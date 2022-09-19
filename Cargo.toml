@@ -1,3 +1,2 @@
 [workspace]
 members = ["frontend", "backend"]
-#exclude = ["crates/foo", "path/to/other"]
