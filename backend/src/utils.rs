@@ -4,6 +4,7 @@ use argon2::{
     Argon2,
 };
 
+///Hashes password with the same settings that are used in data table
 pub fn hash_password(password: &str) -> Result<String, ServiceError> {
     let salt = SaltString::generate(&mut OsRng);
     let argon2 = Argon2::default();

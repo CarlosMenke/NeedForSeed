@@ -1,3 +1,4 @@
+use crate::db::users::check_login;
 use crate::models::db::Pool;
 use actix_web::{web, Result};
 use diesel::PgConnection;
@@ -8,12 +9,17 @@ use shared::auth::{UserLogin, UserLoginResponse};
 use shared::models::NewUser;
 
 pub async fn login(
+    pool: web::Data<Pool>,
     user_login: web::Json<UserLogin>,
 ) -> Result<web::Json<UserLoginResponse>, ServiceError> {
     debug!(
         "login function called for User: {:#?}",
         &user_login.username
     );
+    let connection: &mut PgConnection = &mut pool.get().unwrap();
+    if !check_login(connection, &user_login.username, &user_login.password)? {
+        return Err(ServiceError::Unauthorized);
+    };
     let permissions = Vec::from(["ADMIN_ROLE".to_string()]);
     let token_str = create_token(user_login.username.clone(), permissions).await?;
 

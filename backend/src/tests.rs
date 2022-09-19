@@ -9,16 +9,28 @@ mod unit_tests {
     use crate::db;
     use crate::handler::*;
     use crate::models;
+    use crate::utils;
     use shared::auth::UserLogin;
     use shared::models::NewUser;
 
     #[actix_web::test]
     async fn test_login() {
-        let app = test::init_service(App::new().route("/", web::post().to(api::login))).await;
+        dotenv().ok();
+        let settings = Application::default();
+        let connection_manager = ConnectionManager::<PgConnection>::new(settings.database_url);
+        let pool: models::db::Pool = r2d2::Pool::builder()
+            .build(connection_manager)
+            .expect("Failed to create pool.");
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(pool.clone()))
+                .route("/", web::post().to(api::login)),
+        )
+        .await;
         let req = test::TestRequest::post()
             .uri("/")
             .set_json(&UserLogin {
-                username: "my-name".to_owned(),
+                username: "Carlos-test".to_owned(),
                 password: "12345678".to_owned(),
             })
             .to_request();
@@ -28,14 +40,17 @@ mod unit_tests {
 
         println!("Test if response was korrekt.");
         let body_bytes = to_bytes(resp.into_body()).await.unwrap();
-        let token_str = create_token("my-name".to_string(), Vec::from(["ADMIN_ROLE".to_string()]))
-            .await
-            .expect("Failed to unwrap Token");
+        let token_str = create_token(
+            "Carlos-test".to_string(),
+            Vec::from(["ADMIN_ROLE".to_string()]),
+        )
+        .await
+        .expect("Failed to unwrap Token");
 
         assert_eq!(
             body_bytes,
             web::Bytes::from(format!(
-                r##"{{"username":"my-name","token":"{}"}}"##,
+                r##"{{"username":"Carlos-test","token":"{}"}}"##,
                 token_str
             ))
         );
@@ -57,11 +72,11 @@ mod unit_tests {
                 .route("/", web::post().to(api::create_user)),
         )
         .await;
-        db::users::delete_user(connection, "my-name");
+        db::users::delete_user(connection, "create-test");
         let req = test::TestRequest::post()
             .uri("/")
             .set_json(&NewUser {
-                username: "my-name".to_owned(),
+                username: "create-test".to_owned(),
                 password: "12345678".to_owned(),
             })
             .to_request();
@@ -72,14 +87,21 @@ mod unit_tests {
         println!("Test if response was korrekt.");
         let body_bytes = to_bytes(resp.into_body()).await.unwrap();
         // get userid
-        let result = db::users::get_user(connection, "my-name").unwrap();
-        db::users::delete_user(connection, "my-name");
+        let result = db::users::get_user(connection, "create-test").unwrap();
+        db::users::delete_user(connection, "create-test");
         assert_eq!(
             body_bytes,
             web::Bytes::from(format!(
-                r##"{{"user_id":"{}","username":"my-name","password":"{}"}}"##,
+                r##"{{"user_id":"{}","username":"create-test","password":"{}"}}"##,
                 result.user_id, result.password,
             ))
         );
+    }
+
+    #[actix_web::test]
+    async fn test_password_hash_and_verify() {
+        let pwd = "jkl";
+        let pwd_hash = &utils::hash_password(pwd).unwrap();
+        assert!(utils::verify(pwd_hash, pwd).unwrap());
     }
 }
