@@ -9,7 +9,7 @@ mod unit_tests {
     use crate::db;
     use crate::handler::*;
     use crate::models;
-    use shared::auth::UserPermissions;
+    use shared::auth::UserLogin;
     use shared::models::NewUser;
 
     #[actix_web::test]
@@ -17,9 +17,9 @@ mod unit_tests {
         let app = test::init_service(App::new().route("/", web::post().to(api::login))).await;
         let req = test::TestRequest::post()
             .uri("/")
-            .set_json(&UserPermissions {
+            .set_json(&UserLogin {
                 username: "my-name".to_owned(),
-                permissions: Vec::from(["ADMIN_ROLE".to_string()]),
+                password: "12345678".to_owned(),
             })
             .to_request();
         let resp = test::call_service(&app, req).await;
@@ -35,7 +35,7 @@ mod unit_tests {
         assert_eq!(
             body_bytes,
             web::Bytes::from(format!(
-                r##"{{"username":"my-name","permissions":["ADMIN_ROLE"],"token":"{}"}}"##,
+                r##"{{"username":"my-name","token":"{}"}}"##,
                 token_str
             ))
         );
