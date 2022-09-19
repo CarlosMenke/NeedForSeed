@@ -26,3 +26,5 @@ env_logger = "*"
 anyhow = "*"
 derive_more = "0.99.5"
 argon2 = "0.4"
+
+shared = {path="../shared"}

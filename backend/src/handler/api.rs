@@ -2,6 +2,7 @@ use actix_web::{web, Result};
 use log::debug;
 
 use crate::{auth::*, errors::ServiceError};
+use shared::auth::{UserPermissions, UserPermissionsResponse};
 
 pub async fn login(
     user_permissions: web::Json<UserPermissions>,

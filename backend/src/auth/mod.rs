@@ -36,19 +36,6 @@ pub async fn create_token(username: String, permissions: Vec<String>) -> Result<
     Ok(jwt)
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct UserPermissions {
-    pub username: String,
-    pub permissions: Vec<String>,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct UserPermissionsResponse {
-    pub username: String,
-    pub permissions: Vec<String>,
-    pub token: String,
-}
-
 //TODO implement enum or so with all role models, to restirct them
 const JWT_EXPIRATION_HOURS: i64 = 24;
 const SECRET: &str = "SECRET";
