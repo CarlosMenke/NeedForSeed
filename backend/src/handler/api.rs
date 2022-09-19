@@ -4,25 +4,21 @@ use diesel::PgConnection;
 use log::debug;
 
 use crate::{auth::*, db::users::insert_user, errors::ServiceError, models::db::User};
-use shared::auth::{UserPermissions, UserPermissionsResponse};
+use shared::auth::{UserLogin, UserLoginResponse};
 use shared::models::NewUser;
 
 pub async fn login(
-    user_permissions: web::Json<UserPermissions>,
-) -> Result<web::Json<UserPermissionsResponse>, ServiceError> {
+    user_login: web::Json<UserLogin>,
+) -> Result<web::Json<UserLoginResponse>, ServiceError> {
     debug!(
-        "login function called for User: {:#?} with Permisstions: {:#?}",
-        &user_permissions.username, &user_permissions.permissions
+        "login function called for User: {:#?}",
+        &user_login.username
     );
-    let token_str = create_token(
-        user_permissions.username.clone(),
-        user_permissions.permissions.clone(),
-    )
-    .await?;
+    let permissions = Vec::from(["ADMIN_ROLE".to_string()]);
+    let token_str = create_token(user_login.username.clone(), permissions).await?;
 
-    let response = UserPermissionsResponse {
-        username: user_permissions.username.clone(),
-        permissions: user_permissions.permissions.clone(),
+    let response = UserLoginResponse {
+        username: user_login.username.clone(),
         token: token_str.clone(),
     };
     Ok(web::Json(response))

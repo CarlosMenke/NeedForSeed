@@ -21,6 +21,7 @@ pub fn insert_user(conn: &mut PgConnection, name: &str, pwd: &str) -> Result<Use
         .expect("Error inserting new user"))
 }
 
+#[allow(dead_code)]
 pub fn get_user(conn: &mut PgConnection, _username: &str) -> Result<User, String> {
     debug!("Selecting User with username: {:?}", _username);
 
@@ -35,6 +36,7 @@ pub fn get_user(conn: &mut PgConnection, _username: &str) -> Result<User, String
     return Err("UserNotFound".to_string());
 }
 
+#[allow(dead_code)]
 pub fn delete_user(conn: &mut PgConnection, _username: &str) {
     info!("Delete User with username: {:?}", _username);
 
