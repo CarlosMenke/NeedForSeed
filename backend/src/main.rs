@@ -38,14 +38,14 @@ async fn main() -> std::io::Result<()> {
         .expect("Failed to create pool.");
 
     HttpServer::new(move || {
-        let cors = Cors::default()
+        let cors = Cors::permissive()
             //.allow_any_origin()
-            .allowed_origin("http://127.0.0.1:8080")
-            .allowed_methods(vec!["GET", "POST"])
-            .allowed_headers(vec![header::AUTHORIZATION, header::ACCEPT])
-            .allowed_header(header::CONTENT_TYPE)
-            .supports_credentials()
-            .disable_preflight()
+            //.allowed_origin("http://127.0.0.1:8080")
+            //.allowed_methods(vec!["GET", "POST"])
+            //.allowed_headers(vec![header::AUTHORIZATION, header::ACCEPT])
+            //.allowed_header(header::CONTENT_TYPE)
+            //.supports_credentials()
+            //.disable_preflight()
             .max_age(3600);
         App::new()
             .app_data(web::Data::new(pool.clone()))

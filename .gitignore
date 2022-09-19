@@ -13,3 +13,4 @@ Cargo.lock
 # any dotenv files
 backend/.env
 frontend/.env
+frontend/dist
