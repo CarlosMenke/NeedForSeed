@@ -1,8 +1,7 @@
 diesel::table! {
     users (username) {
-        user_id -> Nullable<Uuid>,
+        user_id -> Varchar,
         username -> Varchar,
-        password -> Nullable<Varchar>,
-        registerd_time -> Nullable<Timestamp>,
+        password -> Varchar,
     }
 }

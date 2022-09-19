@@ -1,7 +1,6 @@
 -- Your SQL goes here
 CREATE TABLE users (
-    user_id uuid DEFAULT gen_random_uuid (),
+    user_id VARCHAR NOT NULL,
     username VARCHAR PRIMARY KEY,
-    password VARCHAR,
-    registerd_time TIMESTAMP
+    password VARCHAR NOT NULL
 )

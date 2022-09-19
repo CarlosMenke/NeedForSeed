@@ -8,7 +8,7 @@ use actix_session::{storage::RedisActorSessionStore, SessionMiddleware};
 use actix_web::{cookie::Key, http::header, web, App, HttpServer};
 
 use diesel::{r2d2, r2d2::ConnectionManager, PgConnection};
-pub type Pool = r2d2::Pool<ConnectionManager<PgConnection>>;
+use models::db::Pool;
 
 use dotenvy::dotenv;
 
@@ -17,9 +17,12 @@ use handler::api;
 
 mod auth;
 mod configuration;
+mod db;
 mod errors;
 mod handler;
+mod models;
 mod tests;
+mod utils;
 
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
@@ -55,7 +58,11 @@ async fn main() -> std::io::Result<()> {
                 )
                 .build(),
             )
-            .service(web::scope("/api").route("login.json", web::post().to(api::login)))
+            .service(
+                web::scope("/api")
+                    .route("login.json", web::post().to(api::login))
+                    .route("create_user.json", web::post().to(api::create_user)),
+            )
     })
     .bind(format!("{}:{}", settings.server_ip, settings.server_port))
     .expect("Can not bind to IP:PORT")

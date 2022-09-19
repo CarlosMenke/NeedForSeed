@@ -25,5 +25,6 @@ chrono = "0.4.19"
 env_logger = "*"
 derive_more = "0.99.5"
 argon2 = "0.4"
-
+uuid = { version = "1.1.2", features = [ "v4", "fast-rng", "macro-diagnostics"] }
+ 
 shared = {path="../shared"}
