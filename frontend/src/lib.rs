@@ -36,6 +36,7 @@ pub struct Model {
 }
 
 pub enum Page {
+    Home,
     NotFound,
 }
 impl Page {
@@ -45,6 +46,7 @@ impl Page {
         ctx: &Option<shared::auth::UserLoginResponse>,
     ) -> Self {
         match url.next_path_part() {
+            None => Self::Home,
             _ => Self::NotFound,
         }
     }
@@ -109,6 +111,7 @@ fn view(model: &Model) -> Node<Msg> {
     div![
         header(&model.base_url),
         match &model.page {
+            Page::Home => page::home::view(),
             Page::NotFound => page::not_found::view(),
         }
     ]
