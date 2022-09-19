@@ -23,7 +23,6 @@ futures = "*"
 log = { version = "^0.4.14", features = ["std"] }
 chrono = "0.4.19"
 env_logger = "*"
-anyhow = "*"
 derive_more = "0.99.5"
 argon2 = "0.4"
 
