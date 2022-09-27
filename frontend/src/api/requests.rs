@@ -21,11 +21,14 @@ pub async fn get_music(
     token: String,
     _depth: String,
 ) -> fetch::Result<shared::models::ResponseHtml> {
-    Request::new(get_api_url(String::from("api/auth/get_music.json")))
-        .header(Header::bearer(token))
-        .fetch()
-        .await?
-        .check_status()?
-        .json()
-        .await
+    Request::new(get_api_url(String::from(format!(
+        "api/auth/get_music_depth/{}.json",
+        _depth
+    ))))
+    .header(Header::bearer(token))
+    .fetch()
+    .await?
+    .check_status()?
+    .json()
+    .await
 }

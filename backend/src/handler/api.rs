@@ -51,8 +51,10 @@ pub async fn create_user(
 
 /// get Music history
 #[has_permissions("GET_INFO_MUSIC")]
-pub async fn get_music() -> Result<web::Json<ResponseHtml>, ServiceError> {
-    match fs::read_to_string("./files/music_1.html") {
+pub async fn get_music(path: web::Path<u32>) -> Result<web::Json<ResponseHtml>, ServiceError> {
+    let depth = path.into_inner();
+    debug!("Get Music function called for depth: {:#?}", &depth);
+    match fs::read_to_string(format!("./files/music_{}.html", depth)) {
         Ok(f) => return Ok(web::Json(ResponseHtml { html: f })),
         Err(_) => {
             return Err(ServiceError::InternalServerError(

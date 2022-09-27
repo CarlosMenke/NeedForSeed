@@ -27,9 +27,8 @@ pub fn init(
     };
     orders.skip().perform_cmd({
         let token = ctx.clone().unwrap().token;
-        async {
-            Msg::FetchedMusicSummary(api::requests::get_music(token, DEPTH1.to_string()).await)
-        }
+        let depth_str = depth.clone().str();
+        async { Msg::FetchedMusicSummary(api::requests::get_music(token, depth_str).await) }
     });
     Model {
         base_url,
@@ -52,10 +51,20 @@ pub struct Model {
 
 // ------ Frequency ------
 
+#[derive(Clone)]
 enum Depth {
     Depth1,
     Depth2,
     Depth3,
+}
+impl Depth {
+    fn str(self) -> String {
+        match self {
+            Depth::Depth1 => DEPTH1.to_string(),
+            Depth::Depth2 => DEPTH2.to_string(),
+            Depth::Depth3 => DEPTH3.to_string(),
+        }
+    }
 }
 
 pub enum Msg {
@@ -90,11 +99,8 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         Msg::GetMusicSummary => {
             orders.skip().perform_cmd({
                 let token = model.ctx.clone().unwrap().token;
-                async {
-                    Msg::FetchedMusicSummary(
-                        api::requests::get_music(token, DEPTH1.to_string()).await,
-                    )
-                }
+                let depth_str = model.depth.clone().str();
+                async { Msg::FetchedMusicSummary(api::requests::get_music(token, depth_str).await) }
             });
         }
         Msg::FetchedMusicSummary(Ok(response_data)) => {

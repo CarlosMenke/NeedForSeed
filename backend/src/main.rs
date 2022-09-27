@@ -64,11 +64,10 @@ async fn main() -> std::io::Result<()> {
                 web::scope("/api")
                     .route("login.json", web::post().to(api::login))
                     .route("create_user.json", web::post().to(api::create_user))
-                    .service(
-                        web::scope("/auth")
-                            .wrap(auth)
-                            .route("get_music.json", web::get().to(api::get_music)),
-                    ),
+                    .service(web::scope("/auth").wrap(auth).route(
+                        "get_music_depth/{depth}.json",
+                        web::get().to(api::get_music),
+                    )),
             )
     })
     .bind(format!("{}:{}", settings.server_ip, settings.server_port))

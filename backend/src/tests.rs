@@ -125,18 +125,18 @@ mod unit_tests {
         let app = test::init_service(
             App::new()
                 .wrap(auth)
-                .route("/", web::get().to(api::get_music)),
+                .route("/{depth}", web::get().to(api::get_music)),
         )
         .await;
         let req = test::TestRequest::get()
-            .uri("/")
+            .uri("/1")
             .insert_header((AUTHORIZATION, format!("Bearer {}", token_str)))
             .to_request();
         let resp = test::call_service(&app, req).await;
         println!("Valid Request {:?}", resp);
         assert!(resp.status().is_success());
         let req = test::TestRequest::get()
-            .uri("/")
+            .uri("/1")
             .insert_header((AUTHORIZATION, format!("Bearer {}", token_str_invalid)))
             .to_request();
         let resp = test::call_service(&app, req).await;
