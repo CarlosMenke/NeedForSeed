@@ -12,3 +12,8 @@ pub struct User {
     pub username: String,
     pub password: String,
 }
+
+#[derive(Serialize, Deserialize)]
+pub struct ResponseHtml {
+    pub html: String,
+}

@@ -1,10 +1,11 @@
 #[cfg(test)]
 mod unit_tests {
-    use actix_web::{body::to_bytes, test, web, App};
+    use actix_web::{body::to_bytes, http::header::AUTHORIZATION, test, web, App};
+    use actix_web_httpauth::middleware::HttpAuthentication;
     use diesel::{r2d2, r2d2::ConnectionManager, PgConnection};
     use dotenvy::dotenv;
 
-    use crate::auth::create_token;
+    use crate::auth::{create_token, validator};
     use crate::configuration::Application;
     use crate::db;
     use crate::handler::*;
@@ -42,7 +43,7 @@ mod unit_tests {
         let body_bytes = to_bytes(resp.into_body()).await.unwrap();
         let token_str = create_token(
             "Carlos-test".to_string(),
-            Vec::from(["ADMIN_ROLE".to_string()]),
+            Vec::from(["ADMIN_ROLE".to_string(), "GET_INFO_MUSIC".to_string()]),
         )
         .await
         .expect("Failed to unwrap Token");
@@ -103,5 +104,43 @@ mod unit_tests {
         let pwd = "jkl";
         let pwd_hash = &utils::hash_password(pwd).unwrap();
         assert!(utils::verify(pwd_hash, pwd).unwrap());
+    }
+
+    #[actix_web::test]
+    async fn test_get_music() {
+        let token_str = create_token(
+            "Carlos-test".to_string(),
+            Vec::from(["GET_INFO_MUSIC".to_string()]),
+        )
+        .await
+        .expect("Failed to unwrap Token");
+        let token_str_invalid = create_token(
+            "Carlos-test".to_string(),
+            Vec::from(["ADMIN_ROLE".to_string()]),
+        )
+        .await
+        .expect("Failed to unwrap Token");
+
+        let auth = HttpAuthentication::bearer(validator);
+        let app = test::init_service(
+            App::new()
+                .wrap(auth)
+                .route("/", web::get().to(api::get_music)),
+        )
+        .await;
+        let req = test::TestRequest::get()
+            .uri("/")
+            .insert_header((AUTHORIZATION, format!("Bearer {}", token_str)))
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        println!("Valid Request {:?}", resp);
+        assert!(resp.status().is_success());
+        let req = test::TestRequest::get()
+            .uri("/")
+            .insert_header((AUTHORIZATION, format!("Bearer {}", token_str_invalid)))
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        println!("Invalid Request {:?}", resp);
+        assert!(!resp.status().is_success());
     }
 }

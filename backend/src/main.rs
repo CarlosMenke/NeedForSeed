@@ -5,7 +5,8 @@ extern crate serde;
 use actix_cors::Cors;
 use actix_identity::IdentityMiddleware;
 use actix_session::{storage::RedisActorSessionStore, SessionMiddleware};
-use actix_web::{cookie::Key, http::header, web, App, HttpServer};
+use actix_web::{cookie::Key, web, App, HttpServer};
+use actix_web_httpauth::middleware::HttpAuthentication;
 
 use diesel::{r2d2, r2d2::ConnectionManager, PgConnection};
 use models::db::Pool;
@@ -47,6 +48,7 @@ async fn main() -> std::io::Result<()> {
             //.supports_credentials()
             //.disable_preflight()
             .max_age(3600);
+        let auth = HttpAuthentication::bearer(auth::validator);
         App::new()
             .app_data(web::Data::new(pool.clone()))
             .wrap(cors)
@@ -61,7 +63,12 @@ async fn main() -> std::io::Result<()> {
             .service(
                 web::scope("/api")
                     .route("login.json", web::post().to(api::login))
-                    .route("create_user.json", web::post().to(api::create_user)),
+                    .route("create_user.json", web::post().to(api::create_user))
+                    .service(
+                        web::scope("/auth")
+                            .wrap(auth)
+                            .route("get_music.json", web::get().to(api::get_music)),
+                    ),
             )
     })
     .bind(format!("{}:{}", settings.server_ip, settings.server_port))
