@@ -119,7 +119,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
 pub fn view(model: &Model) -> Node<Msg> {
     let music_summary_html = match model.music_summary.clone() {
         Some(m) => m.html,
-        None => "default".to_string(),
+        None => "".to_string(),
     };
     let (depth, link) = match &model.depth {
         Depth::Depth1 => (

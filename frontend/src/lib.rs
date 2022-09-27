@@ -6,7 +6,10 @@ mod api;
 mod page;
 
 use api::requests::*;
-use shared::{auth::UserLogin, *};
+use shared::{
+    auth::{UserLogin, UserLoginResponse},
+    *,
+};
 
 // ------ ------
 //     Init
@@ -137,7 +140,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
 // `view` describes what to display.
 fn view(model: &Model) -> Node<Msg> {
     div![
-        header(&model.base_url, &model.login_data),
+        header(&model.base_url, &model.login_data, &model.ctx),
         match &model.page {
             Page::Home => page::home::view(),
             Page::Music(model) => page::music::view(&model).map_msg(Msg::MusicMsg),
@@ -146,7 +149,7 @@ fn view(model: &Model) -> Node<Msg> {
     ]
 }
 
-fn header(base_url: &Url, login_data: &UserLogin) -> Node<Msg> {
+fn header(base_url: &Url, login_data: &UserLogin, ctx: &Option<UserLoginResponse>) -> Node<Msg> {
     div![
         C!["navbar"],
         "Test Navbar",
@@ -158,31 +161,35 @@ fn header(base_url: &Url, login_data: &UserLogin) -> Node<Msg> {
             attrs! { At::Href => Urls::new(base_url).music().default() },
             "Music",
         ]],
-        div![
-            C!["login"],
-            input![
-                C!["login-name"],
-                input_ev(Ev::Input, Msg::SaveLoginUsername),
-                attrs! {
-                    At::Placeholder => "Name",
-                    At::AutoFocus => AtValue::None,
-                    At::Value => login_data.username,
-                }
-            ],
-            input![
-                C!["login-password"],
-                input_ev(Ev::Input, Msg::SaveLoginPassword),
-                attrs! {
-                    At::Placeholder => "Password",
-                    At::AutoFocus => AtValue::None,
-                    At::Value => login_data.password,
-                }
-            ],
-            button![ev(Ev::Click, |_| Msg::GetLoginRequest), "Get Login message"],
-        ]
+        IF!( ctx.is_none() => view_login(login_data))
     ]
 }
 
+fn view_login(login_data: &UserLogin) -> Node<Msg> {
+    div![
+        C!["login"],
+        input![
+            C!["login-name"],
+            input_ev(Ev::Input, Msg::SaveLoginUsername),
+            attrs! {
+                At::Placeholder => "Name",
+                At::AutoFocus => AtValue::None,
+                At::Value => login_data.username,
+            }
+        ],
+        input![
+            C!["login-password"],
+            input_ev(Ev::Input, Msg::SaveLoginPassword),
+            attrs! {
+                At::Placeholder => "Password",
+                At::AutoFocus => AtValue::None,
+                At::Value => login_data.password,
+                At::Type => "Password",
+            }
+        ],
+        button![ev(Ev::Click, |_| Msg::GetLoginRequest), "Get Login message"],
+    ]
+}
 // ------ ------
 //     Start
 // ------ ------
