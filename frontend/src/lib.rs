@@ -37,17 +37,24 @@ pub struct Model {
     pub login_data: shared::auth::UserLogin,
 }
 
+const MUSIC: &str = "Music";
 pub enum Page {
     Home,
+    Music(page::music::Model),
     NotFound,
 }
 impl Page {
     fn init(
         mut url: Url,
-        _orders: &mut impl Orders<Msg>,
-        _ctx: &Option<shared::auth::UserLoginResponse>,
+        orders: &mut impl Orders<Msg>,
+        ctx: &Option<shared::auth::UserLoginResponse>,
     ) -> Self {
         match url.next_path_part() {
+            Some(MUSIC) => Self::Music(page::music::init(
+                url,
+                &mut orders.proxy(Msg::MusicMsg),
+                ctx.clone(),
+            )),
             None => Self::Home,
             _ => Self::NotFound,
         }
@@ -60,6 +67,9 @@ impl Page {
 
 struct_urls!();
 impl<'a> Urls<'a> {
+    fn music(self) -> page::music::Urls<'a> {
+        page::music::Urls::new(self.base_url().add_path_part(MUSIC))
+    }
     fn home(self) -> Url {
         self.base_url()
     }
@@ -68,6 +78,7 @@ impl<'a> Urls<'a> {
 pub enum Msg {
     UrlChanged(subs::UrlChanged),
     GoToUrl(Url),
+    MusicMsg(page::music::Msg),
 
     SaveLoginUsername(String),
     SaveLoginPassword(String),
@@ -109,8 +120,14 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         Msg::FetchedLogin(Err(fetch_error)) => {
             log!("Example_A error:", fetch_error);
             orders.skip();
-        } // ------- Page
-    };
+        }
+        // ------- Page -------
+        Msg::MusicMsg(msg) => {
+            if let Page::Music(model) = &mut model.page {
+                page::music::update(msg, model, &mut orders.proxy(Msg::MusicMsg))
+            }
+        }
+    }
 }
 
 // ------ ------
@@ -123,6 +140,7 @@ fn view(model: &Model) -> Node<Msg> {
         header(&model.base_url, &model.login_data),
         match &model.page {
             Page::Home => page::home::view(),
+            Page::Music(model) => page::music::view(&model).map_msg(Msg::MusicMsg),
             Page::NotFound => page::not_found::view(),
         }
     ]
@@ -135,6 +153,10 @@ fn header(base_url: &Url, login_data: &UserLogin) -> Node<Msg> {
         li![a![
             attrs! { At::Href => Urls::new(base_url).home() },
             "Home",
+        ]],
+        li![a![
+            attrs! { At::Href => Urls::new(base_url).music().default() },
+            "Music",
         ]],
         div![
             C!["login"],
