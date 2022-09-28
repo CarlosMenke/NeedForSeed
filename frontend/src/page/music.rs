@@ -19,24 +19,26 @@ pub fn init(
     ctx: Option<shared::auth::UserLoginResponse>,
 ) -> Model {
     let base_url = url.to_base_url();
-    let (depth, timeframe) = match url.remaining_path_parts().as_slice() {
-        [DEPTH1, WEEK] => (Depth::Depth1, Timeframe::Week),
-        [DEPTH2, WEEK] => (Depth::Depth2, Timeframe::Week),
-        [DEPTH3, WEEK] => (Depth::Depth3, Timeframe::Week),
-        [DEPTH1, MONTH] => (Depth::Depth1, Timeframe::Month),
-        [DEPTH2, MONTH] => (Depth::Depth2, Timeframe::Month),
-        [DEPTH3, MONTH] => (Depth::Depth3, Timeframe::Month),
-        [DEPTH1, YEAR] => (Depth::Depth1, Timeframe::Year),
-        [DEPTH2, YEAR] => (Depth::Depth2, Timeframe::Year),
-        [DEPTH3, YEAR] => (Depth::Depth3, Timeframe::Year),
-        [DEPTH1, ALL] => (Depth::Depth1, Timeframe::All),
-        [DEPTH2, ALL] => (Depth::Depth2, Timeframe::All),
-        [DEPTH3, ALL] => (Depth::Depth3, Timeframe::All),
-        [] => {
+    let depth = match url.next_path_part() {
+        Some(DEPTH1) => Depth::Depth1,
+        Some(DEPTH2) => Depth::Depth2,
+        Some(DEPTH3) => Depth::Depth3,
+        None => {
             Urls::new(&base_url).default().go_and_replace();
-            (Depth::Depth1, Timeframe::Year)
+            Depth::Depth1
         }
-        _ => (Depth::Depth1, Timeframe::All),
+        _ => Depth::Depth1,
+    };
+    let timeframe = match url.next_path_part() {
+        Some(WEEK) => Timeframe::Week,
+        Some(MONTH) => Timeframe::Month,
+        Some(YEAR) => Timeframe::Year,
+        Some(ALL) => Timeframe::All,
+        None => {
+            Urls::new(&base_url).default().go_and_replace();
+            Timeframe::Year
+        }
+        _ => Timeframe::All,
     };
     orders.skip().perform_cmd({
         let token = ctx.clone().unwrap().token;
