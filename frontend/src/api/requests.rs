@@ -19,11 +19,12 @@ pub async fn get_login(name: String, pwd: String) -> fetch::Result<auth::UserLog
 
 pub async fn get_music(
     token: String,
-    _depth: String,
+    depth: String,
+    timeframe: String,
 ) -> fetch::Result<shared::models::ResponseHtml> {
     Request::new(get_api_url(String::from(format!(
-        "api/auth/get_music_depth/{}.json",
-        _depth
+        "api/auth/get_music/depth_{}/timeframe_{}.json",
+        depth, timeframe
     ))))
     .header(Header::bearer(token))
     .fetch()

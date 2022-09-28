@@ -55,7 +55,7 @@ async fn main() -> std::io::Result<()> {
                     .route("login.json", web::post().to(api::login))
                     .route("create_user.json", web::post().to(api::create_user))
                     .service(web::scope("/auth").wrap(auth).route(
-                        "get_music_depth/{depth}.json",
+                        "get_{target}/depth_{depth}/timeframe_{timeframe}.json",
                         web::get().to(api::get_music),
                     )),
             )
