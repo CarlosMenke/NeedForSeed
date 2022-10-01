@@ -43,7 +43,7 @@ mod unit_tests {
         let body_bytes = to_bytes(resp.into_body()).await.unwrap();
         let token_str = create_token(
             "Carlos-test".to_string(),
-            Vec::from(["ADMIN_ROLE".to_string(), "GET_HTML_INFO".to_string()]),
+            Vec::from(["ADMIN_ROLE".to_string(), "GET_LEDGER_INFO".to_string()]),
         )
         .await
         .expect("Failed to unwrap Token");
@@ -110,7 +110,7 @@ mod unit_tests {
     async fn test_get_html() {
         let token_str = create_token(
             "Carlos-test".to_string(),
-            Vec::from(["GET_HTML_INFO".to_string()]),
+            Vec::from(["GET_LEDGER_INFO".to_string()]),
         )
         .await
         .expect("Failed to unwrap Token");

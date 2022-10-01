@@ -27,7 +27,7 @@ pub async fn login(
     if !check_login(connection, &user_login.username, &user_login.password)? {
         return Err(ServiceError::Unauthorized);
     };
-    let permissions = Vec::from(["ADMIN_ROLE".to_string(), "GET_HTML_INFO".to_string()]);
+    let permissions = Vec::from(["ADMIN_ROLE".to_string(), "GET_LEDGER_INFO".to_string()]);
     let token_str = create_token(user_login.username.clone(), permissions).await?;
 
     let response = UserLoginResponse {
@@ -50,7 +50,7 @@ pub async fn create_user(
 }
 
 /// get Html files
-#[has_permissions("GET_HTML_INFO")]
+#[has_permissions("GET_LEDGER_INFO")]
 pub async fn get_html(
     path: web::Path<(String, String, String)>,
 ) -> Result<web::Json<ResponseHtml>, ServiceError> {
