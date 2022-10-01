@@ -67,8 +67,9 @@ pub async fn get_html(
 }
 
 /// get Headline and Content HashMap from Ledger Music
-#[has_permissions("GET_LEDGER_INFO")]
+//#[has_permissions("GET_LEDGER_INFO")]
 pub async fn get_ledger_time_suggetstions() -> Result<web::Json<ResponseHashMap>, ServiceError> {
+    debug!("Get Ledger Time Suggestion");
     Ok(web::Json(ResponseHashMap {
         hash_map: utils::ledger_time_content()?,
     }))

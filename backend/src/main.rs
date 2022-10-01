@@ -72,7 +72,7 @@ async fn main() -> std::io::Result<()> {
                                 web::get().to(api::get_html),
                             )
                             .route(
-                                "get_music_suggestions.json",
+                                "get_time_suggestions.json",
                                 web::get().to(api::get_ledger_time_suggetstions),
                             ),
                     ),
