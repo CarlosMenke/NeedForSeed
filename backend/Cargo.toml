@@ -26,5 +26,6 @@ env_logger = "*"
 derive_more = "0.99.5"
 argon2 = "0.4"
 uuid = { version = "1.1.2", features = [ "v4", "fast-rng", "macro-diagnostics"] }
+regex = "1.6"
  
 shared = {path="../shared"}

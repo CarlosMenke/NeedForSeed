@@ -49,7 +49,7 @@ pub async fn create_user(
     };
 }
 
-/// get history of html file
+/// get Html files
 #[has_permissions("GET_HTML_INFO")]
 pub async fn get_html(
     path: web::Path<(String, String, String)>,
