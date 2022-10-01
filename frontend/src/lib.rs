@@ -6,10 +6,7 @@ mod api;
 mod page;
 
 use api::requests::*;
-use shared::{
-    auth::{UserLogin, UserLoginResponse},
-    *,
-};
+use shared::*;
 
 // ------ ------
 //     Init
@@ -173,7 +170,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
 // `view` describes what to display.
 fn view(model: &Model) -> Node<Msg> {
     div![
-        IF!( ! &model.ctx.is_none() => header(&model.base_url, &model.login_data, &model.ctx)),
+        IF!( ! &model.ctx.is_none() => header(&model.base_url)),
         IF!( model.ctx.is_none() => view_login(&model.login_data)),
         match &model.page {
             Page::Home => page::home::view(),
@@ -186,7 +183,7 @@ fn view(model: &Model) -> Node<Msg> {
     ]
 }
 
-fn header(base_url: &Url, login_data: &UserLogin, ctx: &Option<UserLoginResponse>) -> Node<Msg> {
+fn header(base_url: &Url) -> Node<Msg> {
     div![
         C!["navbar"],
         "Test Navbar",
@@ -209,7 +206,7 @@ fn header(base_url: &Url, login_data: &UserLogin, ctx: &Option<UserLoginResponse
     ]
 }
 
-fn view_login(login_data: &UserLogin) -> Node<Msg> {
+fn view_login(login_data: &auth::UserLogin) -> Node<Msg> {
     div![
         C!["login"],
         input![
