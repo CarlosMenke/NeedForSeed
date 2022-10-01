@@ -46,7 +46,7 @@ pub fn init(
         let depth_str = depth.clone().str();
         let timeframte_str = timeframe.clone().str();
         async {
-            Msg::FetchedMusicSummary(
+            Msg::FetchedSummary(
                 api::requests::get_html(token, API_TARGET.to_string(), depth_str, timeframte_str)
                     .await,
             )
@@ -110,8 +110,8 @@ impl Timeframe {
 }
 
 pub enum Msg {
-    GetMusicSummary,
-    FetchedMusicSummary(fetch::Result<shared::models::ResponseHtml>),
+    GetSummary,
+    FetchedSummary(fetch::Result<shared::models::ResponseHtml>),
 }
 // ------ ------
 //     Urls
@@ -164,13 +164,13 @@ impl<'a> Urls<'a> {
 
 pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     match msg {
-        Msg::GetMusicSummary => {
+        Msg::GetSummary => {
             orders.skip().perform_cmd({
                 let token = model.ctx.clone().unwrap().token;
                 let depth_str = model.depth.clone().str();
                 let timeframe_str = model.timeframe.clone().str();
                 async {
-                    Msg::FetchedMusicSummary(
+                    Msg::FetchedSummary(
                         api::requests::get_html(
                             token,
                             API_TARGET.to_string(),
@@ -182,10 +182,10 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 }
             });
         }
-        Msg::FetchedMusicSummary(Ok(response_data)) => {
+        Msg::FetchedSummary(Ok(response_data)) => {
             model.finance_summary = Some(response_data);
         }
-        Msg::FetchedMusicSummary(Err(fetch_error)) => {
+        Msg::FetchedSummary(Err(fetch_error)) => {
             log!("Fetch error:", fetch_error);
             orders.skip();
         }
