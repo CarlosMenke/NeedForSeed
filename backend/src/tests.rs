@@ -43,7 +43,7 @@ mod unit_tests {
         let body_bytes = to_bytes(resp.into_body()).await.unwrap();
         let token_str = create_token(
             "Carlos-test".to_string(),
-            Vec::from(["ADMIN_ROLE".to_string(), "GET_INFO_MUSIC".to_string()]),
+            Vec::from(["ADMIN_ROLE".to_string(), "GET_HTML_INFO".to_string()]),
         )
         .await
         .expect("Failed to unwrap Token");
@@ -107,10 +107,10 @@ mod unit_tests {
     }
 
     #[actix_web::test]
-    async fn test_get_music() {
+    async fn test_get_html() {
         let token_str = create_token(
             "Carlos-test".to_string(),
-            Vec::from(["GET_INFO_MUSIC".to_string()]),
+            Vec::from(["GET_HTML_INFO".to_string()]),
         )
         .await
         .expect("Failed to unwrap Token");
@@ -122,21 +122,20 @@ mod unit_tests {
         .expect("Failed to unwrap Token");
 
         let auth = HttpAuthentication::bearer(validator);
-        let app = test::init_service(
-            App::new()
-                .wrap(auth)
-                .route("/{depth}", web::get().to(api::get_music)),
-        )
+        let app = test::init_service(App::new().wrap(auth).route(
+            "/get_{target}/depth_{depth}/timeframe_{timeframe}.json",
+            web::get().to(api::get_html),
+        ))
         .await;
         let req = test::TestRequest::get()
-            .uri("/1")
+            .uri("/get_music/depth_1/timeframe_all.json")
             .insert_header((AUTHORIZATION, format!("Bearer {}", token_str)))
             .to_request();
         let resp = test::call_service(&app, req).await;
         println!("Valid Request {:?}", resp);
         assert!(resp.status().is_success());
         let req = test::TestRequest::get()
-            .uri("/1")
+            .uri("/get_music/depth_1/timeframe_all.json")
             .insert_header((AUTHORIZATION, format!("Bearer {}", token_str_invalid)))
             .to_request();
         let resp = test::call_service(&app, req).await;
