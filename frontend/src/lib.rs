@@ -41,9 +41,11 @@ pub struct Model {
 }
 
 const MUSIC: &str = "Music";
+const FINANCE: &str = "Finance";
 pub enum Page {
     Home,
     Music(page::music::Model),
+    Finance(page::finance::Model),
     NotFound,
 }
 impl Page {
@@ -56,6 +58,11 @@ impl Page {
             Some(MUSIC) => Self::Music(page::music::init(
                 url,
                 &mut orders.proxy(Msg::MusicMsg),
+                ctx.clone(),
+            )),
+            Some(FINANCE) => Self::Finance(page::finance::init(
+                url,
+                &mut orders.proxy(Msg::FinanceMsg),
                 ctx.clone(),
             )),
             None => Self::Home,
@@ -73,6 +80,9 @@ impl<'a> Urls<'a> {
     fn music(self) -> page::music::Urls<'a> {
         page::music::Urls::new(self.base_url().add_path_part(MUSIC))
     }
+    fn finance(self) -> page::finance::Urls<'a> {
+        page::finance::Urls::new(self.base_url().add_path_part(FINANCE))
+    }
     fn home(self) -> Url {
         self.base_url()
     }
@@ -82,6 +92,7 @@ pub enum Msg {
     UrlChanged(subs::UrlChanged),
     GoToUrl(Url),
     MusicMsg(page::music::Msg),
+    FinanceMsg(page::finance::Msg),
 
     SaveLoginUsername(String),
     SaveLoginPassword(String),
@@ -130,6 +141,11 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 page::music::update(msg, model, &mut orders.proxy(Msg::MusicMsg))
             }
         }
+        Msg::FinanceMsg(msg) => {
+            if let Page::Finance(model) = &mut model.page {
+                page::finance::update(msg, model, &mut orders.proxy(Msg::FinanceMsg))
+            }
+        }
     }
 }
 
@@ -144,6 +160,7 @@ fn view(model: &Model) -> Node<Msg> {
         match &model.page {
             Page::Home => page::home::view(),
             Page::Music(model) => page::music::view(&model).map_msg(Msg::MusicMsg),
+            Page::Finance(model) => page::finance::view(&model).map_msg(Msg::FinanceMsg),
             Page::NotFound => page::not_found::view(),
         }
     ]
@@ -160,6 +177,10 @@ fn header(base_url: &Url, login_data: &UserLogin, ctx: &Option<UserLoginResponse
         li![a![
             attrs! { At::Href => Urls::new(base_url).music().default() },
             "Music",
+        ]],
+        li![a![
+            attrs! { At::Href => Urls::new(base_url).finance().default() },
+            "Finance",
         ]],
         IF!( ctx.is_none() => view_login(login_data))
     ]
