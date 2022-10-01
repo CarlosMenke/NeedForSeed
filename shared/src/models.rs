@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 #[derive(Serialize, Deserialize)]
 pub struct NewUser {
@@ -21,6 +21,6 @@ pub struct ResponseHtml {
 
 // TODO test if also &str works
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct ResponseHashMap {
-    pub hash_map: HashMap<String, String>,
+pub struct ResponseBTreeMap {
+    pub hash_map: BTreeMap<String, String>,
 }
