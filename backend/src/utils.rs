@@ -28,11 +28,11 @@ use std::collections::HashMap;
 use std::fs;
 
 //TODO make function more generic: give the file path
-fn get_ledger_music_content() {
-    let mut contacts = HashMap::new();
+/// converts the ledger file for Music tracking and extracts the Heandline and the buttom content
+pub fn ledger_music_content() -> Result<HashMap<String, String>, ServiceError> {
+    let mut content_headline = HashMap::new();
 
-    let ledger =
-        fs::read_to_string("./time_spend.dat").expect("Should have been able to read the file");
+    let ledger = fs::read_to_string("./files/time_spend.dat")?;
     let mut pos: i32 = 0; //log line number of entery
     let mut headline: String = "".to_string(); //temp store of headline
 
@@ -50,7 +50,7 @@ fn get_ledger_music_content() {
         } else if pos == 1 && tracking {
             pos = 0;
             tracking = false;
-            contacts.insert(
+            content_headline.insert(
                 remove_first_tab
                     .replace_all(&remove_time.replace(line, "").to_string(), "")
                     .to_string(),
@@ -60,8 +60,5 @@ fn get_ledger_music_content() {
             pos += 1;
         }
     }
-
-    for (headline, content) in contacts.iter() {
-        println!("{:?}{:?}", headline, content)
-    }
+    Ok(content_headline)
 }

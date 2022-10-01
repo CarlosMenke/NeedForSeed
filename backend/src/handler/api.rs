@@ -10,9 +10,10 @@ use crate::{
     db::users::{check_login, insert_user},
     errors::ServiceError,
     models::db::{Pool, User},
+    utils,
 };
 use shared::auth::{UserLogin, UserLoginResponse};
-use shared::models::{NewUser, ResponseHtml};
+use shared::models::{NewUser, ResponseHashMap, ResponseHtml};
 
 /// Handles user Login and returns JWT
 pub async fn login(
@@ -61,12 +62,14 @@ pub async fn get_html(
     );
     //TODO make path more general. right now, it only works, if cargo run is executed one dir above
     //main.rs
-    match fs::read_to_string(format!("./files/{}_{}_{}.html", target, depth, timeframe)) {
-        Ok(f) => return Ok(web::Json(ResponseHtml { html: f })),
-        Err(_) => {
-            return Err(ServiceError::InternalServerError(
-                "Unable to read file".to_string(),
-            ))
-        }
-    };
+    let file = fs::read_to_string(format!("./files/{}_{}_{}.html", target, depth, timeframe))?;
+    Ok(web::Json(ResponseHtml { html: file }))
+}
+
+/// get Headline and Content HashMap from Ledger Music
+#[has_permissions("GET_LEDGER_INFO")]
+pub async fn get_ledger_music_suggetstions() -> Result<web::Json<ResponseHashMap>, ServiceError> {
+    Ok(web::Json(ResponseHashMap {
+        hash_map: utils::ledger_music_content()?,
+    }))
 }

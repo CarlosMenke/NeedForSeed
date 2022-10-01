@@ -114,12 +114,6 @@ mod unit_tests {
         )
         .await
         .expect("Failed to unwrap Token");
-        let token_str_invalid = create_token(
-            "Carlos-test".to_string(),
-            Vec::from(["ADMIN_ROLE".to_string()]),
-        )
-        .await
-        .expect("Failed to unwrap Token");
 
         let auth = HttpAuthentication::bearer(validator);
         let app = test::init_service(App::new().wrap(auth).route(
@@ -134,12 +128,30 @@ mod unit_tests {
         let resp = test::call_service(&app, req).await;
         println!("Valid Request {:?}", resp);
         assert!(resp.status().is_success());
+    }
+
+    #[actix_web::test]
+    async fn test_get_ledger_music_suggestion() {
+        let token_str = create_token(
+            "Carlos-test".to_string(),
+            Vec::from(["GET_LEDGER_INFO".to_string()]),
+        )
+        .await
+        .expect("Failed to unwrap Token");
+
+        let auth = HttpAuthentication::bearer(validator);
+        let app = test::init_service(
+            App::new()
+                .wrap(auth)
+                .route("/", web::get().to(api::get_ledger_music_suggetstions)),
+        )
+        .await;
         let req = test::TestRequest::get()
-            .uri("/get_music/depth_1/timeframe_all.json")
-            .insert_header((AUTHORIZATION, format!("Bearer {}", token_str_invalid)))
+            .uri("/")
+            .insert_header((AUTHORIZATION, format!("Bearer {}", token_str)))
             .to_request();
         let resp = test::call_service(&app, req).await;
-        println!("Invalid Request {:?}", resp);
-        assert!(!resp.status().is_success());
+        println!("Valid Request {:?}", resp);
+        assert!(resp.status().is_success());
     }
 }

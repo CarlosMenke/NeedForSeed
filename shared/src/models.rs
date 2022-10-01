@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 #[derive(Serialize, Deserialize)]
 pub struct NewUser {
@@ -16,4 +17,10 @@ pub struct User {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ResponseHtml {
     pub html: String,
+}
+
+// TODO test if also &str works
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct ResponseHashMap {
+    pub hash_map: HashMap<String, String>,
 }

@@ -64,10 +64,18 @@ async fn main() -> std::io::Result<()> {
                 web::scope("/api")
                     .route("login.json", web::post().to(api::login))
                     .route("create_user.json", web::post().to(api::create_user))
-                    .service(web::scope("/auth").wrap(auth).route(
-                        "get_{target}/depth_{depth}/timeframe_{timeframe}.json",
-                        web::get().to(api::get_html),
-                    )),
+                    .service(
+                        web::scope("/auth")
+                            .wrap(auth)
+                            .route(
+                                "get_{target}/depth_{depth}/timeframe_{timeframe}.json",
+                                web::get().to(api::get_html),
+                            )
+                            .route(
+                                "get_music_suggestions.json",
+                                web::get().to(api::get_ledger_music_suggetstions),
+                            ),
+                    ),
             )
     })
     .workers(2)
