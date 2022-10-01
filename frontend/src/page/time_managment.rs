@@ -271,9 +271,9 @@ pub fn view(model: &Model) -> Node<Msg> {
     div![
         "This is the depth: ",
         depth,
-        div![format!("Hello! This is your {} report.", depth), link,],
+        div![format!("This is your {} report.", depth), link,],
         div![
-            format!("Hello! This is your {} report.", timeframe),
+            format!("This is your {} report.", timeframe),
             link_timeframe,
         ],
         raw![&finance_summary_html]
