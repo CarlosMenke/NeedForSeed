@@ -1,6 +1,7 @@
 use crate::api;
 use seed::{prelude::*, *};
 
+const API_TARGET: &str = "music";
 const DEPTH1: &str = "1";
 const DEPTH2: &str = "2";
 const DEPTH3: &str = "3";
@@ -46,7 +47,8 @@ pub fn init(
         let timeframte_str = timeframe.clone().str();
         async {
             Msg::FetchedMusicSummary(
-                api::requests::get_music(token, depth_str, timeframte_str).await,
+                api::requests::get_html(token, API_TARGET.to_string(), depth_str, timeframte_str)
+                    .await,
             )
         }
     });
@@ -169,7 +171,13 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 let timeframe_str = model.timeframe.clone().str();
                 async {
                     Msg::FetchedMusicSummary(
-                        api::requests::get_music(token, depth_str, timeframe_str).await,
+                        api::requests::get_html(
+                            token,
+                            API_TARGET.to_string(),
+                            depth_str,
+                            timeframe_str,
+                        )
+                        .await,
                     )
                 }
             });

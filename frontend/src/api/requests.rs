@@ -17,14 +17,16 @@ pub async fn get_login(name: String, pwd: String) -> fetch::Result<auth::UserLog
     .await
 }
 
-pub async fn get_music(
+/// this function returns raw html for finance and music summary
+pub async fn get_html(
     token: String,
+    target: String,
     depth: String,
     timeframe: String,
 ) -> fetch::Result<shared::models::ResponseHtml> {
     Request::new(get_api_url(String::from(format!(
-        "api/auth/get_music/depth_{}/timeframe_{}.json",
-        depth, timeframe
+        "api/auth/get_{}/depth_{}/timeframe_{}.json",
+        target, depth, timeframe
     ))))
     .header(Header::bearer(token))
     .fetch()
