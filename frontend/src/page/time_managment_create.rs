@@ -67,7 +67,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
 
 pub fn view(model: &Model) -> Node<Msg> {
     let suggestions = match model.suggestions.clone() {
-        Some(m) => m.hash_map,
+        Some(m) => m.map,
         None => BTreeMap::new(),
     };
 

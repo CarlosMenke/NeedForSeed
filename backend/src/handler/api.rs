@@ -71,6 +71,6 @@ pub async fn get_html(
 pub async fn get_ledger_time_suggetstions() -> Result<web::Json<ResponseBTreeMap>, ServiceError> {
     debug!("Get Ledger Time Suggestion");
     Ok(web::Json(ResponseBTreeMap {
-        hash_map: utils::ledger_time_content()?,
+        map: utils::ledger_time_content()?,
     }))
 }

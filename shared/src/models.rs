@@ -22,5 +22,5 @@ pub struct ResponseHtml {
 // TODO test if also &str works
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ResponseBTreeMap {
-    pub hash_map: BTreeMap<String, String>,
+    pub map: BTreeMap<String, String>,
 }
