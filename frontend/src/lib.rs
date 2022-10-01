@@ -235,14 +235,6 @@ fn header(base_url: &Url) -> Node<Msg> {
 }
 
 fn view_login(login_data: &auth::UserLogin) -> Node<Msg> {
-    let names: Vec<&str> = Vec::from([
-        "Carlos",
-        "Andrea",
-        "Mira",
-        "Pascal",
-        "Education:Uni",
-        "Education:Programming",
-    ]);
     div![
         C!["login"],
         input![
