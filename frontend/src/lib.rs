@@ -42,10 +42,12 @@ pub struct Model {
 
 const MUSIC: &str = "Music";
 const FINANCE: &str = "Finance";
+const TIMEMANAGMENT: &str = "TimeManagment";
 pub enum Page {
     Home,
     Music(page::music::Model),
     Finance(page::finance::Model),
+    TimeManagment(page::time_managment::Model),
     NotFound,
 }
 impl Page {
@@ -63,6 +65,11 @@ impl Page {
             Some(FINANCE) => Self::Finance(page::finance::init(
                 url,
                 &mut orders.proxy(Msg::FinanceMsg),
+                ctx.clone(),
+            )),
+            Some(TIMEMANAGMENT) => Self::TimeManagment(page::time_managment::init(
+                url,
+                &mut orders.proxy(Msg::TimeManagmentMsg),
                 ctx.clone(),
             )),
             None => Self::Home,
@@ -83,6 +90,9 @@ impl<'a> Urls<'a> {
     fn finance(self) -> page::finance::Urls<'a> {
         page::finance::Urls::new(self.base_url().add_path_part(FINANCE))
     }
+    fn time_managment(self) -> page::time_managment::Urls<'a> {
+        page::time_managment::Urls::new(self.base_url().add_path_part(TIMEMANAGMENT))
+    }
     fn home(self) -> Url {
         self.base_url()
     }
@@ -91,8 +101,10 @@ impl<'a> Urls<'a> {
 pub enum Msg {
     UrlChanged(subs::UrlChanged),
     GoToUrl(Url),
+    // ----- Page Msg
     MusicMsg(page::music::Msg),
     FinanceMsg(page::finance::Msg),
+    TimeManagmentMsg(page::time_managment::Msg),
 
     SaveLoginUsername(String),
     SaveLoginPassword(String),
@@ -146,6 +158,11 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 page::finance::update(msg, model, &mut orders.proxy(Msg::FinanceMsg))
             }
         }
+        Msg::TimeManagmentMsg(msg) => {
+            if let Page::TimeManagment(model) = &mut model.page {
+                page::time_managment::update(msg, model, &mut orders.proxy(Msg::TimeManagmentMsg))
+            }
+        }
     }
 }
 
@@ -156,11 +173,14 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
 // `view` describes what to display.
 fn view(model: &Model) -> Node<Msg> {
     div![
-        header(&model.base_url, &model.login_data, &model.ctx),
+        IF!( ! &model.ctx.is_none() => header(&model.base_url, &model.login_data, &model.ctx)),
+        IF!( model.ctx.is_none() => view_login(&model.login_data)),
         match &model.page {
             Page::Home => page::home::view(),
             Page::Music(model) => page::music::view(&model).map_msg(Msg::MusicMsg),
             Page::Finance(model) => page::finance::view(&model).map_msg(Msg::FinanceMsg),
+            Page::TimeManagment(model) =>
+                page::time_managment::view(&model).map_msg(Msg::TimeManagmentMsg),
             Page::NotFound => page::not_found::view(),
         }
     ]
@@ -182,7 +202,10 @@ fn header(base_url: &Url, login_data: &UserLogin, ctx: &Option<UserLoginResponse
             attrs! { At::Href => Urls::new(base_url).finance().default() },
             "Finance",
         ]],
-        IF!( ctx.is_none() => view_login(login_data))
+        li![a![
+            attrs! { At::Href => Urls::new(base_url).time_managment().default() },
+            "Time Tracking",
+        ]],
     ]
 }
 
