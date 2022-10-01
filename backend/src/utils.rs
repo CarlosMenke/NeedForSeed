@@ -29,7 +29,7 @@ use std::fs;
 
 //TODO make function more generic: give the file path
 /// converts the ledger file for Music tracking and extracts the Heandline and the buttom content
-pub fn ledger_music_content() -> Result<HashMap<String, String>, ServiceError> {
+pub fn ledger_time_content() -> Result<HashMap<String, String>, ServiceError> {
     let mut content_headline = HashMap::new();
 
     let ledger = fs::read_to_string("./files/time_spend.dat")?;

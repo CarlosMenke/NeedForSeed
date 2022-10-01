@@ -143,7 +143,7 @@ mod unit_tests {
         let app = test::init_service(
             App::new()
                 .wrap(auth)
-                .route("/", web::get().to(api::get_ledger_music_suggetstions)),
+                .route("/", web::get().to(api::get_ledger_time_suggetstions)),
         )
         .await;
         let req = test::TestRequest::get()
