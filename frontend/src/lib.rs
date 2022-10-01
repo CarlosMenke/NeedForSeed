@@ -40,11 +40,13 @@ pub struct Model {
 const MUSIC: &str = "Music";
 const FINANCE: &str = "Finance";
 const TIMEMANAGMENT: &str = "TimeManagment";
+const TIMEMANAGMENTCREATE: &str = "TimeManagmentCreate";
 pub enum Page {
     Home,
     Music(page::music::Model),
     Finance(page::finance::Model),
     TimeManagment(page::time_managment::Model),
+    TimeManagmentCreate(page::time_managment_create::Model),
     NotFound,
 }
 impl Page {
@@ -69,6 +71,13 @@ impl Page {
                 &mut orders.proxy(Msg::TimeManagmentMsg),
                 ctx.clone(),
             )),
+            Some(TIMEMANAGMENTCREATE) => {
+                Self::TimeManagmentCreate(page::time_managment_create::init(
+                    url,
+                    &mut orders.proxy(Msg::TimeManagmentCreateMsg),
+                    ctx.clone(),
+                ))
+            }
             None => Self::Home,
             _ => Self::NotFound,
         }
@@ -90,6 +99,9 @@ impl<'a> Urls<'a> {
     fn time_managment(self) -> page::time_managment::Urls<'a> {
         page::time_managment::Urls::new(self.base_url().add_path_part(TIMEMANAGMENT))
     }
+    fn time_managment_create(self) -> Url {
+        self.base_url().add_path_part(TIMEMANAGMENTCREATE)
+    }
     fn home(self) -> Url {
         self.base_url()
     }
@@ -102,6 +114,7 @@ pub enum Msg {
     MusicMsg(page::music::Msg),
     FinanceMsg(page::finance::Msg),
     TimeManagmentMsg(page::time_managment::Msg),
+    TimeManagmentCreateMsg(page::time_managment_create::Msg),
 
     SaveLoginUsername(String),
     SaveLoginPassword(String),
@@ -160,6 +173,15 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 page::time_managment::update(msg, model, &mut orders.proxy(Msg::TimeManagmentMsg))
             }
         }
+        Msg::TimeManagmentCreateMsg(msg) => {
+            if let Page::TimeManagmentCreate(model) = &mut model.page {
+                page::time_managment_create::update(
+                    msg,
+                    model,
+                    &mut orders.proxy(Msg::TimeManagmentCreateMsg),
+                )
+            }
+        }
     }
 }
 
@@ -178,6 +200,8 @@ fn view(model: &Model) -> Node<Msg> {
             Page::Finance(model) => page::finance::view(&model).map_msg(Msg::FinanceMsg),
             Page::TimeManagment(model) =>
                 page::time_managment::view(&model).map_msg(Msg::TimeManagmentMsg),
+            Page::TimeManagmentCreate(model) =>
+                page::time_managment_create::view(&model).map_msg(Msg::TimeManagmentCreateMsg),
             Page::NotFound => page::not_found::view(),
         }
     ]
@@ -202,6 +226,10 @@ fn header(base_url: &Url) -> Node<Msg> {
         li![a![
             attrs! { At::Href => Urls::new(base_url).time_managment().default() },
             "Time Tracking",
+        ]],
+        li![a![
+            attrs! { At::Href => Urls::new(base_url).time_managment_create() },
+            "Time Tracking Create Entery",
         ]],
     ]
 }

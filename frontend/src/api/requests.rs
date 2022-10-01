@@ -35,3 +35,16 @@ pub async fn get_html(
     .json()
     .await
 }
+
+/// this function returns a HashMap, witch encodes the suggestions for a new time Tracking entery
+pub async fn get_time_suggestion(token: String) -> fetch::Result<shared::models::ResponseHashMap> {
+    Request::new(get_api_url(String::from(
+        "api/auth/get_time_suggestions.json",
+    )))
+    .header(Header::bearer(token))
+    .fetch()
+    .await?
+    .check_status()?
+    .json()
+    .await
+}
