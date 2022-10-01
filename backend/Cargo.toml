@@ -4,7 +4,8 @@ version = "0.0.1"
 edition = "2021"
 
 [dependencies]
-actix-web = "4"
+actix-web = { version = "4", features = ["openssl"] }
+openssl = { version = "0.10" }
 actix-files = "*"
 actix-rt = "*"
 actix-session = { version = "*", features = [ "redis-rs-tls-session", "redis-actor-session"] }

@@ -1,4 +1,4 @@
-use actix_web::{web, Result};
+use actix_web::{web, HttpRequest, HttpResponse, Result};
 use actix_web_grants::proc_macro::has_permissions;
 use diesel::PgConnection;
 use log::debug;
