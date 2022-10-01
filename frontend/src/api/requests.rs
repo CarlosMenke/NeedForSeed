@@ -36,8 +36,8 @@ pub async fn get_html(
     .await
 }
 
-/// this function returns a HashMap, witch encodes the suggestions for a new time Tracking entery
-pub async fn get_time_suggestion(token: String) -> fetch::Result<shared::models::ResponseHashMap> {
+/// this function returns a BTreeMap, witch encodes the suggestions for a new time Tracking entery
+pub async fn get_time_suggestion(token: String) -> fetch::Result<shared::models::ResponseBTreeMap> {
     Request::new(get_api_url(String::from(
         "api/auth/get_time_suggestions.json",
     )))

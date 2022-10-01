@@ -266,22 +266,6 @@ fn view_login(login_data: &auth::UserLogin) -> Node<Msg> {
         ],
         button![ev(Ev::Click, |_| Msg::GetLoginRequest), "Get Login message"],
         C!["login"],
-        div![
-            input![
-                C!["test-container"],
-                input_ev(Ev::Input, Msg::SaveLoginUsername),
-                attrs! {
-                    At::Placeholder => "Name",
-                    At::AutoFocus => AtValue::None,
-                    At::Value => login_data.username,
-                    At::List => "suggestions",
-                }
-            ],
-            datalist![
-                id!["suggestions"],
-                names.iter().map(|value| { option![value] })
-            ]
-        ],
     ]
 }
 // ------ ------

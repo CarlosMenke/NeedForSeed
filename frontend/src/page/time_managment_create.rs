@@ -1,6 +1,6 @@
 use crate::api;
 use seed::{prelude::*, *};
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 // ------ ------
 //     Init
@@ -30,14 +30,14 @@ pub fn init(
 pub struct Model {
     base_url: Url,
     ctx: Option<shared::auth::UserLoginResponse>,
-    suggestions: Option<shared::models::ResponseHashMap>,
+    suggestions: Option<shared::models::ResponseBTreeMap>,
 }
 
 // ------ Frequency ------
 
 pub enum Msg {
     GetSummary,
-    FetchedSuggestion(fetch::Result<shared::models::ResponseHashMap>),
+    FetchedSuggestion(fetch::Result<shared::models::ResponseBTreeMap>),
 }
 // ------ ------
 //     Urls
@@ -68,8 +68,28 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
 pub fn view(model: &Model) -> Node<Msg> {
     let suggestions = match model.suggestions.clone() {
         Some(m) => m.hash_map,
-        None => HashMap::new(),
+        None => BTreeMap::new(),
     };
 
-    div!["Create new time Tracking Entery",]
+    div![
+        "Create new time Tracking Entery",
+        div![
+            input![
+                C!["input-content"],
+                //input_ev(Ev::Input, Msg::SaveNewEntery),
+                attrs! {
+                    At::Placeholder => "Name",
+                    At::AutoFocus => AtValue::None,
+                    //At::Value => new_entery.content,
+                    At::List => "suggestions",
+                }
+            ],
+            datalist![
+                id!["suggestions"],
+                suggestions
+                    .iter()
+                    .map(|(content, _headline)| { option![content] })
+            ]
+        ],
+    ]
 }
