@@ -27,7 +27,7 @@ pub async fn login(
     if !check_login(connection, &user_login.username, &user_login.password)? {
         return Err(ServiceError::Unauthorized);
     };
-    let permissions = Vec::from(["ADMIN_ROLE".to_string(), "GET_INFO_MUSIC".to_string()]);
+    let permissions = Vec::from(["ADMIN_ROLE".to_string(), "GET_HTML_INFO".to_string()]);
     let token_str = create_token(user_login.username.clone(), permissions).await?;
 
     let response = UserLoginResponse {
@@ -49,8 +49,8 @@ pub async fn create_user(
     };
 }
 
-/// get Music history
-#[has_permissions("GET_INFO_MUSIC")]
+/// get history of html file
+#[has_permissions("GET_HTML_INFO")]
 pub async fn get_html(
     path: web::Path<(String, String, String)>,
 ) -> Result<web::Json<ResponseHtml>, ServiceError> {
@@ -59,6 +59,8 @@ pub async fn get_html(
         "Get HTML function called for target: \t {:#?} \tdepth: \t{:#?} \ttimeframe: \t{:#?}",
         &target, &depth, &timeframe
     );
+    //TODO make path more general. right now, it only works, if cargo run is executed one dir above
+    //main.rs
     match fs::read_to_string(format!("./files/{}_{}_{}.html", target, depth, timeframe)) {
         Ok(f) => return Ok(web::Json(ResponseHtml { html: f })),
         Err(_) => {
