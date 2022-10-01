@@ -13,7 +13,7 @@ use crate::{
     utils,
 };
 use shared::auth::{UserLogin, UserLoginResponse};
-use shared::models::{NewUser, ResponseHashMap, ResponseHtml};
+use shared::models::{NewUser, ResponseBTreeMap, ResponseHtml};
 
 /// Handles user Login and returns JWT
 pub async fn login(
@@ -66,11 +66,11 @@ pub async fn get_html(
     Ok(web::Json(ResponseHtml { html: file }))
 }
 
-/// get Headline and Content HashMap from Ledger Music
-//#[has_permissions("GET_LEDGER_INFO")]
-pub async fn get_ledger_time_suggetstions() -> Result<web::Json<ResponseHashMap>, ServiceError> {
+/// get Headline and Content BTreeMap from Ledger Music
+#[has_permissions("GET_LEDGER_INFO")]
+pub async fn get_ledger_time_suggetstions() -> Result<web::Json<ResponseBTreeMap>, ServiceError> {
     debug!("Get Ledger Time Suggestion");
-    Ok(web::Json(ResponseHashMap {
+    Ok(web::Json(ResponseBTreeMap {
         hash_map: utils::ledger_time_content()?,
     }))
 }

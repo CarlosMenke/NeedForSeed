@@ -24,13 +24,13 @@ pub fn verify(password_hash: &str, password: &str) -> Result<bool, ServiceError>
 }
 
 use regex::Regex;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::fs;
 
 //TODO make function more generic: give the file path
 /// converts the ledger file for Music tracking and extracts the Heandline and the buttom content
-pub fn ledger_time_content() -> Result<HashMap<String, String>, ServiceError> {
-    let mut content_headline = HashMap::new();
+pub fn ledger_time_content() -> Result<BTreeMap<String, String>, ServiceError> {
+    let mut content_headline = BTreeMap::new();
 
     let ledger = fs::read_to_string("./files/time_spend.dat")?;
     let mut pos: i32 = 0; //log line number of entery
