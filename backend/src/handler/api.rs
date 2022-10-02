@@ -28,7 +28,11 @@ pub async fn login(
     if !check_login(connection, &user_login.username, &user_login.password)? {
         return Err(ServiceError::Unauthorized);
     };
-    let permissions = Vec::from(["ADMIN_ROLE".to_string(), "GET_LEDGER_INFO".to_string()]);
+    let permissions = Vec::from([
+        "ADMIN_ROLE".to_string(),
+        "GET_LEDGER_INFO".to_string(),
+        "SET_LEDGER_INFO".to_string(),
+    ]);
     let token_str = create_token(user_login.username.clone(), permissions).await?;
 
     let response = UserLoginResponse {
