@@ -1,7 +1,6 @@
 use crate::api;
 use fuzzy_matcher::skim::SkimMatcherV2;
 use fuzzy_matcher::FuzzyMatcher;
-use itertools::Itertools;
 use seed::{prelude::*, *};
 use std::collections::BTreeMap;
 
@@ -82,7 +81,7 @@ pub fn view(model: &Model) -> Node<Msg> {
         None => BTreeMap::new(),
     };
     let matcher = SkimMatcherV2::default();
-    let len: i64 = model
+    let threshhold: i64 = model
         .new_entery
         .account_target
         .replace(" ", "")
@@ -107,16 +106,10 @@ pub fn view(model: &Model) -> Node<Msg> {
                 id!["suggestions_origin"],
                 suggestions
                     .iter()
-                    .filter(|(content, headline)| matcher
+                    .filter(|(content, _headline)| matcher
                         .fuzzy_match(content, &model.new_entery.account_target.replace(" ", ""))
                         .unwrap_or(0)
-                        > len)
-                    //.sorted_by(|content, headline| Ord::cmp(
-                    //matcher.fuzzy_match(
-                    //content,
-                    //&model.new_entery.account_target.replace(" ", "")
-                    //)
-                    //))
+                        > threshhold)
                     .map(|(_content, headline)| {
                         option![format!(
                             "{:?}-{:?}",
