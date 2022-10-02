@@ -19,8 +19,14 @@ pub struct ResponseHtml {
     pub html: String,
 }
 
-// TODO test if also &str works
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ResponseBTreeMap {
     pub map: BTreeMap<String, String>,
+}
+
+#[derive(Serialize, Deserialize, Default)]
+pub struct NewTimeEntery {
+    pub headline: String,
+    pub account_origin: String,
+    pub account_target: String,
 }

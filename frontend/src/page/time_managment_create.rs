@@ -1,4 +1,7 @@
 use crate::api;
+use fuzzy_matcher::skim::SkimMatcherV2;
+use fuzzy_matcher::FuzzyMatcher;
+use itertools::Itertools;
 use seed::{prelude::*, *};
 use std::collections::BTreeMap;
 
@@ -7,19 +10,19 @@ use std::collections::BTreeMap;
 // ------ ------
 
 pub fn init(
-    mut url: Url,
+    url: Url,
     orders: &mut impl Orders<Msg>,
     ctx: Option<shared::auth::UserLoginResponse>,
 ) -> Model {
-    let base_url = url.to_base_url();
     orders.skip().perform_cmd({
         let token = ctx.clone().unwrap().token;
         async { Msg::FetchedSuggestion(api::requests::get_time_suggestion(token).await) }
     });
     Model {
-        base_url,
+        _base_url: url.to_base_url(),
         ctx,
         suggestions: None,
+        new_entery: shared::models::NewTimeEntery::default(),
     }
 }
 
@@ -28,9 +31,10 @@ pub fn init(
 // ------ ------
 
 pub struct Model {
-    base_url: Url,
+    _base_url: Url,
     ctx: Option<shared::auth::UserLoginResponse>,
     suggestions: Option<shared::models::ResponseBTreeMap>,
+    new_entery: shared::models::NewTimeEntery,
 }
 
 // ------ Frequency ------
@@ -38,6 +42,8 @@ pub struct Model {
 pub enum Msg {
     GetSummary,
     FetchedSuggestion(fetch::Result<shared::models::ResponseBTreeMap>),
+    SaveNewEnteryTarget(String),
+    SaveNewEnteryOrigin(String),
 }
 // ------ ------
 //     Urls
@@ -45,6 +51,12 @@ pub enum Msg {
 
 pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     match msg {
+        Msg::SaveNewEnteryTarget(content) => {
+            model.new_entery.account_target = content;
+        }
+        Msg::SaveNewEnteryOrigin(content) => {
+            model.new_entery.account_origin = content;
+        }
         Msg::GetSummary => {
             orders.skip().perform_cmd({
                 let token = model.ctx.clone().unwrap().token;
@@ -52,7 +64,6 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             });
         }
         Msg::FetchedSuggestion(Ok(response_data)) => {
-            log!(response_data);
             model.suggestions = Some(response_data);
         }
         Msg::FetchedSuggestion(Err(fetch_error)) => {
@@ -70,22 +81,67 @@ pub fn view(model: &Model) -> Node<Msg> {
         Some(m) => m.map,
         None => BTreeMap::new(),
     };
+    let matcher = SkimMatcherV2::default();
+    let len: i64 = model
+        .new_entery
+        .account_target
+        .replace(" ", "")
+        .chars()
+        .count() as i64
+        * 10;
 
     div![
         "Create new time Tracking Entery",
         div![
             input![
-                C!["input-content"],
-                //input_ev(Ev::Input, Msg::SaveNewEntery),
+                C!["input-content_origin"],
+                input_ev(Ev::Input, Msg::SaveNewEnteryOrigin),
                 attrs! {
-                    At::Placeholder => "Name",
+                    At::Placeholder => "Origin",
                     At::AutoFocus => AtValue::None,
-                    //At::Value => new_entery.content,
-                    At::List => "suggestions",
+                    At::Value => &model.new_entery.account_origin,
+                    At::List => "suggestions_origin",
                 }
             ],
             datalist![
-                id!["suggestions"],
+                id!["suggestions_origin"],
+                suggestions
+                    .iter()
+                    .filter(|(content, headline)| matcher
+                        .fuzzy_match(content, &model.new_entery.account_target.replace(" ", ""))
+                        .unwrap_or(0)
+                        > len)
+                    //.sorted_by(|content, headline| Ord::cmp(
+                    //matcher.fuzzy_match(
+                    //content,
+                    //&model.new_entery.account_target.replace(" ", "")
+                    //)
+                    //))
+                    .map(|(_content, headline)| {
+                        option![format!(
+                            "{:?}-{:?}",
+                            matcher
+                                .fuzzy_match(
+                                    _content,
+                                    &model.new_entery.account_target.replace(" ", "")
+                                )
+                                .unwrap_or(0),
+                            headline
+                        )]
+                    })
+            ],
+            input![
+                C!["input-content_target"],
+                input_ev(Ev::Input, Msg::SaveNewEnteryTarget),
+                attrs! {
+                    At::Placeholder => "Target",
+                    At::AutoFocus => AtValue::None,
+                    At::Value => &model.new_entery.account_target,
+                    At::List => "suggestions_target",
+                }
+            ],
+            datalist![
+                id!["suggestions_target"],
                 suggestions
                     .iter()
                     .map(|(content, _headline)| { option![content] })
