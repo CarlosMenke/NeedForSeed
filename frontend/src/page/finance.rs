@@ -1,6 +1,7 @@
 use crate::api;
 use seed::{prelude::*, *};
 
+//TODO switch from depth to this / last month / week ...
 const API_TARGET: &str = "finance";
 const DEPTH4: &str = "4";
 const DEPTH2: &str = "2";
@@ -21,14 +22,14 @@ pub fn init(
 ) -> Model {
     let base_url = url.to_base_url();
     let depth = match url.next_path_part() {
-        Some(DEPTH4) => Depth::Depth1,
+        Some(DEPTH4) => Depth::Depth4,
         Some(DEPTH2) => Depth::Depth2,
         Some(DEPTH3) => Depth::Depth3,
         None => {
             Urls::new(&base_url).default().go_and_replace();
-            Depth::Depth1
+            Depth::Depth4
         }
-        _ => Depth::Depth1,
+        _ => Depth::Depth4,
     };
     let timeframe = match url.next_path_part() {
         Some(WEEK) => Timeframe::Week,
@@ -77,14 +78,14 @@ pub struct Model {
 
 #[derive(Clone)]
 enum Depth {
-    Depth1,
+    Depth4,
     Depth2,
     Depth3,
 }
 impl Depth {
     fn str(self) -> String {
         match self {
-            Depth::Depth1 => DEPTH4.to_string(),
+            Depth::Depth4 => DEPTH4.to_string(),
             Depth::Depth2 => DEPTH2.to_string(),
             Depth::Depth3 => DEPTH3.to_string(),
         }
@@ -201,7 +202,7 @@ pub fn view(model: &Model) -> Node<Msg> {
         None => "".to_string(),
     };
     let (depth, link) = match &model.depth {
-        Depth::Depth1 => (
+        Depth::Depth4 => (
             DEPTH4,
             a![
                 "Switch to depth 2",
