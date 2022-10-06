@@ -87,7 +87,7 @@ pub fn view(model: &Model) -> Node<Msg> {
         .replace(" ", "")
         .chars()
         .count() as i64
-        * 10;
+        * 5;
 
     div![
         "Create new time Tracking Entery",
@@ -110,18 +110,7 @@ pub fn view(model: &Model) -> Node<Msg> {
                         .fuzzy_match(content, &model.new_entery.account_target.replace(" ", ""))
                         .unwrap_or(0)
                         > threshhold)
-                    .map(|(_content, headline)| {
-                        option![format!(
-                            "{:?}-{:?}",
-                            matcher
-                                .fuzzy_match(
-                                    _content,
-                                    &model.new_entery.account_target.replace(" ", "")
-                                )
-                                .unwrap_or(0),
-                            headline
-                        )]
-                    })
+                    .map(|(_content, headline)| { option![headline] })
             ],
             input![
                 C!["input-content_target"],
