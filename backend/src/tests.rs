@@ -4,6 +4,8 @@ mod unit_tests {
     use actix_web_httpauth::middleware::HttpAuthentication;
     use diesel::{r2d2, r2d2::ConnectionManager, PgConnection};
     use dotenvy::dotenv;
+    use std::fs;
+    use std::io::{BufRead, BufReader};
 
     use crate::auth::{create_token, validator};
     use crate::configuration::Application;
@@ -12,7 +14,7 @@ mod unit_tests {
     use crate::models;
     use crate::utils;
     use shared::auth::UserLogin;
-    use shared::models::NewUser;
+    use shared::models::{NewTimeEntery, NewUser};
 
     #[actix_web::test]
     async fn test_login() {
@@ -135,7 +137,7 @@ mod unit_tests {
     }
 
     #[actix_web::test]
-    async fn test_get_ledger_music_suggestion() {
+    async fn test_get_ledger_time_suggestion() {
         let token_str = create_token(
             "Carlos-test".to_string(),
             Vec::from(["GET_LEDGER_INFO".to_string()]),
@@ -157,5 +159,50 @@ mod unit_tests {
         let resp = test::call_service(&app, req).await;
         println!("Valid Request {:?}", resp);
         assert!(resp.status().is_success());
+    }
+
+    #[actix_web::test]
+    async fn test_set_ledger_time() {
+        let token_str = create_token(
+            "Carlos-test".to_string(),
+            Vec::from(["SET_LEDGER_INFO".to_string()]),
+        )
+        .await
+        .expect("Failed to unwrap Token");
+
+        let auth = HttpAuthentication::bearer(validator);
+        let app = test::init_service(
+            App::new()
+                .wrap(auth)
+                .route("/", web::post().to(api::set_ledger_time_entery_start)),
+        )
+        .await;
+        let req = test::TestRequest::post()
+            .uri("/")
+            .insert_header((AUTHORIZATION, format!("Bearer {}", token_str)))
+            .set_json(&NewTimeEntery {
+                headline: "Carlos is programming".to_owned(),
+                account_origin: "FreeTime".to_owned(),
+                account_target: "EducationRust".to_owned(),
+            })
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        println!("Valid Request {:?}", resp);
+        assert!(resp.status().is_success());
+
+        //remove added line
+        let file = fs::OpenOptions::new()
+            .read(true)
+            .write(true)
+            .open("./files/time_spend.dat")
+            .expect("file.txt doesn't exist or so");
+
+        let lines_raw = BufReader::new(file)
+            .lines()
+            .map(|x| x.unwrap())
+            .collect::<Vec<String>>();
+        let lines = lines_raw[..lines_raw.len() - 1].join("\n");
+
+        fs::write("./files/time_spend.dat", lines).expect("Can't write");
     }
 }

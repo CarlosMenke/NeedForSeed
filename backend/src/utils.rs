@@ -1,8 +1,14 @@
-use crate::errors::ServiceError;
 use argon2::{
     password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
     Argon2,
 };
+use chrono::*;
+use regex::Regex;
+use std::collections::BTreeMap;
+use std::fs;
+use std::io::Write;
+
+use crate::errors::ServiceError;
 
 ///Hashes password with the same settings that are used in data table
 pub fn hash_password(password: &str) -> Result<String, ServiceError> {
@@ -22,10 +28,6 @@ pub fn verify(password_hash: &str, password: &str) -> Result<bool, ServiceError>
         Err(_) => Ok(false),
     }
 }
-
-use regex::Regex;
-use std::collections::BTreeMap;
-use std::fs;
 
 //TODO make function more generic: give the file path
 /// converts the ledger file for Music tracking and extracts the Heandline and the buttom content
@@ -61,4 +63,40 @@ pub fn ledger_time_content() -> Result<BTreeMap<String, String>, ServiceError> {
         }
     }
     Ok(content_headline)
+}
+
+//TODO find better return type
+pub fn ledger_start_time_entery(
+    headline: &str,
+    origin: &str,
+    target: &str,
+) -> Result<(), ServiceError> {
+    println!("{:?}", headline);
+    let dt = chrono::Local::now();
+    let minutes_count = dt.hour() * 60 + dt.minute();
+    let chrono_date = chrono::Local::now();
+    let date = format!(
+        "{:?}/{:?}/{:02}",
+        chrono_date.year(),
+        chrono_date.month(),
+        chrono_date.day()
+    );
+    //first line
+    let entery = &format!(
+        ";{} {}\t\t\t {};\t {};\t {}\t\t\t\t\t\t ##m\n",
+        &minutes_count.to_string(),
+        &date.to_string(),
+        headline,
+        origin,
+        target
+    );
+
+    //TODO find a way how to close the file again
+    fs::OpenOptions::new()
+        .append(true)
+        .open("./files/time_spend.dat")
+        .expect("Unable to open file")
+        .write_all(entery.as_bytes())
+        .expect("write failed");
+    return Ok(());
 }

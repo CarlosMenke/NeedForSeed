@@ -12,8 +12,11 @@ use crate::{
     models::db::{Pool, User},
     utils,
 };
-use shared::auth::{UserLogin, UserLoginResponse};
-use shared::models::{NewUser, ResponseBTreeMap, ResponseHtml};
+use shared::models::{NewUser, ResponseBTreeMap, ResponseHtml, ResponseStatus};
+use shared::{
+    auth::{UserLogin, UserLoginResponse},
+    models::NewTimeEntery,
+};
 
 /// Handles user Login and returns JWT
 pub async fn login(
@@ -72,9 +75,28 @@ pub async fn get_html(
 
 /// get Headline and Content BTreeMap from Ledger Music
 #[has_permissions("GET_LEDGER_INFO")]
+//TODO make the function more generic in the future
 pub async fn get_ledger_time_suggetstions() -> Result<web::Json<ResponseBTreeMap>, ServiceError> {
     debug!("Get Ledger Time Suggestion");
     Ok(web::Json(ResponseBTreeMap {
         map: utils::ledger_time_content()?,
     }))
+}
+
+/// create new entery for time Tracking
+#[has_permissions("SET_LEDGER_INFO")]
+//TODO think of better return type
+pub async fn set_ledger_time_entery_start(
+    new_time_entery: web::Json<NewTimeEntery>,
+) -> Result<web::Json<ResponseStatus>, ServiceError> {
+    debug!(
+        "Set ledger time function is called with Headline: \t{:?}\t account_origin: \t{:?}\t account_origin: \t{:?}",
+        &new_time_entery.headline, &new_time_entery.account_origin, &new_time_entery.account_target);
+
+    utils::ledger_start_time_entery(
+        &new_time_entery.headline,
+        &new_time_entery.account_origin,
+        &new_time_entery.account_target,
+    )?;
+    Ok(web::Json(ResponseStatus { status: 0 }))
 }
