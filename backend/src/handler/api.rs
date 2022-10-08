@@ -98,7 +98,7 @@ pub async fn set_ledger_time_entery_start(
     Ok(web::Json(ResponseStatus { status: 0 }))
 }
 
-/// stoping started Time entery, and return all started
+/// get all running time Enteries
 #[has_permissions("GET_LEDGER_INFO")]
 pub async fn get_ledger_time_entery_running(
 ) -> Result<web::Json<ResponseRunningLedgerTimeEntery>, ServiceError> {
