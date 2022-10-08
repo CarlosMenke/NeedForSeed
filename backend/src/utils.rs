@@ -112,11 +112,11 @@ pub fn ledger_get_running_time_entery(
     let get_started_enteries = Regex::new(r"^;[0-9]").unwrap();
     let get_start_minute = Regex::new(r"[0-9]+ ").unwrap();
     let new_line = Regex::new(r";").unwrap();
-    let get_content = Regex::new(r" .*").unwrap();
-    for l in ledger.lines() {
-        if get_started_enteries.is_match(l) {
-            //TODO remove this, unessesary
-            let line = l.to_string();
+    let get_content = Regex::new(r"\d{4}.*").unwrap();
+    let clean_account_origin = Regex::new(r" \t").unwrap();
+    let clean_account_target = Regex::new(r"[ ]*[\t]+[#,m]*").unwrap();
+    for line in ledger.lines() {
+        if get_started_enteries.is_match(line) {
             let start_minute_str = get_start_minute.find(&line).unwrap().as_str();
             let content_raw = get_content.find(&line).unwrap().as_str();
             let content = new_line.replace_all(content_raw, "\n").to_string(); // replace ; with \n
@@ -138,19 +138,23 @@ pub fn ledger_get_running_time_entery(
                 headline: content_vec[0]
                     .to_string()
                     .split("\t")
-                    .collect::<Vec<&str>>()[0]
+                    .collect::<Vec<&str>>()[3]
                     .to_string(),
-                account_origin: content_vec[1].to_string(),
-                account_target: content_vec[2].to_string(),
+                account_origin: clean_account_origin
+                    .replace(&content_vec[1].to_string(), "")
+                    .to_string(),
+                account_target: clean_account_target
+                    .replace_all(&content_vec[2].to_string(), "")
+                    .to_string(),
                 time_span,
                 duration,
-                date: content_vec[1]
+                date: content_vec[0]
                     .to_string()
                     .split("\t")
                     .collect::<Vec<&str>>()[0]
                     .to_string(),
             };
-            response.insert(l.to_string(), new_entery);
+            response.insert(line.to_string(), new_entery);
         }
     }
     Ok(response)
