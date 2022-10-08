@@ -12,11 +12,8 @@ use crate::{
     models::db::{Pool, User},
     utils,
 };
-use shared::models::{NewUser, ResponseBTreeMap, ResponseHtml, ResponseStatus};
-use shared::{
-    auth::{UserLogin, UserLoginResponse},
-    models::NewTimeEntery,
-};
+use shared::auth::*;
+use shared::models::*;
 
 /// Handles user Login and returns JWT
 pub async fn login(
@@ -87,7 +84,7 @@ pub async fn get_ledger_time_suggetstions() -> Result<web::Json<ResponseBTreeMap
 #[has_permissions("SET_LEDGER_INFO")]
 //TODO think of better return type
 pub async fn set_ledger_time_entery_start(
-    new_time_entery: web::Json<NewTimeEntery>,
+    new_time_entery: web::Json<StartTimeEntery>,
 ) -> Result<web::Json<ResponseStatus>, ServiceError> {
     debug!(
         "Set ledger time function is called with Headline: \t{:?}\t account_origin: \t{:?}\t account_origin: \t{:?}",
@@ -99,4 +96,14 @@ pub async fn set_ledger_time_entery_start(
         &new_time_entery.account_target,
     )?;
     Ok(web::Json(ResponseStatus { status: 0 }))
+}
+
+/// stoping started Time entery, and return all started
+#[has_permissions("GET_LEDGER_INFO")]
+pub async fn get_ledger_time_entery_running(
+) -> Result<web::Json<ResponseRunningLedgerTimeEntery>, ServiceError> {
+    debug!("Get all Running Time Enteries.");
+    return Ok(web::Json(ResponseRunningLedgerTimeEntery {
+        running_entery: utils::ledger_get_running_time_entery()?,
+    }));
 }

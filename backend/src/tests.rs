@@ -1,3 +1,4 @@
+//TODO restructure tests. Move function testing to used file, rest to tests folder beside src
 #[cfg(test)]
 mod unit_tests {
     use actix_web::{body::to_bytes, http::header::AUTHORIZATION, test, web, App};
@@ -14,7 +15,7 @@ mod unit_tests {
     use crate::models;
     use crate::utils;
     use shared::auth::UserLogin;
-    use shared::models::{NewTimeEntery, NewUser};
+    use shared::models::{NewUser, StartTimeEntery};
 
     #[actix_web::test]
     async fn test_login() {
@@ -162,7 +163,7 @@ mod unit_tests {
     }
 
     #[actix_web::test]
-    async fn test_set_ledger_time() {
+    async fn test_set_ledger_time_start() {
         let token_str = create_token(
             "Carlos-test".to_string(),
             Vec::from(["SET_LEDGER_INFO".to_string()]),
@@ -180,7 +181,7 @@ mod unit_tests {
         let req = test::TestRequest::post()
             .uri("/")
             .insert_header((AUTHORIZATION, format!("Bearer {}", token_str)))
-            .set_json(&NewTimeEntery {
+            .set_json(&StartTimeEntery {
                 headline: "Carlos is programming".to_owned(),
                 account_origin: "FreeTime".to_owned(),
                 account_target: "EducationRust".to_owned(),
@@ -204,5 +205,30 @@ mod unit_tests {
         let lines = lines_raw[..lines_raw.len() - 1].join("\n");
 
         fs::write("./files/time_spend.dat", lines).expect("Can't write");
+    }
+
+    #[actix_web::test]
+    async fn test_get_ledger_time_running() {
+        let token_str = create_token(
+            "Carlos-test".to_string(),
+            Vec::from(["GET_LEDGER_INFO".to_string()]),
+        )
+        .await
+        .expect("Failed to unwrap Token");
+
+        let auth = HttpAuthentication::bearer(validator);
+        let app = test::init_service(
+            App::new()
+                .wrap(auth)
+                .route("/", web::get().to(api::get_ledger_time_entery_running)),
+        )
+        .await;
+        let req = test::TestRequest::get()
+            .uri("/")
+            .insert_header((AUTHORIZATION, format!("Bearer {}", token_str)))
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        println!("Valid Request {:?}", resp);
+        assert!(resp.status().is_success());
     }
 }

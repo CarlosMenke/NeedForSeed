@@ -100,3 +100,58 @@ pub fn ledger_start_time_entery(
         .expect("write failed");
     return Ok(());
 }
+
+/// It returns all found started enterys in the ledger file for time_spend.
+pub fn ledger_get_running_time_entery(
+) -> Result<BTreeMap<String, shared::models::NewTimeEntery>, ServiceError> {
+    let mut response = BTreeMap::new();
+    let ledger = fs::read_to_string("./files/time_spend.dat")
+        .expect("Should have been able to read the file");
+    let stop_minute: u32 = chrono::Local::now().hour() * 60 + chrono::Local::now().minute();
+
+    let get_started_enteries = Regex::new(r"^;[0-9]").unwrap();
+    let get_start_minute = Regex::new(r"[0-9]+ ").unwrap();
+    let new_line = Regex::new(r";").unwrap();
+    let get_content = Regex::new(r" .*").unwrap();
+    for l in ledger.lines() {
+        if get_started_enteries.is_match(l) {
+            //TODO remove this, unessesary
+            let line = l.to_string();
+            let start_minute_str = get_start_minute.find(&line).unwrap().as_str();
+            let content_raw = get_content.find(&line).unwrap().as_str();
+            let content = new_line.replace_all(content_raw, "\n").to_string(); // replace ; with \n
+            let start_minute: u32 = start_minute_str.trim().parse().unwrap();
+            let mut offset = 0;
+            if start_minute > stop_minute {
+                offset += 60 * 24;
+            }
+            let duration = offset + stop_minute - start_minute;
+            let time_span = format!(
+                "{:02}:{:02} - {:02}:{:02}",
+                start_minute / 60,
+                start_minute % 60,
+                stop_minute / 60,
+                stop_minute % 60
+            );
+            let content_vec = content.split("\n").collect::<Vec<&str>>();
+            let new_entery = shared::models::NewTimeEntery {
+                headline: content_vec[0]
+                    .to_string()
+                    .split("\t")
+                    .collect::<Vec<&str>>()[0]
+                    .to_string(),
+                account_origin: content_vec[1].to_string(),
+                account_target: content_vec[2].to_string(),
+                time_span,
+                duration,
+                date: content_vec[1]
+                    .to_string()
+                    .split("\t")
+                    .collect::<Vec<&str>>()[0]
+                    .to_string(),
+            };
+            response.insert(l.to_string(), new_entery);
+        }
+    }
+    Ok(response)
+}
