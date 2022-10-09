@@ -73,15 +73,15 @@ async fn main() -> std::io::Result<()> {
                             )
                             .route(
                                 "get_time_suggestions.json",
-                                web::get().to(api::get_ledger_time_suggetstions),
+                                web::get().to(api::get_time_suggetstions),
                             )
                             .route(
-                                "set_ledger_time_entery_start.json",
-                                web::post().to(api::set_ledger_time_entery_start),
+                                "set_time_entery_start.json",
+                                web::post().to(api::set_time_entery_start),
                             )
                             .route(
-                                "set_ledger_time_entery_stop.json",
-                                web::get().to(api::get_ledger_time_entery_running),
+                                "set_time_entery_running.json",
+                                web::get().to(api::get_time_entery_running),
                             ),
                     ),
             )

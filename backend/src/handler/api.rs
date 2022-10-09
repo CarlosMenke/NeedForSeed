@@ -73,7 +73,7 @@ pub async fn get_html(
 /// get Headline and Content BTreeMap from Ledger Music
 #[has_permissions("GET_LEDGER_INFO")]
 //TODO make the function more generic in the future
-pub async fn get_ledger_time_suggetstions() -> Result<web::Json<ResponseBTreeMap>, ServiceError> {
+pub async fn get_time_suggetstions() -> Result<web::Json<ResponseBTreeMap>, ServiceError> {
     debug!("Get Ledger Time Suggestion");
     Ok(web::Json(ResponseBTreeMap {
         map: utils::ledger_time_content()?,
@@ -83,7 +83,7 @@ pub async fn get_ledger_time_suggetstions() -> Result<web::Json<ResponseBTreeMap
 /// create new entery for time Tracking
 #[has_permissions("SET_LEDGER_INFO")]
 //TODO think of better return type
-pub async fn set_ledger_time_entery_start(
+pub async fn set_time_entery_start(
     new_time_entery: web::Json<StartTimeEntery>,
 ) -> Result<web::Json<ResponseStatus>, ServiceError> {
     debug!(
@@ -100,7 +100,7 @@ pub async fn set_ledger_time_entery_start(
 
 /// get all running time Enteries
 #[has_permissions("GET_LEDGER_INFO")]
-pub async fn get_ledger_time_entery_running(
+pub async fn get_time_entery_running(
 ) -> Result<web::Json<ResponseRunningLedgerTimeEntery>, ServiceError> {
     debug!("Get all Running Time Enteries.");
     return Ok(web::Json(ResponseRunningLedgerTimeEntery {

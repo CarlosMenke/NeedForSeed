@@ -107,13 +107,6 @@ mod unit_tests {
     }
 
     #[actix_web::test]
-    async fn test_password_hash_and_verify() {
-        let pwd = "jkl";
-        let pwd_hash = &utils::hash_password(pwd).unwrap();
-        assert!(utils::verify(pwd_hash, pwd).unwrap());
-    }
-
-    #[actix_web::test]
     async fn test_get_html() {
         let token_str = create_token(
             "Carlos-test".to_string(),
@@ -138,7 +131,7 @@ mod unit_tests {
     }
 
     #[actix_web::test]
-    async fn test_get_ledger_time_suggestion() {
+    async fn test_get_time_suggestion() {
         let token_str = create_token(
             "Carlos-test".to_string(),
             Vec::from(["GET_LEDGER_INFO".to_string()]),
@@ -150,7 +143,7 @@ mod unit_tests {
         let app = test::init_service(
             App::new()
                 .wrap(auth)
-                .route("/", web::get().to(api::get_ledger_time_suggetstions)),
+                .route("/", web::get().to(api::get_time_suggetstions)),
         )
         .await;
         let req = test::TestRequest::get()
@@ -163,7 +156,7 @@ mod unit_tests {
     }
 
     #[actix_web::test]
-    async fn test_set_ledger_time_start() {
+    async fn test_set_time_start() {
         let token_str = create_token(
             "Carlos-test".to_string(),
             Vec::from(["SET_LEDGER_INFO".to_string()]),
@@ -175,7 +168,7 @@ mod unit_tests {
         let app = test::init_service(
             App::new()
                 .wrap(auth)
-                .route("/", web::post().to(api::set_ledger_time_entery_start)),
+                .route("/", web::post().to(api::set_time_entery_start)),
         )
         .await;
         let req = test::TestRequest::post()
@@ -184,31 +177,33 @@ mod unit_tests {
             .set_json(&StartTimeEntery {
                 headline: "Carlos is programming".to_owned(),
                 account_origin: "FreeTime".to_owned(),
-                account_target: "EducationRust".to_owned(),
+                account_target: "Education:Programming Rust".to_owned(),
             })
             .to_request();
         let resp = test::call_service(&app, req).await;
         println!("Valid Request {:?}", resp);
         assert!(resp.status().is_success());
+        let remove_line = ledger_start_time_entery(
+            "Carlos is programming",
+            "FreeTime",
+            "Education:Programming Rust",
+        )
+        .unwrap();
 
         //remove added line
-        let file = fs::OpenOptions::new()
-            .read(true)
-            .write(true)
-            .open("./files/time_spend.dat")
-            .expect("file.txt doesn't exist or so");
-
-        let lines_raw = BufReader::new(file)
-            .lines()
-            .map(|x| x.unwrap())
-            .collect::<Vec<String>>();
-        let lines = lines_raw[..lines_raw.len() - 1].join("\n");
-
-        fs::write("./files/time_spend.dat", lines).expect("Can't write");
+        let ledger = fs::read_to_string(utils::PATH_TIME_SPEND).unwrap();
+        fs::File::create(utils::PATH_TIME_SPEND)
+            .unwrap()
+            .write(
+                ledger
+                    .replace(&format!("{}\n", &remove_line), "")
+                    .as_bytes(),
+            )
+            .unwrap();
     }
 
     #[actix_web::test]
-    async fn test_get_ledger_time_running() {
+    async fn test_get_time_running() {
         let token_str = create_token(
             "Carlos-test".to_string(),
             Vec::from(["GET_LEDGER_INFO".to_string()]),
@@ -220,7 +215,7 @@ mod unit_tests {
         let app = test::init_service(
             App::new()
                 .wrap(auth)
-                .route("/", web::get().to(api::get_ledger_time_entery_running)),
+                .route("/", web::get().to(api::get_time_entery_running)),
         )
         .await;
         let req = test::TestRequest::get()
