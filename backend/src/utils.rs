@@ -10,6 +10,8 @@ use std::io::Write;
 
 use crate::errors::ServiceError;
 
+pub const PATH_TIME_SPEND: &str = "./files/time_spend.dat";
+
 ///Hashes password with the same settings that are used in data table
 pub fn hash_password(password: &str) -> Result<String, ServiceError> {
     let salt = SaltString::generate(&mut OsRng);
@@ -34,7 +36,7 @@ pub fn verify(password_hash: &str, password: &str) -> Result<bool, ServiceError>
 pub fn ledger_time_content() -> Result<BTreeMap<String, String>, ServiceError> {
     let mut content_headline = BTreeMap::new();
 
-    let ledger = fs::read_to_string("./files/time_spend.dat")?;
+    let ledger = fs::read_to_string(PATH_TIME_SPEND)?;
     let mut pos: i32 = 0; //log line number of entery
     let mut headline: String = "".to_string(); //temp store of headline
 
@@ -70,7 +72,7 @@ pub fn ledger_start_time_entery(
     headline: &str,
     origin: &str,
     target: &str,
-) -> Result<(), ServiceError> {
+) -> Result<String, ServiceError> {
     println!("{:?}", headline);
     let dt = chrono::Local::now();
     let minutes_count = dt.hour() * 60 + dt.minute();
@@ -81,9 +83,9 @@ pub fn ledger_start_time_entery(
         chrono_date.month(),
         chrono_date.day()
     );
-    //first line
+
     let entery = &format!(
-        ";{} {}\t\t\t {};\t {};\t {}\t\t\t\t\t\t ##m\n",
+        ";{} {}\t\t\t {}; \t{}; \t{}\t\t\t\t\t\t ##m",
         &minutes_count.to_string(),
         &date.to_string(),
         headline,
@@ -94,19 +96,16 @@ pub fn ledger_start_time_entery(
     //TODO find a way how to close the file again
     fs::OpenOptions::new()
         .append(true)
-        .open("./files/time_spend.dat")
-        .expect("Unable to open file")
-        .write_all(entery.as_bytes())
-        .expect("write failed");
-    return Ok(());
+        .open(PATH_TIME_SPEND)?
+        .write_all(format!("{}\n", entery).as_bytes())?;
+    return Ok(entery.to_string());
 }
 
 /// It returns all found started enterys in the ledger file for time_spend.
 pub fn ledger_get_running_time_entery(
 ) -> Result<BTreeMap<String, shared::models::NewTimeEntery>, ServiceError> {
     let mut response = BTreeMap::new();
-    let ledger = fs::read_to_string("./files/time_spend.dat")
-        .expect("Should have been able to read the file");
+    let ledger = fs::read_to_string(PATH_TIME_SPEND)?;
     let stop_minute: u32 = chrono::Local::now().hour() * 60 + chrono::Local::now().minute();
 
     let get_started_enteries = Regex::new(r"^;[0-9]").unwrap();
