@@ -3,6 +3,7 @@ use argon2::{
     Argon2,
 };
 use chrono::*;
+use log::debug;
 use regex::Regex;
 use std::collections::BTreeMap;
 use std::fs;
@@ -113,7 +114,8 @@ pub fn ledger_get_running_time_entery(
     let new_line = Regex::new(r";").unwrap();
     let get_content = Regex::new(r"\d{4}.*").unwrap();
     let clean_account_origin = Regex::new(r" \t").unwrap();
-    let clean_account_target = Regex::new(r"[ ]*[\t]+[#,m]*").unwrap();
+    let clean_account_target = Regex::new(r"[ ]*[\t]+[ ,#,m]*").unwrap();
+    let get_date = Regex::new(r"\d{4}/\d{2}/\d{2}").unwrap();
     for line in ledger.lines() {
         if get_started_enteries.is_match(line) {
             let start_minute_str = get_start_minute.find(&line).unwrap().as_str();
@@ -133,6 +135,7 @@ pub fn ledger_get_running_time_entery(
                 stop_minute % 60
             );
             let content_vec = content.split("\n").collect::<Vec<&str>>();
+            println!("vec {:?}", content_vec);
             let new_entery = shared::models::NewTimeEntery {
                 headline: content_vec[0]
                     .to_string()
@@ -147,11 +150,7 @@ pub fn ledger_get_running_time_entery(
                     .to_string(),
                 time_span,
                 duration,
-                date: content_vec[0]
-                    .to_string()
-                    .split("\t")
-                    .collect::<Vec<&str>>()[0]
-                    .to_string(),
+                date: get_date.find(&content_vec[0]).unwrap().as_str().to_string(),
             };
             response.insert(line.to_string(), new_entery);
         }
