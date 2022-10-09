@@ -199,3 +199,65 @@ pub fn ledger_stop_time_entery(
     ledger_create_time_entery(info.new_entery.clone())?;
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use shared::models::NewTimeEntery;
+
+    use super::*;
+    #[actix_web::test]
+    async fn test_password_hash_and_verify() {
+        let pwd = "jkl";
+        let pwd_hash = &hash_password(pwd).unwrap();
+        assert!(verify(pwd_hash, pwd).unwrap());
+    }
+
+    #[actix_web::test]
+    async fn test_ledger_create_time_entery() {
+        let new_entery = NewTimeEntery {
+            headline: "Carlos is programming".to_owned(),
+            account_origin: "FreeTime".to_owned(),
+            account_target: "EducationRust".to_owned(),
+            duration: 10,
+            time_span: "12:00 - 24:00".to_string(),
+            date: "2022/10/10".to_string(),
+        };
+        assert!(ledger_create_time_entery(new_entery.clone()).is_ok());
+
+        //remove added line
+        let ledger = fs::read_to_string(PATH_TIME_SPEND).unwrap();
+        fs::File::create(PATH_TIME_SPEND)
+            .unwrap()
+            .write(
+                ledger
+                    .replace(&ledger_create_time_entery(new_entery).unwrap(), "")
+                    .as_bytes(),
+            )
+            .unwrap();
+    }
+    #[actix_web::test]
+    async fn test_ledger_stop_time_entery() {
+        let remove_line = ledger_start_time_entery(
+            "Carlos Programiert",
+            "FreeTime",
+            "Education:Programming Rust",
+        )
+        .unwrap();
+        //TODO find error
+        assert!(ledger_get_running_time_entery()
+            .unwrap()
+            .get(&remove_line)
+            .is_some());
+
+        //remove added line
+        let ledger = fs::read_to_string(PATH_TIME_SPEND).unwrap();
+        fs::File::create(PATH_TIME_SPEND)
+            .unwrap()
+            .write(
+                ledger
+                    .replace(&format!("{}\n", &remove_line), "")
+                    .as_bytes(),
+            )
+            .unwrap();
+    }
+}

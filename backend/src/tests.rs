@@ -6,6 +6,7 @@ mod unit_tests {
     use diesel::{r2d2, r2d2::ConnectionManager, PgConnection};
     use dotenvy::dotenv;
     use std::fs;
+    use std::io::Write;
     use std::io::{BufRead, BufReader};
 
     use crate::auth::{create_token, validator};
@@ -14,8 +15,9 @@ mod unit_tests {
     use crate::handler::*;
     use crate::models;
     use crate::utils;
+    use crate::utils::{ledger_get_running_time_entery, ledger_start_time_entery};
     use shared::auth::UserLogin;
-    use shared::models::{NewUser, StartTimeEntery};
+    use shared::models::*;
 
     #[actix_web::test]
     async fn test_login() {
@@ -225,5 +227,55 @@ mod unit_tests {
         let resp = test::call_service(&app, req).await;
         println!("Valid Request {:?}", resp);
         assert!(resp.status().is_success());
+    }
+
+    ///tests also basic ledger functions
+    #[actix_web::test]
+    async fn test_set_time_stop() {
+        let token_str = create_token(
+            "Carlos-test".to_string(),
+            Vec::from(["SET_LEDGER_INFO".to_string()]),
+        )
+        .await
+        .expect("Failed to unwrap Token");
+        let remove_line =
+            ledger_start_time_entery("Carlos Programiert", "FreeTime", "Education:Programming")
+                .unwrap();
+        //TODO find error
+        let new_entery = ledger_get_running_time_entery()
+            .unwrap()
+            .get(&remove_line)
+            .unwrap()
+            .clone();
+
+        let auth = HttpAuthentication::bearer(validator);
+        let app = test::init_service(
+            App::new()
+                .wrap(auth)
+                .route("/", web::post().to(api::set_time_entery_stop)),
+        )
+        .await;
+        let req = test::TestRequest::post()
+            .uri("/")
+            .insert_header((AUTHORIZATION, format!("Bearer {}", token_str)))
+            .set_json(&StopLedgerTimeEntery {
+                remove_line: remove_line.clone(),
+                new_entery: new_entery.clone(),
+            })
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        println!("Valid Request {:?}", resp);
+        assert!(resp.status().is_success());
+
+        //remove added line
+        let ledger = fs::read_to_string(utils::PATH_TIME_SPEND).unwrap();
+        fs::File::create(utils::PATH_TIME_SPEND)
+            .unwrap()
+            .write(
+                ledger
+                    .replace(&utils::ledger_create_time_entery(new_entery).unwrap(), "")
+                    .as_bytes(),
+            )
+            .unwrap();
     }
 }
