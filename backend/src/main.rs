@@ -82,6 +82,10 @@ async fn main() -> std::io::Result<()> {
                             .route(
                                 "set_time_entery_running.json",
                                 web::get().to(api::get_time_entery_running),
+                            )
+                            .route(
+                                "set_time_entery_stop.json",
+                                web::post().to(api::set_time_entery_stop),
                             ),
                     ),
             )

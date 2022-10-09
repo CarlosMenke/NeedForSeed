@@ -61,3 +61,9 @@ pub struct ResponseStatus {
 pub struct ResponseRunningLedgerTimeEntery {
     pub running_entery: BTreeMap<String, NewTimeEntery>,
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct StopLedgerTimeEntery {
+    pub new_entery: NewTimeEntery,
+    pub remove_line: String,
+}

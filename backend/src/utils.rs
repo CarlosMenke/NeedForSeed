@@ -155,5 +155,47 @@ pub fn ledger_get_running_time_entery(
             response.insert(line.to_string(), new_entery);
         }
     }
+    debug!("Found running Enteries: {:#?}", response);
     Ok(response)
+}
+
+///Creates a new time Entery
+pub fn ledger_create_time_entery(
+    start_entery: shared::models::NewTimeEntery,
+) -> Result<String, ServiceError> {
+    let chrono_date = chrono::Local::now();
+    let date = format!(
+        "{:?}/{:?}/{:02}",
+        chrono_date.year(),
+        chrono_date.month(),
+        chrono_date.day()
+    );
+
+    let entery = &format!(
+        "\n{}\t\t\t {}\n\t {}\n\t {}\t\t\t\t\t\t\t{}m\n",
+        &date.to_string(),
+        start_entery.headline,
+        start_entery.account_origin,
+        start_entery.account_target,
+        start_entery.duration.to_string(),
+    );
+    fs::OpenOptions::new()
+        .append(true)
+        .open(PATH_TIME_SPEND)?
+        .write_all(entery.as_bytes())?;
+    Ok(entery.to_string())
+}
+
+/// This function create a new time entery and removes the given line.
+pub fn ledger_stop_time_entery(
+    info: &shared::models::StopLedgerTimeEntery,
+) -> Result<(), ServiceError> {
+    let ledger = fs::read_to_string(PATH_TIME_SPEND)?;
+    fs::File::create(PATH_TIME_SPEND)?.write(
+        ledger
+            .replace(&format!("{}\n", &info.remove_line), "")
+            .as_bytes(),
+    )?;
+    ledger_create_time_entery(info.new_entery.clone())?;
+    Ok(())
 }
