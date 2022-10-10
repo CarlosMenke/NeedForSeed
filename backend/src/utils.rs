@@ -86,7 +86,7 @@ pub fn ledger_start_time_entery(
     );
 
     let entery = &format!(
-        ";{} {}\t\t\t {}; \t{}; \t{}\t\t\t\t\t\t ##m",
+        ";{} {}\t\t\t{}; \t{}; \t{}\t\t\t\t\t\t##m",
         &minutes_count.to_string(),
         &date.to_string(),
         headline,
@@ -113,7 +113,7 @@ pub fn ledger_get_running_time_entery(
     let get_start_minute = Regex::new(r"[0-9]+ ").unwrap();
     let new_line = Regex::new(r";").unwrap();
     let get_content = Regex::new(r"\d{4}.*").unwrap();
-    let clean_account_origin = Regex::new(r" \t").unwrap();
+    let clean_account_origin = Regex::new(r"^ \t").unwrap();
     let clean_account_target = Regex::new(r"[ ]*[\t]+[ ,#,m]*").unwrap();
     let get_date = Regex::new(r"\d{4}/\d{2}/\d{2}").unwrap();
     for line in ledger.lines() {
@@ -172,7 +172,7 @@ pub fn ledger_create_time_entery(
     );
 
     let entery = &format!(
-        "\n{}\t\t\t {}\n\t {}\n\t {}\t\t\t\t\t\t\t{}m\n",
+        "\n{}\t\t\t{}\n \t{}\n \t{}\t\t\t\t\t\t\t{}m\n",
         &date.to_string(),
         start_entery.headline,
         start_entery.account_origin,

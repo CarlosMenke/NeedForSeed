@@ -57,7 +57,7 @@ pub struct ResponseStatus {
     pub status: i8,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ResponseRunningLedgerTimeEntery {
     pub running_entery: BTreeMap<String, NewTimeEntery>,
 }

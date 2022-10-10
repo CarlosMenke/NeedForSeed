@@ -7,7 +7,6 @@ mod unit_tests {
     use dotenvy::dotenv;
     use std::fs;
     use std::io::Write;
-    use std::io::{BufRead, BufReader};
 
     use crate::auth::{create_token, validator};
     use crate::configuration::Application;
