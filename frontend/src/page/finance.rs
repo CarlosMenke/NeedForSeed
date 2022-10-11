@@ -27,9 +27,9 @@ pub fn init(
         Some(DEPTH3) => Depth::Depth3,
         None => {
             Urls::new(&base_url).default().go_and_replace();
-            Depth::Depth4
+            Depth::Depth3
         }
-        _ => Depth::Depth4,
+        _ => Depth::Depth3,
     };
     let timeframe = match url.next_path_part() {
         Some(WEEK) => Timeframe::Week,
@@ -124,12 +124,7 @@ impl<'a> Urls<'a> {
         self.base_url()
     }
     pub fn default(self) -> Url {
-        self.depth1(Timeframe::All)
-    }
-    fn depth1(self, time: Timeframe) -> Url {
-        self.base_url()
-            .add_path_part(DEPTH4)
-            .add_path_part(time.str())
+        self.depth3(Timeframe::All)
     }
     fn depth2(self, time: Timeframe) -> Url {
         self.base_url()
@@ -139,6 +134,11 @@ impl<'a> Urls<'a> {
     fn depth3(self, time: Timeframe) -> Url {
         self.base_url()
             .add_path_part(DEPTH3)
+            .add_path_part(time.str())
+    }
+    fn depth4(self, time: Timeframe) -> Url {
+        self.base_url()
+            .add_path_part(DEPTH4)
             .add_path_part(time.str())
     }
     fn week(self, depth: Depth) -> Url {
@@ -225,7 +225,7 @@ pub fn view(model: &Model) -> Node<Msg> {
             a![
                 "Switch to depth 4",
                 attrs! {
-                    At::Href => Urls::new(&model.base_url).depth1(model.timeframe.clone())
+                    At::Href => Urls::new(&model.base_url).depth4(model.timeframe.clone())
                 }
             ],
         ),
@@ -270,13 +270,8 @@ pub fn view(model: &Model) -> Node<Msg> {
     };
 
     div![
-        "This is the depth: ",
-        depth,
-        div![format!("This is your {} report.", depth), link,],
-        div![
-            format!("This is your {} report.", timeframe),
-            link_timeframe,
-        ],
+        div![format!("Depth:  {}    ", depth), link,],
+        div![format!("Timeframe:  {}    ", timeframe), link_timeframe,],
         raw![&finance_summary_html]
     ]
 }

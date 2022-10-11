@@ -269,13 +269,8 @@ pub fn view(model: &Model) -> Node<Msg> {
     };
 
     div![
-        "This is the depth: ",
-        depth,
-        div![format!("This is your {} report.", depth), link,],
-        div![
-            format!("This is your {} report.", timeframe),
-            link_timeframe,
-        ],
+        div![format!("Depth:  {}    ", depth), link,],
+        div![format!("Timeframe:  {}    ", timeframe), link_timeframe,],
         raw![&music_summary_html]
     ]
 }

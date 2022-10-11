@@ -1,6 +1,7 @@
 use crate::api;
 use seed::{prelude::*, *};
 
+// TODO change it from depth to depth for thime (this and last)
 const API_TARGET: &str = "timeManagment";
 const DEPTH2: &str = "2";
 const DEPTH3: &str = "3";
@@ -26,9 +27,9 @@ pub fn init(
         Some(DEPTHALL) => Depth::DepthAll,
         None => {
             Urls::new(&base_url).default().go_and_replace();
-            Depth::DepthAll
+            Depth::Depth3
         }
-        _ => Depth::DepthAll,
+        _ => Depth::Depth3,
     };
     let timeframe = match url.next_path_part() {
         Some(WEEK) => Timeframe::Week,
@@ -123,7 +124,7 @@ impl<'a> Urls<'a> {
         self.base_url()
     }
     pub fn default(self) -> Url {
-        self.depthall(Timeframe::All)
+        self.depth3(Timeframe::All)
     }
     fn depth2(self, time: Timeframe) -> Url {
         self.base_url()
@@ -204,7 +205,7 @@ pub fn view(model: &Model) -> Node<Msg> {
         Depth::DepthAll => (
             DEPTHALL,
             a![
-                "Switch to depth 2",
+                "Switch to 2",
                 attrs! {
                     At::Href => Urls::new(&model.base_url).depth2(model.timeframe.clone())
                 }
@@ -213,7 +214,7 @@ pub fn view(model: &Model) -> Node<Msg> {
         Depth::Depth2 => (
             DEPTH2,
             a![
-                "Switch to depth 3",
+                "Switch to 3",
                 attrs! {
                     At::Href => Urls::new(&model.base_url).depth3(model.timeframe.clone())
                 }
@@ -222,7 +223,7 @@ pub fn view(model: &Model) -> Node<Msg> {
         Depth::Depth3 => (
             DEPTH3,
             a![
-                "Switch to depth All",
+                "Switch to All",
                 attrs! {
                     At::Href => Urls::new(&model.base_url).depthall(model.timeframe.clone())
                 }
@@ -233,7 +234,7 @@ pub fn view(model: &Model) -> Node<Msg> {
         Timeframe::Week => (
             WEEK,
             a![
-                "Switch to timeframe month",
+                "Switch to month",
                 attrs! {
                     At::Href => Urls::new(&model.base_url).month(model.depth.clone())
                 }
@@ -242,7 +243,7 @@ pub fn view(model: &Model) -> Node<Msg> {
         Timeframe::Month => (
             MONTH,
             a![
-                "Switch to timeframe year",
+                "Switch to year",
                 attrs! {
                     At::Href => Urls::new(&model.base_url).year(model.depth.clone())
                 }
@@ -251,7 +252,7 @@ pub fn view(model: &Model) -> Node<Msg> {
         Timeframe::Year => (
             YEAR,
             a![
-                "Switch to timeframe all",
+                "Switch to all",
                 attrs! {
                     At::Href => Urls::new(&model.base_url).all(model.depth.clone())
                 }
@@ -260,7 +261,7 @@ pub fn view(model: &Model) -> Node<Msg> {
         Timeframe::All => (
             ALL,
             a![
-                "Switch to timeframe week",
+                "Switch to week",
                 attrs! {
                     At::Href => Urls::new(&model.base_url).week(model.depth.clone())
                 }
@@ -269,13 +270,8 @@ pub fn view(model: &Model) -> Node<Msg> {
     };
 
     div![
-        "This is the depth: ",
-        depth,
-        div![format!("This is your {} report.", depth), link,],
-        div![
-            format!("This is your {} report.", timeframe),
-            link_timeframe,
-        ],
+        div![format!("Depth:  {}    ", depth), link,],
+        div![format!("Timeframe:  {}    ", timeframe), link_timeframe,],
         raw![&finance_summary_html]
     ]
 }
