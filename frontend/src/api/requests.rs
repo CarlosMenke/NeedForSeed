@@ -1,12 +1,15 @@
 use crate::api::get_api_url;
 use seed::prelude::*;
-use shared::*;
+use shared;
 
-pub async fn get_login(name: String, pwd: String) -> fetch::Result<auth::UserLoginResponse> {
+pub async fn get_login(
+    name: String,
+    pwd: String,
+) -> fetch::Result<shared::auth::UserLoginResponse> {
     fetch(
         Request::new(get_api_url(String::from("api/login.json")))
             .method(Method::Post)
-            .json(&auth::UserLogin {
+            .json(&shared::auth::UserLogin {
                 username: name,
                 password: pwd,
             })?,
@@ -43,6 +46,57 @@ pub async fn get_time_suggestion(token: String) -> fetch::Result<shared::models:
     )))
     .header(Header::bearer(token))
     .fetch()
+    .await?
+    .check_status()?
+    .json()
+    .await
+}
+
+/// this function returns a BTreeMap, witch encodes all running time Enteries
+pub async fn get_time_running_entery(
+    token: String,
+) -> fetch::Result<shared::models::ResponseRunningLedgerTimeEntery> {
+    Request::new(get_api_url(String::from(
+        "api/auth/set_time_entery_running.json",
+    )))
+    .header(Header::bearer(token))
+    .fetch()
+    .await?
+    .check_status()?
+    .json()
+    .await
+}
+
+pub async fn start_time_entery(
+    token: String,
+    new_entery: shared::models::StartTimeEntery,
+) -> fetch::Result<shared::models::ResponseStatus> {
+    fetch(
+        Request::new(get_api_url(String::from(
+            "api/auth/set_time_entery_start.json",
+        )))
+        .method(Method::Post)
+        .header(Header::bearer(token))
+        .json(&new_entery)?,
+    )
+    .await?
+    .check_status()?
+    .json()
+    .await
+}
+
+pub async fn stop_time_entery(
+    token: String,
+    new_entery: shared::models::StopLedgerTimeEntery,
+) -> fetch::Result<shared::models::ResponseStatus> {
+    fetch(
+        Request::new(get_api_url(String::from(
+            "api/auth/set_time_entery_stop.json",
+        )))
+        .method(Method::Post)
+        .header(Header::bearer(token))
+        .json(&new_entery)?,
+    )
     .await?
     .check_status()?
     .json()
