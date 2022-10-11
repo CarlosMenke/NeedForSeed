@@ -172,7 +172,8 @@ pub fn ledger_create_time_entery(
     );
 
     let entery = &format!(
-        "\n{}\t\t\t{}\n \t{}\n \t{}\t\t\t\t\t\t\t{}m\n",
+        "\n; {}\n{}\t\t\t{}\n \t{}\n \t{}\t\t\t\t\t\t\t{}m\n",
+        start_entery.time_span,
         &date.to_string(),
         start_entery.headline,
         start_entery.account_origin,
