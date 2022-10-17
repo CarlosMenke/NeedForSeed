@@ -87,14 +87,19 @@ pub async fn set_time_entery_start(
     new_time_entery: web::Json<StartTimeEntery>,
 ) -> Result<web::Json<ResponseStatus>, ServiceError> {
     debug!(
-        "Set ledger time function is called with Headline: \t{:?}\t account_origin: \t{:?}\t account_origin: \t{:?}",
-        &new_time_entery.headline, &new_time_entery.account_origin, &new_time_entery.account_target);
+        "Set ledger time function is called with Headline: \t{:?}\t account_origin: \t{:?}\t account_origin: \t{:?}\t duration: \t{:?}",
+        &new_time_entery.headline, &new_time_entery.account_origin, &new_time_entery.account_target, &new_time_entery.duration);
 
-    utils::ledger_start_time_entery(
-        &new_time_entery.headline,
-        &new_time_entery.account_origin,
-        &new_time_entery.account_target,
-    )?;
+    if new_time_entery.duration.is_none() {
+        //start running entery, because it has not ended yet.
+        utils::ledger_start_time_entery(
+            &new_time_entery.headline,
+            &new_time_entery.account_origin,
+            &new_time_entery.account_target,
+        )?;
+    } else {
+        utils::ledger_create_time_entery_custom(new_time_entery.to_owned())?;
+    };
     Ok(web::Json(ResponseStatus { status: 0 }))
 }
 

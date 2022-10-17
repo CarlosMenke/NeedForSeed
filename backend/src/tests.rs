@@ -179,6 +179,10 @@ mod unit_tests {
                 headline: "Carlos is programming".to_owned(),
                 account_origin: "FreeTime".to_owned(),
                 account_target: "Education:Programming Rust".to_owned(),
+                duration: None,
+                time_span: None,
+                date: None,
+                offset: None,
             })
             .to_request();
         let resp = test::call_service(&app, req).await;

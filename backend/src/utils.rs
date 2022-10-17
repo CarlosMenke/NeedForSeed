@@ -151,6 +151,7 @@ pub fn ledger_get_running_time_entery(
                 time_span,
                 duration,
                 date: get_date.find(&content_vec[0]).unwrap().as_str().to_string(),
+                offset: 0,
             };
             response.insert(line.to_string(), new_entery);
         }
@@ -160,6 +161,7 @@ pub fn ledger_get_running_time_entery(
 }
 
 ///Creates a new time Entery
+//TODO merge with custom version
 pub fn ledger_create_time_entery(
     start_entery: shared::models::NewTimeEntery,
 ) -> Result<String, ServiceError> {
@@ -170,10 +172,14 @@ pub fn ledger_create_time_entery(
         chrono_date.month(),
         chrono_date.day()
     );
+    let mut time_span = format!("\n; {}", &start_entery.time_span);
+    if &start_entery.time_span == "" {
+        time_span = "".to_string();
+    };
 
     let entery = &format!(
-        "\n; {}\n{}\t\t\t{}\n \t{}\n \t{}\t\t\t\t\t\t\t{}m\n",
-        start_entery.time_span,
+        "{}\n{}\t\t\t{}\n \t{}\n \t{}\t\t\t\t\t\t\t{}m\n",
+        time_span,
         &date.to_string(),
         start_entery.headline,
         start_entery.account_origin,
@@ -201,9 +207,49 @@ pub fn ledger_stop_time_entery(
     Ok(())
 }
 
+///Creates a new time Entery
+pub fn ledger_create_time_entery_custom(
+    start_entery: shared::models::StartTimeEntery,
+) -> Result<String, ServiceError> {
+    let chrono_date = chrono::Local::now();
+    let date_now = format!(
+        "{:?}/{:?}/{:02}",
+        chrono_date.year(),
+        chrono_date.month(),
+        chrono_date.day()
+    );
+    let time_span = match &start_entery.time_span {
+        Some(s) => format!("\n; {}", s),
+        None => "".to_string(),
+    };
+    let date = match &start_entery.date {
+        Some(d) => d,
+        None => &date_now,
+    };
+    let duration = match &start_entery.offset {
+        Some(o) => &start_entery.duration.unwrap() + o,
+        None => start_entery.duration.unwrap(),
+    };
+
+    let entery = &format!(
+        "{}\n{}\t\t\t{}\n \t{}\n \t{}\t\t\t\t\t\t\t{}m\n",
+        time_span,
+        date,
+        start_entery.headline,
+        start_entery.account_origin,
+        start_entery.account_target,
+        duration,
+    );
+    fs::OpenOptions::new()
+        .append(true)
+        .open(PATH_TIME_SPEND)?
+        .write_all(entery.as_bytes())?;
+    Ok(entery.to_string())
+}
+
 #[cfg(test)]
 mod tests {
-    use shared::models::NewTimeEntery;
+    use shared::models::{NewTimeEntery, StartTimeEntery};
 
     use super::*;
     #[actix_web::test]
@@ -222,6 +268,7 @@ mod tests {
             duration: 10,
             time_span: "12:00 - 24:00".to_string(),
             date: "2022/10/10".to_string(),
+            offset: 0,
         };
         assert!(ledger_create_time_entery(new_entery.clone()).is_ok());
 
@@ -236,6 +283,32 @@ mod tests {
             )
             .unwrap();
     }
+
+    #[actix_web::test]
+    async fn test_ledger_create_time_entery_custom() {
+        let new_entery = StartTimeEntery {
+            headline: "Carlos is programming".to_owned(),
+            account_origin: "FreeTime".to_owned(),
+            account_target: "EducationRust".to_owned(),
+            duration: Some(10),
+            time_span: Some("12:00 - 24:00".to_string()),
+            date: Some("2022/10/10".to_string()),
+            offset: None,
+        };
+        assert!(ledger_create_time_entery_custom(new_entery.clone()).is_ok());
+
+        //remove added line
+        let ledger = fs::read_to_string(PATH_TIME_SPEND).unwrap();
+        fs::File::create(PATH_TIME_SPEND)
+            .unwrap()
+            .write(
+                ledger
+                    .replace(&ledger_create_time_entery_custom(new_entery).unwrap(), "")
+                    .as_bytes(),
+            )
+            .unwrap();
+    }
+
     #[actix_web::test]
     async fn test_ledger_stop_time_entery() {
         let remove_line = ledger_start_time_entery(
