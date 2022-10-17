@@ -53,6 +53,8 @@ pub enum Msg {
     FetchedStartTimeEntery(fetch::Result<shared::models::ResponseStatus>),
     SaveNewEnteryHeadline(String),
     SaveNewEnteryTarget(String),
+    SaveNewEnteryDuration(String),
+    SaveNewEnteryDate(String),
     StopTimeEntery(String),
 }
 // ------ ------
@@ -67,6 +69,21 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         Msg::SaveNewEnteryTarget(content) => {
             model.start_entery.account_target = content;
         }
+        Msg::SaveNewEnteryDuration(content) => {
+            model.start_entery.duration = match content.parse::<u32>() {
+                Ok(0) => None,
+                Ok(n) => Some(n),
+                Err(_) => None,
+            };
+        }
+        Msg::SaveNewEnteryDate(content) => {
+            model.start_entery.date = if content == "".to_string() {
+                None
+            } else {
+                Some(content)
+            };
+            log!(model.start_entery.date);
+        }
         Msg::GetSuggestion => {
             orders.skip().perform_cmd({
                 let token = model.ctx.clone().unwrap().token;
@@ -76,12 +93,15 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         Msg::StartTimeEntery => {
             orders.skip().perform_cmd({
                 let token = model.ctx.clone().unwrap().token;
-                let start_entery = model.start_entery.clone();
+                let mut start_entery = model.start_entery.clone();
+                start_entery.date = match start_entery.date {
+                    Some(e) => Some(e.replace("-", "/")),
+                    None => None,
+                };
                 async {
                     Msg::FetchedStartTimeEntery(
-                        api::requests::start_time_entery(token.clone(), start_entery).await,
-                    );
-                    Msg::FetchedRunningEntery(api::requests::get_time_running_entery(token).await)
+                        api::requests::start_time_entery(token, start_entery).await,
+                    )
                 }
             });
         }
@@ -111,6 +131,12 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         }
         Msg::FetchedStartTimeEntery(Ok(_response_data)) => {
             model.start_entery = shared::models::StartTimeEntery::default();
+            orders.skip().perform_cmd({
+                let token = model.ctx.clone().unwrap().token;
+                async {
+                    Msg::FetchedRunningEntery(api::requests::get_time_running_entery(token).await)
+                }
+            });
         }
         Msg::FetchedSuggestion(Ok(response_data)) => {
             model.suggestions = Some(response_data);
@@ -177,8 +203,7 @@ pub fn view(model: &Model) -> Node<Msg> {
                 input_ev(Ev::Input, Msg::SaveNewEnteryTarget),
                 attrs! {
                     At::Placeholder => "Target",
-                    //TODO change to true if it is nicer
-                    At::AutoFocus => AtValue::None,
+                    At::AutoFocus => true.as_at_value();
                     At::Value => &model.start_entery.account_target,
                     At::List => "suggestions_target",
                 }
@@ -188,6 +213,25 @@ pub fn view(model: &Model) -> Node<Msg> {
                 suggestions
                     .iter()
                     .map(|(content, _headline)| { option![content] })
+            ],
+            input![
+                C!["input-content_duration"],
+                input_ev(Ev::Input, Msg::SaveNewEnteryDuration),
+                attrs! {
+                    At::Placeholder => "Duration",
+                    At::AutoFocus => true.as_at_value();
+                    At::Value => &model.start_entery.duration.clone().unwrap_or(0),
+                }
+            ],
+            input![
+                C!["input-content_date"],
+                input_ev(Ev::Input, Msg::SaveNewEnteryDate),
+                attrs! {
+                    At::Placeholder => "Date",
+                    At::AutoFocus => true.as_at_value();
+                    At::Type => "date",
+                    At::Value => &model.start_entery.date.clone().unwrap_or("".to_string()),
+                }
             ],
             button![ev(Ev::Click, |_| Msg::StartTimeEntery), "Start Entery"],
             ul![running_entery.iter().filter_map(|(remove_line, entery)| {
@@ -204,6 +248,7 @@ fn view_runing_enteries(remove_line: String, entery: &shared::models::NewTimeEnt
         style! {St::Display => "flex", St::FlexDirection => "column", St::MaxWidth => px(500), St::Margin => "auto", St::MarginTop => px(30)},
         p![entery.headline.clone()],
         p![entery.account_target.clone()],
+        p![format!("Duration: {}", entery.duration.clone())],
         button![
             "Stop",
             ev(
