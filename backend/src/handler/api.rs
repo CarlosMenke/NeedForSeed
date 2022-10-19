@@ -92,14 +92,17 @@ pub async fn set_time_entery_start(
 
     if new_time_entery.duration.is_none() {
         //start running entery, because it has not ended yet.
-        utils::ledger_start_time_entery(
-            &new_time_entery.headline,
-            &new_time_entery.account_origin,
-            &new_time_entery.account_target,
-            &new_time_entery.offset,
-        )?;
+        utils::ledger_start_time_entery(new_time_entery.to_owned())?;
     } else {
-        utils::ledger_create_time_entery_custom(new_time_entery.to_owned())?;
+        //if duration is given, create the time entery.
+        utils::ledger_create_time_entery(shared::models::NewTimeEntery {
+            headline: String::from(&new_time_entery.headline),
+            account_origin: String::from(&new_time_entery.account_origin),
+            account_target: String::from(&new_time_entery.account_target),
+            duration: new_time_entery.duration.unwrap(),
+            date: new_time_entery.date.to_owned(),
+            offset: new_time_entery.offset,
+        })?;
     };
     Ok(web::Json(ResponseStatus { status: 0 }))
 }
