@@ -4,6 +4,18 @@ use fuzzy_matcher::skim::SkimMatcherV2;
 use fuzzy_matcher::FuzzyMatcher;
 use seed::{prelude::*, *};
 use std::collections::BTreeMap;
+use web_sys::HtmlInputElement;
+
+const ENTER_KEY: u32 = 13;
+const ESC_KEY: u32 = 27;
+
+type RunningEnteryId = String;
+
+#[derive(Clone, Debug)]
+pub struct EditingNewTimeEntery {
+    pub id: RunningEnteryId,
+    pub offset: i32,
+}
 
 // ------ ------
 //     Init
@@ -28,6 +40,8 @@ pub fn init(
         suggestions: None,
         start_entery: shared::models::StartTimeEntery::default(),
         running_entery: None,
+        editing_offset: None,
+        refs: Refs::default(),
     }
 }
 
@@ -41,27 +55,44 @@ pub struct Model {
     suggestions: Option<shared::models::ResponseBTreeMap>,
     start_entery: shared::models::StartTimeEntery,
     running_entery: Option<shared::models::ResponseRunningLedgerTimeEntery>,
+    editing_offset: Option<EditingNewTimeEntery>,
+    refs: Refs,
+}
+
+#[derive(Default)]
+struct Refs {
+    editing_running_entery_input: ElRef<HtmlInputElement>,
 }
 
 // ------ Frequency ------
 
 pub enum Msg {
     GetSuggestion,
-    StartTimeEntery,
+
     FetchedSuggestion(fetch::Result<shared::models::ResponseBTreeMap>),
     FetchedRunningEntery(fetch::Result<shared::models::ResponseRunningLedgerTimeEntery>),
     FetchedStartTimeEntery(fetch::Result<shared::models::ResponseStatus>),
+
     SaveNewEnteryHeadline(String),
     SaveNewEnteryTarget(String),
     SaveNewEnteryDuration(String),
     SaveNewEnteryDate(String),
-    StopTimeEntery(String),
+    SaveNewEnteryOffset(String),
+
+    StartOffsetEdit(RunningEnteryId),
+    EditingRunningEnteryOffsetChanged(String),
+    SaveEditingRunningEnteryOffset,
+    CancelRunningEnteryOffsetEdit,
+
+    StartTimeEntery,
+    StopTimeEntery(RunningEnteryId),
 }
 // ------ ------
 //     Urls
 // ------ ------
 
 pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
+    let data = &mut model.running_entery;
     match msg {
         Msg::SaveNewEnteryHeadline(content) => {
             model.start_entery.headline = content;
@@ -83,6 +114,60 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 Some(content)
             };
             log!(model.start_entery.date);
+        }
+        Msg::SaveNewEnteryOffset(content) => {
+            model.start_entery.offset = match content.parse::<i32>() {
+                Ok(0) => None,
+                Ok(n) => Some(n),
+                Err(_) => None,
+            };
+        }
+
+        Msg::StartOffsetEdit(running_entery_id) => {
+            if let Some(running_entery) = model
+                .running_entery
+                .as_ref()
+                .unwrap()
+                .running_entery
+                .get(&running_entery_id)
+            {
+                model.editing_offset = Some({
+                    EditingNewTimeEntery {
+                        id: running_entery_id,
+                        offset: running_entery.offset.clone(),
+                    }
+                });
+            }
+
+            let input = model.refs.editing_running_entery_input.clone();
+            orders.after_next_render(move |_| {
+                input
+                    .get()
+                    .expect("get `editing_running_entery_input`")
+                    .select();
+            });
+        }
+        Msg::EditingRunningEnteryOffsetChanged(offset) => {
+            if let Some(ref mut editing_running_entery) = model.editing_offset {
+                editing_running_entery.offset = offset.parse::<i32>().unwrap_or(0);
+            }
+        }
+        Msg::SaveEditingRunningEnteryOffset => {
+            if let Some(editing_offset) = model.editing_offset.take() {
+                let offset = editing_offset.offset;
+                if offset == 0 {
+                } else if let Some(entery) = match data {
+                    Some(e) => e.running_entery.get_mut(&editing_offset.id),
+                    None => None,
+                } {
+                    entery.offset = offset.to_owned();
+                }
+            }
+            log!("{:#?}", &model.running_entery);
+        }
+
+        Msg::CancelRunningEnteryOffsetEdit => {
+            model.editing_offset = None;
         }
         Msg::GetSuggestion => {
             orders.skip().perform_cmd({
@@ -233,28 +318,70 @@ pub fn view(model: &Model) -> Node<Msg> {
                     At::Value => &model.start_entery.date.clone().unwrap_or("".to_string()),
                 }
             ],
+            input![
+                C!["input-content_offset"],
+                input_ev(Ev::Input, Msg::SaveNewEnteryOffset),
+                attrs! {
+                    At::Placeholder => "Offset",
+                    At::AutoFocus => true.as_at_value();
+                    At::Value => &model.start_entery.offset.clone().unwrap_or(0),
+                }
+            ],
             button![ev(Ev::Click, |_| Msg::StartTimeEntery), "Start Entery"],
             ul![running_entery.iter().filter_map(|(remove_line, entery)| {
-                Some(view_runing_enteries(remove_line.to_string(), entery))
+                Some(view_runing_enteries(
+                    remove_line.to_string(),
+                    entery,
+                    &model.editing_offset,
+                    &model.refs.editing_running_entery_input,
+                ))
             })]
         ],
     ]
 }
 
 //TODO add change name / headline of running entery
-fn view_runing_enteries(remove_line: String, entery: &shared::models::NewTimeEntery) -> Node<Msg> {
+fn view_runing_enteries(
+    id: RunningEnteryId,
+    entery: &shared::models::NewTimeEntery,
+    editing_running_entery: &Option<EditingNewTimeEntery>,
+    editing_running_entery_input: &ElRef<HtmlInputElement>,
+) -> Node<Msg> {
     //TODO use entery for button name
     div![
-        style! {St::Display => "flex", St::FlexDirection => "column", St::MaxWidth => px(500), St::Margin => "auto", St::MarginTop => px(30)},
+        style! {St::Display => "flex", St::FlexDirection => "column", St::JustifyContent => "flex-start" , St::MaxWidth => px(500), St::Margin => "auto", St::MarginTop => px(30)},
         p![entery.headline.clone()],
         p![entery.account_target.clone()],
-        p![format!("Duration: {}", entery.duration.clone())],
+        p![format!("Duration: {}", entery.duration)],
+        div![
+            style! {St::Display => "flex", St::FlexDirection => "row", St::JustifyContent => "flex-start", St::MarginBottom => px(10)},
+            label![
+                C!["input-running_entery_offset"],
+                ev(Ev::DblClick, enc!((id) move |_| Msg::StartOffsetEdit(id))),
+                "Offset: ",
+            ],
+            match editing_running_entery {
+                Some(editing_running_entery) if editing_running_entery.id == id => {
+                    input![
+                        el_ref(editing_running_entery_input),
+                        C!["input"],
+                        attrs! {At::Value => editing_running_entery.offset},
+                        input_ev(Ev::Input, Msg::EditingRunningEnteryOffsetChanged),
+                        keyboard_ev(Ev::KeyDown, |keyboard_event| {
+                            match keyboard_event.key_code() {
+                                ENTER_KEY => Some(Msg::SaveEditingRunningEnteryOffset),
+                                ESC_KEY => Some(Msg::CancelRunningEnteryOffsetEdit),
+                                _ => None,
+                            }
+                        }),
+                    ]
+                }
+                _ => label![entery.offset.clone()],
+            },
+        ],
         button![
             "Stop",
-            ev(
-                Ev::Click,
-                enc!((remove_line) move |_| Msg::StopTimeEntery(remove_line))
-            )
+            ev(Ev::Click, enc!((id) move |_| Msg::StopTimeEntery(id)))
         ]
     ]
 }
