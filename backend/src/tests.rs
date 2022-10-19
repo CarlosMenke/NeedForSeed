@@ -164,6 +164,14 @@ mod unit_tests {
         )
         .await
         .expect("Failed to unwrap Token");
+        let start_entery = shared::models::StartTimeEntery {
+            headline: "Carlos is programming".to_owned(),
+            account_origin: "FreeTime".to_owned(),
+            account_target: "EducationRust".to_owned(),
+            duration: None,
+            date: None,
+            offset: None,
+        };
 
         let auth = HttpAuthentication::bearer(validator);
         let app = test::init_service(
@@ -175,25 +183,12 @@ mod unit_tests {
         let req = test::TestRequest::post()
             .uri("/")
             .insert_header((AUTHORIZATION, format!("Bearer {}", token_str)))
-            .set_json(&StartTimeEntery {
-                headline: "Carlos is programming".to_owned(),
-                account_origin: "FreeTime".to_owned(),
-                account_target: "Education:Programming Rust".to_owned(),
-                duration: None,
-                time_span: None,
-                date: None,
-                offset: None,
-            })
+            .set_json(&start_entery)
             .to_request();
         let resp = test::call_service(&app, req).await;
         println!("Valid Request {:?}", resp);
         assert!(resp.status().is_success());
-        let remove_line = ledger_start_time_entery(
-            "Carlos is programming",
-            "FreeTime",
-            "Education:Programming Rust",
-        )
-        .unwrap();
+        let remove_line = ledger_start_time_entery(start_entery).unwrap();
 
         //remove added line
         let ledger = fs::read_to_string(utils::PATH_TIME_SPEND).unwrap();
@@ -241,9 +236,15 @@ mod unit_tests {
         )
         .await
         .expect("Failed to unwrap Token");
-        let remove_line =
-            ledger_start_time_entery("Carlos Programiert", "FreeTime", "Education:Programming")
-                .unwrap();
+        let start_entery = shared::models::StartTimeEntery {
+            headline: "Carlos is programming".to_owned(),
+            account_origin: "FreeTime".to_owned(),
+            account_target: "EducationRust".to_owned(),
+            duration: None,
+            date: None,
+            offset: None,
+        };
+        let remove_line = ledger_start_time_entery(start_entery).unwrap();
         //TODO find error
         let new_entery = ledger_get_running_time_entery()
             .unwrap()
