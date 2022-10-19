@@ -73,10 +73,11 @@ pub fn ledger_start_time_entery(
     headline: &str,
     origin: &str,
     target: &str,
+    offset: &Option<i32>,
 ) -> Result<String, ServiceError> {
     println!("{:?}", headline);
     let dt = chrono::Local::now();
-    let minutes_count = dt.hour() * 60 + dt.minute();
+    let minutes_count = i64::from(dt.hour() * 60 + dt.minute()) - i64::from(offset.unwrap_or(0));
     let chrono_date = chrono::Local::now();
     let date = format!(
         "{:?}/{:?}/{:02}",
@@ -184,7 +185,7 @@ pub fn ledger_create_time_entery(
         start_entery.headline,
         start_entery.account_origin,
         start_entery.account_target,
-        start_entery.duration.to_string(),
+        (i64::from(start_entery.duration) + i64::from(start_entery.offset)).to_string(),
     );
     fs::OpenOptions::new()
         .append(true)
@@ -227,8 +228,8 @@ pub fn ledger_create_time_entery_custom(
         None => &date_now,
     };
     let duration = match &start_entery.offset {
-        Some(o) => &start_entery.duration.unwrap() + o,
-        None => start_entery.duration.unwrap(),
+        Some(o) => i64::from(start_entery.duration.unwrap()) + i64::from(*o),
+        None => start_entery.duration.unwrap() as i64,
     };
 
     let entery = &format!(
@@ -315,6 +316,7 @@ mod tests {
             "Carlos Programiert",
             "FreeTime",
             "Education:Programming Rust",
+            &None,
         )
         .unwrap();
         //TODO find error

@@ -33,7 +33,7 @@ pub struct NewTimeEntery {
     pub time_span: String,
     pub date: String,
     pub duration: u32,
-    pub offset: u32,
+    pub offset: i32,
 }
 
 //TODO should all send data start with Request as Prefix?
@@ -45,7 +45,7 @@ pub struct StartTimeEntery {
     pub time_span: Option<String>,
     pub date: Option<String>,
     pub duration: Option<u32>,
-    pub offset: Option<u32>,
+    pub offset: Option<i32>,
 }
 impl Default for StartTimeEntery {
     fn default() -> StartTimeEntery {

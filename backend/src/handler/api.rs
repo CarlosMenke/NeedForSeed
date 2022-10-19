@@ -96,6 +96,7 @@ pub async fn set_time_entery_start(
             &new_time_entery.headline,
             &new_time_entery.account_origin,
             &new_time_entery.account_target,
+            &new_time_entery.offset,
         )?;
     } else {
         utils::ledger_create_time_entery_custom(new_time_entery.to_owned())?;
@@ -118,7 +119,7 @@ pub async fn get_time_entery_running(
 pub async fn set_time_entery_stop(
     payload: web::Json<StopLedgerTimeEntery>,
 ) -> Result<web::Json<ResponseStatus>, ServiceError> {
-    debug!("Stop running Time Entery {}", payload.new_entery.headline);
+    debug!("Stop running Time Entery {:#?}", payload.new_entery);
     utils::ledger_stop_time_entery(&payload)?;
     return Ok(web::Json(ResponseStatus { status: 0 }));
 }
