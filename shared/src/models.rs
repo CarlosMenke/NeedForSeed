@@ -30,10 +30,9 @@ pub struct NewTimeEntery {
     pub headline: String,
     pub account_origin: String,
     pub account_target: String,
-    pub time_span: String,
-    pub date: String,
     pub duration: u32,
-    pub offset: i32,
+    pub date: Option<String>,
+    pub offset: Option<i32>,
 }
 
 //TODO should all send data start with Request as Prefix?
@@ -42,7 +41,6 @@ pub struct StartTimeEntery {
     pub headline: String,
     pub account_origin: String,
     pub account_target: String,
-    pub time_span: Option<String>,
     pub date: Option<String>,
     pub duration: Option<u32>,
     pub offset: Option<i32>,
@@ -53,7 +51,6 @@ impl Default for StartTimeEntery {
             headline: String::new(),
             account_origin: "FreeTime".to_string(),
             account_target: String::new(),
-            time_span: None,
             date: None,
             duration: None,
             offset: None,
