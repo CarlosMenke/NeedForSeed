@@ -134,7 +134,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 model.editing_offset = Some({
                     EditingNewTimeEntery {
                         id: running_entery_id,
-                        offset: running_entery.offset.clone(),
+                        offset: running_entery.offset.unwrap_or(0),
                     }
                 });
             }
@@ -160,7 +160,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                     Some(e) => e.running_entery.get_mut(&editing_offset.id),
                     None => None,
                 } {
-                    entery.offset = offset.to_owned();
+                    entery.offset = Some(offset.to_owned());
                 }
             }
             log!("{:#?}", &model.running_entery);
