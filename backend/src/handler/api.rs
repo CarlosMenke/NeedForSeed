@@ -132,7 +132,7 @@ pub async fn set_time_entery_stop(
 pub async fn set_time_entery_kill(
     payload: web::Json<StopLedgerTimeEntery>,
 ) -> Result<web::Json<ResponseStatus>, ServiceError> {
-    debug!("Stop running Time Entery {:#?}", payload.new_entery);
+    debug!("Kill running Time Entery {:#?}", payload.new_entery);
     utils::ledger_kill_time_entery(payload.remove_line.to_owned())?;
     return Ok(web::Json(ResponseStatus { status: 0 }));
 }

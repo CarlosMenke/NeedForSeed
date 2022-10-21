@@ -75,8 +75,10 @@ pub fn ledger_start_time_entery(
 ) -> Result<String, ServiceError> {
     println!("{:?}", start_entery.headline);
     let dt = chrono::Local::now();
-    let minutes_count =
-        i64::from(dt.hour() * 60 + dt.minute()) - i64::from(start_entery.offset.unwrap_or(0));
+    let minutes_count = (i64::from(dt.hour() * 60 + dt.minute())
+        - i64::from(start_entery.offset.unwrap_or(0))
+        + 24 * 60)
+        % (24 * 60);
     let chrono_date = chrono::Local::now();
     let date = format!(
         "{:?}/{:?}/{:02}",
@@ -181,17 +183,22 @@ pub fn ledger_stop_time_entery(
 pub fn ledger_create_time_entery(
     start_entery: shared::models::NewTimeEntery,
 ) -> Result<String, ServiceError> {
+    let offset_end = start_entery.offset.unwrap_or(0);
     let chrono_date = chrono::Local::now();
-    let stop_minute: u32 = chrono::Local::now().hour() * 60 + chrono::Local::now().minute();
+    let stop_minute: i64 =
+        (i64::from(chrono::Local::now().hour() * 60 + chrono::Local::now().minute())
+            + offset_end as i64)
+            % (24 * 60);
     let date_now = format!(
         "{:?}/{:?}/{:02}",
         chrono_date.year(),
         chrono_date.month(),
         chrono_date.day()
     );
-    let start_minute: u32 = stop_minute - start_entery.duration; //TODO adjust
+    let start_minute: i64 =
+        (stop_minute - start_entery.duration as i64 - offset_end as i64 + 24 * 60) % (24 * 60); //TODO adjust
     let time_span = format!(
-        "{:02}:{:02} - {:02}:{:02}",
+        "; {:02}:{:02} - {:02}:{:02}",
         start_minute / 60,
         start_minute % 60,
         stop_minute / 60,
@@ -202,12 +209,8 @@ pub fn ledger_create_time_entery(
         None => &date_now,
     };
 
-    let mut offset = 0;
-    if start_entery.duration > stop_minute {
-        offset += 60 * 24;
-    }
     let duration = match &start_entery.offset {
-        Some(o) => i64::from(start_entery.duration) + i64::from(*o) + offset,
+        Some(o) => (i64::from(start_entery.duration) + i64::from(*o) + 24 * 60) % (24 * 60),
         None => start_entery.duration as i64,
     };
 
