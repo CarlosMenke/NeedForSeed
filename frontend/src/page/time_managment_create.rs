@@ -72,6 +72,7 @@ pub enum Msg {
     FetchedSuggestion(fetch::Result<shared::models::ResponseBTreeMap>),
     FetchedRunningEntery(fetch::Result<shared::models::ResponseRunningLedgerTimeEntery>),
     FetchedStartTimeEntery(fetch::Result<shared::models::ResponseStatus>),
+    FetchedKillTimeEntery(fetch::Result<shared::models::ResponseStatus>),
 
     SaveNewEnteryHeadline(String),
     SaveNewEnteryTarget(String),
@@ -86,6 +87,7 @@ pub enum Msg {
 
     StartTimeEntery,
     StopTimeEntery(RunningEnteryId),
+    KillTimeEntery(RunningEnteryId),
 }
 // ------ ------
 //     Urls
@@ -214,7 +216,23 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 }
             });
         }
-        Msg::FetchedStartTimeEntery(Ok(_response_data)) => {
+        Msg::KillTimeEntery(remove_line) => {
+            orders.skip().perform_cmd({
+                let token = model.ctx.clone().unwrap().token;
+                let stop_entery = shared::models::StopLedgerTimeEntery {
+                    remove_line,
+                    new_entery: shared::models::NewTimeEntery::default(),
+                };
+                log!(stop_entery);
+                async {
+                    Msg::FetchedKillTimeEntery(
+                        api::requests::kill_time_entery(token, stop_entery).await,
+                    )
+                }
+            });
+        }
+        Msg::FetchedStartTimeEntery(Ok(_response_data))
+        | Msg::FetchedKillTimeEntery(Ok(_response_data)) => {
             model.start_entery = shared::models::StartTimeEntery::default();
             orders.skip().perform_cmd({
                 let token = model.ctx.clone().unwrap().token;
@@ -232,7 +250,8 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         }
         Msg::FetchedSuggestion(Err(fetch_error))
         | Msg::FetchedRunningEntery(Err(fetch_error))
-        | Msg::FetchedStartTimeEntery(Err(fetch_error)) => {
+        | Msg::FetchedStartTimeEntery(Err(fetch_error))
+        | Msg::FetchedKillTimeEntery(Err(fetch_error)) => {
             log!("Fetch error:", fetch_error);
             orders.skip();
         }
@@ -378,6 +397,10 @@ fn view_runing_enteries(
                 }
                 _ => label![entery.offset.clone()],
             },
+        ],
+        button![
+            "kill",
+            ev(Ev::Click, enc!((id) move |_| Msg::KillTimeEntery(id)))
         ],
         button![
             "Stop",
