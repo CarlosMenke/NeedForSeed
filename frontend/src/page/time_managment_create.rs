@@ -316,6 +316,7 @@ pub fn view(model: &Model) -> Node<Msg> {
                 id!["suggestions_target"],
                 suggestions
                     .iter()
+                    .rev()
                     .map(|(content, _headline)| { option![content] })
             ],
             input![
