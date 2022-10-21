@@ -3,6 +3,7 @@ use seed::{prelude::*, *};
 
 //TODO switch from depth to this / last month / week ...
 const API_TARGET: &str = "finance";
+const DEPTHALL: &str = "all";
 const DEPTH4: &str = "4";
 const DEPTH2: &str = "2";
 const DEPTH3: &str = "3";
@@ -22,6 +23,7 @@ pub fn init(
 ) -> Model {
     let base_url = url.to_base_url();
     let depth = match url.next_path_part() {
+        Some(DEPTHALL) => Depth::DepthAll,
         Some(DEPTH4) => Depth::Depth4,
         Some(DEPTH2) => Depth::Depth2,
         Some(DEPTH3) => Depth::Depth3,
@@ -78,6 +80,7 @@ pub struct Model {
 
 #[derive(Clone)]
 enum Depth {
+    DepthAll,
     Depth4,
     Depth2,
     Depth3,
@@ -85,6 +88,7 @@ enum Depth {
 impl Depth {
     fn str(self) -> String {
         match self {
+            Depth::DepthAll => DEPTHALL.to_string(),
             Depth::Depth4 => DEPTH4.to_string(),
             Depth::Depth2 => DEPTH2.to_string(),
             Depth::Depth3 => DEPTH3.to_string(),
@@ -139,6 +143,11 @@ impl<'a> Urls<'a> {
     fn depth4(self, time: Timeframe) -> Url {
         self.base_url()
             .add_path_part(DEPTH4)
+            .add_path_part(time.str())
+    }
+    fn depthall(self, time: Timeframe) -> Url {
+        self.base_url()
+            .add_path_part(DEPTHALL)
             .add_path_part(time.str())
     }
     fn week(self, depth: Depth) -> Url {
@@ -202,15 +211,6 @@ pub fn view(model: &Model) -> Node<Msg> {
         None => "".to_string(),
     };
     let (depth, link) = match &model.depth {
-        Depth::Depth4 => (
-            DEPTH4,
-            a![
-                "Switch to depth 2",
-                attrs! {
-                    At::Href => Urls::new(&model.base_url).depth2(model.timeframe.clone())
-                }
-            ],
-        ),
         Depth::Depth2 => (
             DEPTH2,
             a![
@@ -226,6 +226,24 @@ pub fn view(model: &Model) -> Node<Msg> {
                 "Switch to depth 4",
                 attrs! {
                     At::Href => Urls::new(&model.base_url).depth4(model.timeframe.clone())
+                }
+            ],
+        ),
+        Depth::Depth4 => (
+            DEPTH4,
+            a![
+                "Switch to depth all",
+                attrs! {
+                    At::Href => Urls::new(&model.base_url).depthall(model.timeframe.clone())
+                }
+            ],
+        ),
+        Depth::DepthAll => (
+            DEPTHALL,
+            a![
+                "Switch to depth 2",
+                attrs! {
+                    At::Href => Urls::new(&model.base_url).depth2(model.timeframe.clone())
                 }
             ],
         ),
