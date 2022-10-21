@@ -126,3 +126,13 @@ pub async fn set_time_entery_stop(
     utils::ledger_stop_time_entery(&payload)?;
     return Ok(web::Json(ResponseStatus { status: 0 }));
 }
+
+/// kill Time entery
+#[has_permissions("SET_LEDGER_INFO")]
+pub async fn set_time_entery_kill(
+    payload: web::Json<StopLedgerTimeEntery>,
+) -> Result<web::Json<ResponseStatus>, ServiceError> {
+    debug!("Stop running Time Entery {:#?}", payload.new_entery);
+    utils::ledger_kill_time_entery(payload.remove_line.to_owned())?;
+    return Ok(web::Json(ResponseStatus { status: 0 }));
+}

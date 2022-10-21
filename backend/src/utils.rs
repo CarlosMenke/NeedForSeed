@@ -69,6 +69,7 @@ pub fn ledger_time_content() -> Result<BTreeMap<String, String>, ServiceError> {
 }
 
 //TODO find better return type
+/// Starts time Entery in ledger time File.
 pub fn ledger_start_time_entery(
     start_entery: shared::models::StartTimeEntery,
 ) -> Result<String, ServiceError> {
@@ -99,6 +100,17 @@ pub fn ledger_start_time_entery(
         .open(PATH_TIME_SPEND)?
         .write_all(format!("{}\n", entery).as_bytes())?;
     return Ok(entery.to_string());
+}
+
+///Remove started time File
+pub fn ledger_kill_time_entery(remove_line: String) -> Result<String, ServiceError> {
+    let ledger = fs::read_to_string(PATH_TIME_SPEND).unwrap();
+    fs::File::create(PATH_TIME_SPEND).unwrap().write(
+        ledger
+            .replace(&format!("{}\n", &remove_line), "")
+            .as_bytes(),
+    )?;
+    Ok(remove_line)
 }
 
 /// It returns all found started enterys in the ledger file for time_spend.
@@ -278,5 +290,20 @@ mod tests {
                     .as_bytes(),
             )
             .unwrap();
+    }
+
+    #[actix_web::test]
+    async fn test_ledger_kill_time_entery() {
+        let start_entery = shared::models::StartTimeEntery {
+            headline: "Carlos is programming".to_owned(),
+            account_origin: "FreeTime".to_owned(),
+            account_target: "EducationRust".to_owned(),
+            duration: None,
+            date: None,
+            offset: None,
+        };
+        let remove_line = ledger_start_time_entery(start_entery).unwrap();
+        //TODO find error
+        assert!(ledger_kill_time_entery(remove_line).is_ok());
     }
 }
