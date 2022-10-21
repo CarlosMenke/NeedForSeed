@@ -25,7 +25,7 @@ pub struct ResponseBTreeMap {
     pub map: BTreeMap<String, String>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct NewTimeEntery {
     pub headline: String,
     pub account_origin: String,
