@@ -245,6 +245,7 @@ fn view_login(login_data: &auth::UserLogin) -> Node<Msg> {
         St::FontWeight => 600,
         St::BorderRadius => px(5),
         St::Cursor => "Pointer",
+        St::Border => "0",
     };
     let input = style! {
         St::Display => "block",
@@ -256,6 +257,7 @@ fn view_login(login_data: &auth::UserLogin) -> Node<Msg> {
         St::MarginTop => px(8);
         St::FontSize => px(14),
         St::FontWeight => 300,
+        St::Border => "0",
     };
     let lable = style! {
         St::Display => "block",
@@ -288,8 +290,10 @@ fn view_login(login_data: &auth::UserLogin) -> Node<Msg> {
     };
     let body = style! {
         St::BackgroundColor => "#080710",
-        St::Height => "2000px",
-        St::Width => "1000px",
+        St::MinHeight => "2000px",
+        St::MinWidth => "1000px",
+        St::Height => "100%",
+        St::Width => "100%",
         St::Position => "absolute",
     };
     let background = style! {
