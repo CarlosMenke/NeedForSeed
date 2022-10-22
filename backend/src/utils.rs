@@ -214,13 +214,16 @@ pub fn ledger_create_time_entery(
         None => start_entery.duration as i64,
     };
 
+    // calculate number of tabs
+    let tabs = "\t".repeat(11 - (start_entery.account_target.chars().count() / 4));
     let entery = &format!(
-        "\n{}\n{}\t\t\t{}\n \t{}\n \t{}\t\t\t\t\t\t\t{}m\n",
+        "\n{}\n{}\t\t\t{}\n \t{}\n \t{}{}{}m\n",
         time_span,
         date,
         start_entery.headline,
         start_entery.account_origin,
         start_entery.account_target,
+        tabs,
         duration,
     );
     fs::OpenOptions::new()
