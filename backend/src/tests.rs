@@ -13,7 +13,7 @@ mod unit_tests {
     use crate::db;
     use crate::handler::*;
     use crate::models;
-    use crate::utils;
+    use crate::utils::{self, ledger_create_finance_entery};
     use crate::utils::{ledger_get_running_time_entery, ledger_start_time_entery};
     use shared::auth::UserLogin;
     use shared::models::*;
@@ -280,6 +280,47 @@ mod unit_tests {
                     .replace(&utils::ledger_create_time_entery(new_entery).unwrap(), "")
                     .as_bytes(),
             )
+            .unwrap();
+    }
+
+    #[actix_web::test]
+    async fn test_set_finance_create() {
+        let token_str = create_token(
+            "Carlos-test".to_string(),
+            Vec::from(["SET_LEDGER_INFO".to_string()]),
+        )
+        .await
+        .expect("Failed to unwrap Token");
+        let new_entery = shared::models::NewFinanceEntery {
+            headline: "Carlos is programming".to_owned(),
+            account_origin: "FreeTime".to_owned(),
+            account_target: "Girokonto:N2".to_owned(),
+            ammount: 10 as f32,
+            date: None,
+        };
+
+        let auth = HttpAuthentication::bearer(validator);
+        let app = test::init_service(
+            App::new()
+                .wrap(auth)
+                .route("/", web::post().to(api::set_finance_entery_create)),
+        )
+        .await;
+        let req = test::TestRequest::post()
+            .uri("/")
+            .insert_header((AUTHORIZATION, format!("Bearer {}", token_str)))
+            .set_json(&new_entery)
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        println!("Valid Request {:?}", resp);
+        assert!(resp.status().is_success());
+        let remove_line = ledger_create_finance_entery(new_entery).unwrap();
+
+        //remove added line
+        let ledger = fs::read_to_string(utils::PATH_FINANCE).unwrap();
+        fs::File::create(utils::PATH_FINANCE)
+            .unwrap()
+            .write(ledger.replace(&format!("{}", &remove_line), "").as_bytes())
             .unwrap();
     }
 }

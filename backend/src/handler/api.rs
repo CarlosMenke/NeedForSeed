@@ -136,3 +136,14 @@ pub async fn set_time_entery_kill(
     utils::ledger_kill_time_entery(payload.remove_line.to_owned())?;
     return Ok(web::Json(ResponseStatus { status: 0 }));
 }
+
+/// LEDGER FINANCE INTERACTION ///
+/// kill Time entery
+#[has_permissions("SET_LEDGER_INFO")]
+pub async fn set_finance_entery_create(
+    payload: web::Json<NewFinanceEntery>,
+) -> Result<web::Json<ResponseStatus>, ServiceError> {
+    debug!("Create new Finacen Entery {:#?}", payload.to_owned());
+    utils::ledger_create_finance_entery(payload.to_owned())?;
+    return Ok(web::Json(ResponseStatus { status: 0 }));
+}
