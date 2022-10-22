@@ -12,6 +12,7 @@ use std::io::Write;
 use crate::errors::ServiceError;
 
 pub const PATH_TIME_SPEND: &str = "./files/time_spend.dat";
+pub const PATH_FINANCE: &str = "./files/gesamt.dat";
 
 ///Hashes password with the same settings that are used in data table
 pub fn hash_password(password: &str) -> Result<String, ServiceError> {
@@ -233,6 +234,39 @@ pub fn ledger_create_time_entery(
     Ok(entery.to_string())
 }
 
+pub fn ledger_create_finance_entery(
+    new_entery: shared::models::NewFinanceEntery,
+) -> Result<String, ServiceError> {
+    let chrono_date = chrono::Local::now();
+    let date_now = format!(
+        "{:?}/{:?}/{:02}",
+        chrono_date.year(),
+        chrono_date.month(),
+        chrono_date.day()
+    );
+    let date = match &new_entery.date {
+        Some(d) => d,
+        None => &date_now,
+    };
+    // calculate number of tabs
+    let tabs = "\t".repeat(11 - (new_entery.account_target.chars().count() / 4));
+
+    let entery = &format!(
+        "\n{}\t\t\t{}\n \t{}\n \t{}{}{}€\n",
+        date,
+        &new_entery.headline,
+        &new_entery.account_origin,
+        &new_entery.account_target,
+        tabs,
+        &new_entery.ammount,
+    );
+    fs::OpenOptions::new()
+        .append(true)
+        .open(PATH_FINANCE)?
+        .write_all(entery.as_bytes())?;
+    Ok(entery.to_string())
+}
+
 #[cfg(test)]
 mod tests {
     use shared::models::NewTimeEntery;
@@ -311,5 +345,29 @@ mod tests {
         let remove_line = ledger_start_time_entery(start_entery).unwrap();
         //TODO find error
         assert!(ledger_kill_time_entery(remove_line).is_ok());
+    }
+
+    #[actix_web::test]
+    async fn test_ledger_create_finance_entery() {
+        let mut new_entery = shared::models::NewFinanceEntery {
+            headline: "Carlos is programming".to_owned(),
+            account_origin: "FreeTime".to_owned(),
+            account_target: "Girokonto:N2".to_owned(),
+            ammount: 10 as f32,
+            date: None,
+        };
+        let mut remove_line = ledger_create_finance_entery(new_entery.clone()).unwrap();
+        for _i in 1..1 {
+            new_entery.account_target += "6";
+            remove_line = ledger_create_finance_entery(new_entery.clone()).unwrap();
+        }
+        //TODO find error
+        assert!(ledger_kill_time_entery(remove_line.clone()).is_ok());
+        //remove added line
+        let ledger = fs::read_to_string(PATH_FINANCE).unwrap();
+        fs::File::create(PATH_FINANCE)
+            .unwrap()
+            .write(ledger.replace(&format!("{}", &remove_line), "").as_bytes())
+            .unwrap();
     }
 }

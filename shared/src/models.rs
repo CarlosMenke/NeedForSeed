@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
+///LOGIN STRUCTS
 #[derive(Serialize, Deserialize)]
 pub struct NewUser {
     pub username: String,
@@ -21,8 +22,8 @@ pub struct ResponseHtml {
 
 //TODO rename to better name, like ResponseTimeSuggestion
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct ResponseBTreeMap {
-    pub map: BTreeMap<String, String>,
+pub struct HeadlineSuggestion {
+    pub suggestions: BTreeMap<String, String>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
@@ -72,4 +73,14 @@ pub struct ResponseRunningLedgerTimeEntery {
 pub struct StopLedgerTimeEntery {
     pub new_entery: NewTimeEntery,
     pub remove_line: String,
+}
+
+///Section with Finance Enterys
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+pub struct NewFinanceEntery {
+    pub headline: String,
+    pub account_origin: String,
+    pub account_target: String,
+    pub ammount: f32,
+    pub date: Option<String>,
 }
