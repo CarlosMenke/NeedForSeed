@@ -52,7 +52,7 @@ pub fn init(
 pub struct Model {
     _base_url: Url,
     ctx: Option<shared::auth::UserLoginResponse>,
-    suggestions: Option<shared::models::ResponseBTreeMap>,
+    suggestions: Option<shared::models::HeadlineSuggestion>,
     start_entery: shared::models::StartTimeEntery,
     running_entery: Option<shared::models::ResponseRunningLedgerTimeEntery>,
     editing_offset: Option<EditingNewTimeEntery>,
@@ -69,7 +69,7 @@ struct Refs {
 pub enum Msg {
     GetSuggestion,
 
-    FetchedSuggestion(fetch::Result<shared::models::ResponseBTreeMap>),
+    FetchedSuggestion(fetch::Result<shared::models::HeadlineSuggestion>),
     FetchedRunningEntery(fetch::Result<shared::models::ResponseRunningLedgerTimeEntery>),
     FetchedStartTimeEntery(fetch::Result<shared::models::ResponseStatus>),
     FetchedKillTimeEntery(fetch::Result<shared::models::ResponseStatus>),
@@ -263,7 +263,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
 
 pub fn view(model: &Model) -> Node<Msg> {
     let suggestions = match model.suggestions.clone() {
-        Some(m) => m.map,
+        Some(m) => m.suggestions,
         None => BTreeMap::new(),
     };
     let running_entery = match model.running_entery.clone() {
