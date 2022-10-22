@@ -70,13 +70,14 @@ pub async fn get_html(
     Ok(web::Json(ResponseHtml { html: file }))
 }
 
+/// LEDGER TIME INTERACTION ///
 /// get Headline and Content BTreeMap from Ledger Music
 #[has_permissions("GET_LEDGER_INFO")]
 //TODO make the function more generic in the future
-pub async fn get_time_suggetstions() -> Result<web::Json<ResponseBTreeMap>, ServiceError> {
+pub async fn get_time_suggetstions() -> Result<web::Json<HeadlineSuggestion>, ServiceError> {
     debug!("Get Ledger Time Suggestion");
-    Ok(web::Json(ResponseBTreeMap {
-        map: utils::ledger_time_content()?,
+    Ok(web::Json(HeadlineSuggestion {
+        suggestions: utils::ledger_time_content()?,
     }))
 }
 
