@@ -35,8 +35,8 @@ pub fn verify(password_hash: &str, password: &str) -> Result<bool, ServiceError>
 
 //TODO make function more generic: give the file path
 /// converts the ledger file for Music tracking and extracts the Heandline and the buttom content
-pub fn ledger_time_content() -> Result<BTreeMap<String, String>, ServiceError> {
-    let mut content_headline = BTreeMap::new();
+pub fn ledger_time_content() -> Result<Vec<shared::models::TimeEnterySuggestion>, ServiceError> {
+    let mut content_headline = Vec::new();
 
     let ledger = fs::read_to_string(PATH_TIME_SPEND)?;
     let mut pos: i32 = 0; //log line number of entery
@@ -56,12 +56,13 @@ pub fn ledger_time_content() -> Result<BTreeMap<String, String>, ServiceError> {
         } else if pos == 1 && tracking {
             pos = 0;
             tracking = false;
-            content_headline.insert(
-                remove_first_tab
-                    .replace_all(&remove_time.replace(line, "").to_string(), "")
-                    .to_string(),
-                headline.clone(),
-            );
+            let account_target = remove_first_tab
+                .replace_all(&remove_time.replace(line, "").to_string(), "")
+                .to_string();
+            content_headline.push(shared::models::TimeEnterySuggestion {
+                headline: headline.clone(),
+                account_target,
+            });
         } else {
             pos += 1;
         }

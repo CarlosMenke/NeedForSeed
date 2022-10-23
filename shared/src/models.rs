@@ -23,7 +23,13 @@ pub struct ResponseHtml {
 //TODO rename to better name, like ResponseTimeSuggestion
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct HeadlineSuggestion {
-    pub suggestions: BTreeMap<String, String>,
+    pub suggestions: Vec<TimeEnterySuggestion>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+pub struct TimeEnterySuggestion {
+    pub headline: String,
+    pub account_target: String,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
@@ -83,4 +89,12 @@ pub struct NewFinanceEntery {
     pub account_target: String,
     pub ammount: f32,
     pub date: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+pub struct FinanceSuggetstion {
+    pub headline: BTreeMap<String, NewFinanceEntery>,
+    pub account_origin: BTreeMap<String, NewFinanceEntery>,
+    pub account_target: BTreeMap<String, NewFinanceEntery>,
+    pub amount: BTreeMap<i32, NewFinanceEntery>,
 }

@@ -2,6 +2,7 @@ use crate::api;
 use enclose::enc;
 use fuzzy_matcher::skim::SkimMatcherV2;
 use fuzzy_matcher::FuzzyMatcher;
+use itertools::Itertools;
 use seed::{prelude::*, *};
 use std::collections::BTreeMap;
 use web_sys::HtmlInputElement;
@@ -264,7 +265,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
 pub fn view(model: &Model) -> Node<Msg> {
     let suggestions = match model.suggestions.clone() {
         Some(m) => m.suggestions,
-        None => BTreeMap::new(),
+        None => Vec::new(),
     };
     let running_entery = match model.running_entery.clone() {
         Some(m) => m.running_entery,
@@ -296,11 +297,15 @@ pub fn view(model: &Model) -> Node<Msg> {
                 id!["suggestions_origin"],
                 suggestions
                     .iter()
-                    .filter(|(content, _headline)| matcher
-                        .fuzzy_match(content, &model.start_entery.account_target.replace(" ", ""))
+                    .rev()
+                    .filter(|s| matcher
+                        .fuzzy_match(
+                            &s.account_target,
+                            &model.start_entery.account_target.replace(" ", "")
+                        )
                         .unwrap_or(0)
                         > threshhold)
-                    .map(|(_content, headline)| { option![headline] })
+                    .map(|s| { option![s.headline.clone()] })
             ],
             input![
                 C!["input-content_target"],
@@ -316,8 +321,9 @@ pub fn view(model: &Model) -> Node<Msg> {
                 id!["suggestions_target"],
                 suggestions
                     .iter()
+                    .unique_by(|s| &s.account_target)
                     .rev()
-                    .map(|(content, _headline)| { option![content] })
+                    .map(|s| { option![s.account_target.clone()] })
             ],
             input![
                 C!["input-content_duration"],
