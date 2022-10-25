@@ -179,6 +179,9 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             });
         }
         Msg::StartTimeEntery => {
+            if &model.start_entery.account_target == "" {
+                return;
+            }
             orders.skip().perform_cmd({
                 let token = model.ctx.clone().unwrap().token;
                 let mut start_entery = model.start_entery.clone();
@@ -287,7 +290,7 @@ pub fn view(model: &Model) -> Node<Msg> {
                 C!["input-content_origin"],
                 input_ev(Ev::Input, Msg::SaveNewEnteryHeadline),
                 attrs! {
-                    At::Placeholder => "Origin",
+                    At::Placeholder => "Headline",
                     At::AutoFocus => true.as_at_value();
                     At::Value => &model.start_entery.headline,
                     At::List => "suggestions_origin",
@@ -297,6 +300,7 @@ pub fn view(model: &Model) -> Node<Msg> {
                 id!["suggestions_origin"],
                 suggestions
                     .iter()
+                    .unique_by(|s| &s.account_target)
                     .rev()
                     .filter(|s| matcher
                         .fuzzy_match(
