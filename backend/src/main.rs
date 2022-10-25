@@ -92,6 +92,10 @@ async fn main() -> std::io::Result<()> {
                                 web::post().to(api::set_time_entery_kill),
                             )
                             .route(
+                                "get_finance_suggestions.json",
+                                web::post().to(api::set_finance_entery_create),
+                            )
+                            .route(
                                 "set_finance_entery_create.json",
                                 web::post().to(api::set_finance_entery_create),
                             ),

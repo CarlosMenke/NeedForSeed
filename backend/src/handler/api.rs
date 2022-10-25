@@ -75,7 +75,7 @@ pub async fn get_html(
 #[has_permissions("GET_LEDGER_INFO")]
 //TODO make the function more generic in the future
 pub async fn get_time_suggetstions() -> Result<web::Json<HeadlineSuggestion>, ServiceError> {
-    debug!("Get Ledger Time Suggestion");
+    debug!("Get Ledger Time Suggestion.");
     Ok(web::Json(HeadlineSuggestion {
         suggestions: utils::ledger_time_suggestion()?,
     }))
@@ -139,7 +139,7 @@ pub async fn set_time_entery_kill(
 }
 
 /// LEDGER FINANCE INTERACTION ///
-/// kill Time entery
+/// create ledger finance entery
 #[has_permissions("SET_LEDGER_INFO")]
 pub async fn set_finance_entery_create(
     payload: web::Json<NewFinanceEntery>,
@@ -147,4 +147,14 @@ pub async fn set_finance_entery_create(
     debug!("Create new Finacen Entery {:#?}", payload.to_owned());
     utils::ledger_create_finance_entery(payload.to_owned())?;
     return Ok(web::Json(ResponseStatus { status: 0 }));
+}
+
+/// get suggestions for ledger finance entery
+#[has_permissions("GET_LEDGER_INFO")]
+pub async fn get_finance_entery_create() -> Result<web::Json<FinanceEnterySuggestion>, ServiceError>
+{
+    debug!("Get Ledger Finance Suggestion.");
+    Ok(web::Json(FinanceEnterySuggestion {
+        suggestions: utils::ledger_finance_suggestion()?,
+    }))
 }

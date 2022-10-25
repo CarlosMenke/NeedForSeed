@@ -93,5 +93,5 @@ pub struct NewFinanceEntery {
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct FinanceEnterySuggestion {
-    pub suggestion: Vec<NewFinanceEntery>,
+    pub suggestions: Vec<NewFinanceEntery>,
 }
