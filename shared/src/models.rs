@@ -92,9 +92,6 @@ pub struct NewFinanceEntery {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
-pub struct FinanceSuggetstion {
-    pub headline: BTreeMap<String, NewFinanceEntery>,
-    pub account_origin: BTreeMap<String, NewFinanceEntery>,
-    pub account_target: BTreeMap<String, NewFinanceEntery>,
-    pub amount: BTreeMap<i32, NewFinanceEntery>,
+pub struct FinanceEnterySuggestion {
+    pub suggestion: Vec<NewFinanceEntery>,
 }
