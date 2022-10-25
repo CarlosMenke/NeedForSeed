@@ -6,6 +6,7 @@ const API_TARGET: &str = "timeManagment";
 const DEPTH2: &str = "2";
 const DEPTH3: &str = "3";
 const DEPTHALL: &str = "all";
+const DAY: &str = "day";
 const WEEK: &str = "week";
 const MONTH: &str = "month";
 const YEAR: &str = "year";
@@ -32,6 +33,7 @@ pub fn init(
         _ => Depth::Depth3,
     };
     let timeframe = match url.next_path_part() {
+        Some(DAY) => Timeframe::Day,
         Some(WEEK) => Timeframe::Week,
         Some(MONTH) => Timeframe::Month,
         Some(YEAR) => Timeframe::Year,
@@ -94,6 +96,7 @@ impl Depth {
 
 #[derive(Debug, Clone)]
 enum Timeframe {
+    Day,
     Week,
     Month,
     Year,
@@ -102,6 +105,7 @@ enum Timeframe {
 impl Timeframe {
     fn str(self) -> String {
         match self {
+            Timeframe::Day => DAY.to_string(),
             Timeframe::Week => WEEK.to_string(),
             Timeframe::Month => MONTH.to_string(),
             Timeframe::Year => YEAR.to_string(),
@@ -140,6 +144,11 @@ impl<'a> Urls<'a> {
         self.base_url()
             .add_path_part(DEPTHALL)
             .add_path_part(time.str())
+    }
+    fn day(self, depth: Depth) -> Url {
+        self.base_url()
+            .add_path_part(depth.str())
+            .add_path_part(DAY)
     }
     fn week(self, depth: Depth) -> Url {
         self.base_url()
@@ -231,6 +240,15 @@ pub fn view(model: &Model) -> Node<Msg> {
         ),
     };
     let (timeframe, link_timeframe) = match &model.timeframe {
+        Timeframe::Day => (
+            DAY,
+            a![
+                "Switch to Week",
+                attrs! {
+                    At::Href => Urls::new(&model.base_url).week(model.depth.clone())
+                }
+            ],
+        ),
         Timeframe::Week => (
             WEEK,
             a![
@@ -261,9 +279,9 @@ pub fn view(model: &Model) -> Node<Msg> {
         Timeframe::All => (
             ALL,
             a![
-                "Switch to week",
+                "Switch to Day",
                 attrs! {
-                    At::Href => Urls::new(&model.base_url).week(model.depth.clone())
+                    At::Href => Urls::new(&model.base_url).day(model.depth.clone())
                 }
             ],
         ),
