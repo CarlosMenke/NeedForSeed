@@ -77,7 +77,7 @@ pub async fn get_html(
 pub async fn get_time_suggetstions() -> Result<web::Json<HeadlineSuggestion>, ServiceError> {
     debug!("Get Ledger Time Suggestion");
     Ok(web::Json(HeadlineSuggestion {
-        suggestions: utils::ledger_time_content()?,
+        suggestions: utils::ledger_time_suggestion()?,
     }))
 }
 

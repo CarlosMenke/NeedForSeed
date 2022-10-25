@@ -34,8 +34,8 @@ pub fn verify(password_hash: &str, password: &str) -> Result<bool, ServiceError>
 }
 
 //TODO make function more generic: give the file path
-/// converts the ledger file for Music tracking and extracts the Heandline and the buttom content
-pub fn ledger_time_content() -> Result<Vec<shared::models::TimeEnterySuggestion>, ServiceError> {
+/// converts the ledger file for Time tracking and extracts the Heandline and the target account
+pub fn ledger_time_suggestion() -> Result<Vec<shared::models::TimeEnterySuggestion>, ServiceError> {
     let mut content_headline = Vec::new();
 
     let ledger = fs::read_to_string(PATH_TIME_SPEND)?;
