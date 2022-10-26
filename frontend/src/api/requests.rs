@@ -21,7 +21,7 @@ pub async fn get_login(
 }
 
 /// this function returns raw html for finance and music summary
-pub async fn get_html_timepoint(
+pub async fn get_html(
     token: String,
     target: String,
     depth: String,
@@ -31,25 +31,6 @@ pub async fn get_html_timepoint(
     Request::new(get_api_url(String::from(format!(
         "api/auth/get_{}/depth_{}/timeframe_{}/timepoint_{}.json",
         target, depth, timeframe, timepoint
-    ))))
-    .header(Header::bearer(token))
-    .fetch()
-    .await?
-    .check_status()?
-    .json()
-    .await
-}
-
-/// this function returns raw html for finance and music summary
-pub async fn get_html(
-    token: String,
-    target: String,
-    depth: String,
-    timeframe: String,
-) -> fetch::Result<shared::models::ResponseHtml> {
-    Request::new(get_api_url(String::from(format!(
-        "api/auth/get_{}/depth_{}/timeframe_{}.json",
-        target, depth, timeframe
     ))))
     .header(Header::bearer(token))
     .fetch()
