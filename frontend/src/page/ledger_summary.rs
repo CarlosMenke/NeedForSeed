@@ -2,7 +2,6 @@ use crate::api;
 use seed::{prelude::*, *};
 
 // TODO change it from depth to depth for thime (this and last)
-const API_TARGET: &str = "timeManagment";
 const DEPTH2: &str = "2";
 const DEPTH3: &str = "3";
 const DEPTHALL: &str = "all";
@@ -28,6 +27,7 @@ pub fn init(
     mut url: Url,
     orders: &mut impl Orders<Msg>,
     ctx: Option<shared::auth::UserLoginResponse>,
+    api_target: String,
 ) -> Model {
     let base_url = url.to_base_url();
     let depth = match url.next_path_part() {
@@ -69,14 +69,15 @@ pub fn init(
     };
     orders.skip().perform_cmd({
         let token = ctx.clone().unwrap().token;
+        let api_target_clone = api_target.clone();
         let depth_str = depth.clone().str();
         let timeframte_str = timeframe.clone().str();
         let timepoint_str = timepoint.clone().str();
         async {
             Msg::FetchedSummary(
-                api::requests::get_html_timepoint(
+                api::requests::get_html(
                     token,
-                    API_TARGET.to_string(),
+                    api_target_clone,
                     depth_str,
                     timeframte_str,
                     timepoint_str,
@@ -91,7 +92,8 @@ pub fn init(
         depth,
         timeframe,
         timepoint,
-        finance_summary: None,
+        summary: None,
+        api_target,
     }
 }
 
@@ -105,7 +107,8 @@ pub struct Model {
     timeframe: Timeframe,
     timepoint: Timepoint,
     ctx: Option<shared::auth::UserLoginResponse>,
-    finance_summary: Option<shared::models::ResponseHtml>,
+    summary: Option<shared::models::ResponseHtml>,
+    api_target: String,
 }
 
 // ------ Frequency ------
@@ -291,14 +294,15 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         Msg::GetSummary => {
             orders.skip().perform_cmd({
                 let token = model.ctx.clone().unwrap().token;
+                let api_target_clone = model.api_target.clone();
                 let depth_str = model.depth.clone().str();
                 let timeframe_str = model.timeframe.clone().str();
                 let timepoint_str = model.timepoint.clone().str();
                 async {
                     Msg::FetchedSummary(
-                        api::requests::get_html_timepoint(
+                        api::requests::get_html(
                             token,
-                            API_TARGET.to_string(),
+                            api_target_clone,
                             depth_str,
                             timeframe_str,
                             timepoint_str,
@@ -309,7 +313,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             });
         }
         Msg::FetchedSummary(Ok(response_data)) => {
-            model.finance_summary = Some(response_data);
+            model.summary = Some(response_data);
         }
         Msg::FetchedSummary(Err(fetch_error)) => {
             log!("Fetch error:", fetch_error);
@@ -322,7 +326,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
 // ------ ------
 
 pub fn view(model: &Model) -> Node<Msg> {
-    let finance_summary_html = match model.finance_summary.clone() {
+    let summary_html = match model.summary.clone() {
         Some(m) => m.html,
         None => "".to_string(),
     };
@@ -481,6 +485,6 @@ pub fn view(model: &Model) -> Node<Msg> {
         div![format!("Depth:  {}    ", depth), link,],
         div![format!("Timeframe:  {}    ", timeframe), link_timeframe,],
         div![format!("Timepoint:  {}    ", timepoint), link_timepoint,],
-        raw![&finance_summary_html]
+        raw![&summary_html]
     ]
 }

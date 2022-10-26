@@ -45,9 +45,7 @@ const TIMEMANAGMENT: &str = "TimeManagment";
 const TIMEMANAGMENTCREATE: &str = "TimeManagmentCreate";
 pub enum Page {
     Home,
-    Music(page::music::Model),
-    Finance(page::finance::Model),
-    TimeManagment(page::time_managment::Model),
+    LedgerSummary(page::ledger_summary::Model),
     TimeManagmentCreate(page::time_managment_create::Model),
     NotFound,
 }
@@ -58,20 +56,23 @@ impl Page {
         ctx: &Option<shared::auth::UserLoginResponse>,
     ) -> Self {
         match url.next_path_part() {
-            Some(MUSIC) => Self::Music(page::music::init(
+            Some(MUSIC) => Self::LedgerSummary(page::ledger_summary::init(
                 url,
-                &mut orders.proxy(Msg::MusicMsg),
+                &mut orders.proxy(Msg::LedgerSummaryMsg),
                 ctx.clone(),
+                "music".to_string().clone(),
             )),
-            Some(FINANCE) => Self::Finance(page::finance::init(
+            Some(FINANCE) => Self::LedgerSummary(page::ledger_summary::init(
                 url,
-                &mut orders.proxy(Msg::FinanceMsg),
+                &mut orders.proxy(Msg::LedgerSummaryMsg),
                 ctx.clone(),
+                "finance".to_string().clone(),
             )),
-            Some(TIMEMANAGMENT) => Self::TimeManagment(page::time_managment::init(
+            Some(TIMEMANAGMENT) => Self::LedgerSummary(page::ledger_summary::init(
                 url,
-                &mut orders.proxy(Msg::TimeManagmentMsg),
+                &mut orders.proxy(Msg::LedgerSummaryMsg),
                 ctx.clone(),
+                "timeManagment".to_string().clone(),
             )),
             Some(TIMEMANAGMENTCREATE) => {
                 Self::TimeManagmentCreate(page::time_managment_create::init(
@@ -92,14 +93,14 @@ impl Page {
 
 struct_urls!();
 impl<'a> Urls<'a> {
-    fn music(self) -> page::music::Urls<'a> {
-        page::music::Urls::new(self.base_url().add_path_part(MUSIC))
+    fn music(self) -> page::ledger_summary::Urls<'a> {
+        page::ledger_summary::Urls::new(self.base_url().add_path_part(MUSIC))
     }
-    fn finance(self) -> page::finance::Urls<'a> {
-        page::finance::Urls::new(self.base_url().add_path_part(FINANCE))
+    fn finance(self) -> page::ledger_summary::Urls<'a> {
+        page::ledger_summary::Urls::new(self.base_url().add_path_part(FINANCE))
     }
-    fn time_managment(self) -> page::time_managment::Urls<'a> {
-        page::time_managment::Urls::new(self.base_url().add_path_part(TIMEMANAGMENT))
+    fn ledger_summary(self) -> page::ledger_summary::Urls<'a> {
+        page::ledger_summary::Urls::new(self.base_url().add_path_part(TIMEMANAGMENT))
     }
     fn time_managment_create(self) -> Url {
         self.base_url().add_path_part(TIMEMANAGMENTCREATE)
@@ -113,9 +114,7 @@ pub enum Msg {
     UrlChanged(subs::UrlChanged),
     GoToUrl(Url),
     // ----- Page Msg
-    MusicMsg(page::music::Msg),
-    FinanceMsg(page::finance::Msg),
-    TimeManagmentMsg(page::time_managment::Msg),
+    LedgerSummaryMsg(page::ledger_summary::Msg),
     TimeManagmentCreateMsg(page::time_managment_create::Msg),
 
     SaveLoginUsername(String),
@@ -160,19 +159,9 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             orders.skip();
         }
         // ------- Page -------
-        Msg::MusicMsg(msg) => {
-            if let Page::Music(model) = &mut model.page {
-                page::music::update(msg, model, &mut orders.proxy(Msg::MusicMsg))
-            }
-        }
-        Msg::FinanceMsg(msg) => {
-            if let Page::Finance(model) = &mut model.page {
-                page::finance::update(msg, model, &mut orders.proxy(Msg::FinanceMsg))
-            }
-        }
-        Msg::TimeManagmentMsg(msg) => {
-            if let Page::TimeManagment(model) = &mut model.page {
-                page::time_managment::update(msg, model, &mut orders.proxy(Msg::TimeManagmentMsg))
+        Msg::LedgerSummaryMsg(msg) => {
+            if let Page::LedgerSummary(model) = &mut model.page {
+                page::ledger_summary::update(msg, model, &mut orders.proxy(Msg::LedgerSummaryMsg))
             }
         }
         Msg::TimeManagmentCreateMsg(msg) => {
@@ -198,10 +187,8 @@ fn view(model: &Model) -> Node<Msg> {
         IF!( model.ctx.is_none() => view_login(&model.login_data)),
         match &model.page {
             Page::Home => page::home::view(),
-            Page::Music(model) => page::music::view(&model).map_msg(Msg::MusicMsg),
-            Page::Finance(model) => page::finance::view(&model).map_msg(Msg::FinanceMsg),
-            Page::TimeManagment(model) =>
-                page::time_managment::view(&model).map_msg(Msg::TimeManagmentMsg),
+            Page::LedgerSummary(model) =>
+                page::ledger_summary::view(&model).map_msg(Msg::LedgerSummaryMsg),
             Page::TimeManagmentCreate(model) =>
                 page::time_managment_create::view(&model).map_msg(Msg::TimeManagmentCreateMsg),
             Page::NotFound => page::not_found::view(),
@@ -226,7 +213,7 @@ fn header(base_url: &Url) -> Node<Msg> {
             "Finance",
         ]],
         li![a![
-            attrs! { At::Href => Urls::new(base_url).time_managment().default() },
+            attrs! { At::Href => Urls::new(base_url).ledger_summary().default() },
             "Time Tracking",
         ]],
         li![a![
