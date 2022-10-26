@@ -57,16 +57,19 @@ pub async fn create_user(
 /// get Html files
 #[has_permissions("GET_LEDGER_INFO")]
 pub async fn get_html(
-    path: web::Path<(String, String, String)>,
+    path: web::Path<(String, String, String, String)>,
 ) -> Result<web::Json<ResponseHtml>, ServiceError> {
-    let (target, depth, timeframe) = path.into_inner();
+    let (target, depth, timeframe, timepoint) = path.into_inner();
     debug!(
-        "Get HTML function called for target: \t {:#?} \tdepth: \t{:#?} \ttimeframe: \t{:#?}",
-        &target, &depth, &timeframe
+        "Get HTML function called for target: \t {:#?} \tdepth: \t{:#?} \ttimeframe: \t{:#?}\ttimepoint: \t{:#?}",
+        &target, &depth, &timeframe, &timepoint
     );
     //TODO make path more general. right now, it only works, if cargo run is executed one dir above
     //main.rs
-    let file = fs::read_to_string(format!("./files/{}_{}_{}.html", target, depth, timeframe))?;
+    let file = fs::read_to_string(format!(
+        "./files/{}_{}_{}_{}.html",
+        target, depth, timeframe, timepoint
+    ))?;
     Ok(web::Json(ResponseHtml { html: file }))
 }
 

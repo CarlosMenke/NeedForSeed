@@ -11,6 +11,14 @@ const WEEK: &str = "week";
 const MONTH: &str = "month";
 const YEAR: &str = "year";
 const ALL: &str = "all";
+const NOW: &str = "0";
+const ONE: &str = "1";
+const TWO: &str = "2";
+const THREE: &str = "3";
+const FOUR: &str = "4";
+const FIVE: &str = "5";
+const SIX: &str = "6";
+const SEVEN: &str = "7";
 
 // ------ ------
 //     Init
@@ -44,14 +52,36 @@ pub fn init(
         }
         _ => Timeframe::All,
     };
+    let timepoint = match url.next_path_part() {
+        Some(NOW) => Timepoint::Now,
+        Some(ONE) => Timepoint::One,
+        Some(TWO) => Timepoint::Two,
+        Some(THREE) => Timepoint::Three,
+        Some(FOUR) => Timepoint::Four,
+        Some(FIVE) => Timepoint::Five,
+        Some(SIX) => Timepoint::Six,
+        Some(SEVEN) => Timepoint::Seven,
+        None => {
+            Urls::new(&base_url).default().go_and_replace();
+            Timepoint::One
+        }
+        _ => Timepoint::One,
+    };
     orders.skip().perform_cmd({
         let token = ctx.clone().unwrap().token;
         let depth_str = depth.clone().str();
         let timeframte_str = timeframe.clone().str();
+        let timepoint_str = timepoint.clone().str();
         async {
             Msg::FetchedSummary(
-                api::requests::get_html(token, API_TARGET.to_string(), depth_str, timeframte_str)
-                    .await,
+                api::requests::get_html_timepoint(
+                    token,
+                    API_TARGET.to_string(),
+                    depth_str,
+                    timeframte_str,
+                    timepoint_str,
+                )
+                .await,
             )
         }
     });
@@ -60,6 +90,7 @@ pub fn init(
         ctx,
         depth,
         timeframe,
+        timepoint,
         finance_summary: None,
     }
 }
@@ -72,6 +103,7 @@ pub struct Model {
     base_url: Url,
     depth: Depth,
     timeframe: Timeframe,
+    timepoint: Timepoint,
     ctx: Option<shared::auth::UserLoginResponse>,
     finance_summary: Option<shared::models::ResponseHtml>,
 }
@@ -114,6 +146,32 @@ impl Timeframe {
     }
 }
 
+#[derive(Debug, Clone)]
+enum Timepoint {
+    Now,
+    One,
+    Two,
+    Three,
+    Four,
+    Five,
+    Six,
+    Seven,
+}
+impl Timepoint {
+    fn str(self) -> String {
+        match self {
+            Timepoint::Now => NOW.to_string(),
+            Timepoint::One => ONE.to_string(),
+            Timepoint::Two => TWO.to_string(),
+            Timepoint::Three => THREE.to_string(),
+            Timepoint::Four => FOUR.to_string(),
+            Timepoint::Five => FIVE.to_string(),
+            Timepoint::Six => SIX.to_string(),
+            Timepoint::Seven => SEVEN.to_string(),
+        }
+    }
+}
+
 pub enum Msg {
     GetSummary,
     FetchedSummary(fetch::Result<shared::models::ResponseHtml>),
@@ -128,47 +186,103 @@ impl<'a> Urls<'a> {
         self.base_url()
     }
     pub fn default(self) -> Url {
-        self.depth3(Timeframe::All)
+        self.depth3(Timeframe::All, Timepoint::One)
     }
-    fn depth2(self, time: Timeframe) -> Url {
+    fn depth2(self, time: Timeframe, point: Timepoint) -> Url {
         self.base_url()
             .add_path_part(DEPTH2)
             .add_path_part(time.str())
+            .add_path_part(point.str())
     }
-    fn depth3(self, time: Timeframe) -> Url {
+    fn depth3(self, time: Timeframe, point: Timepoint) -> Url {
         self.base_url()
             .add_path_part(DEPTH3)
             .add_path_part(time.str())
+            .add_path_part(point.str())
     }
-    fn depthall(self, time: Timeframe) -> Url {
+    fn depthall(self, time: Timeframe, point: Timepoint) -> Url {
         self.base_url()
             .add_path_part(DEPTHALL)
             .add_path_part(time.str())
+            .add_path_part(point.str())
     }
-    fn day(self, depth: Depth) -> Url {
+    fn day(self, depth: Depth, point: Timepoint) -> Url {
         self.base_url()
             .add_path_part(depth.str())
             .add_path_part(DAY)
+            .add_path_part(point.str())
     }
-    fn week(self, depth: Depth) -> Url {
+    fn week(self, depth: Depth, point: Timepoint) -> Url {
         self.base_url()
             .add_path_part(depth.str())
             .add_path_part(WEEK)
+            .add_path_part(point.str())
     }
-    fn month(self, depth: Depth) -> Url {
+    fn month(self, depth: Depth, point: Timepoint) -> Url {
         self.base_url()
             .add_path_part(depth.str())
             .add_path_part(MONTH)
+            .add_path_part(point.str())
     }
-    fn year(self, depth: Depth) -> Url {
+    fn year(self, depth: Depth, point: Timepoint) -> Url {
         self.base_url()
             .add_path_part(depth.str())
             .add_path_part(YEAR)
+            .add_path_part(point.str())
     }
-    fn all(self, depth: Depth) -> Url {
+    fn all(self, depth: Depth, point: Timepoint) -> Url {
         self.base_url()
             .add_path_part(depth.str())
             .add_path_part(ALL)
+            .add_path_part(point.str())
+    }
+    fn now(self, depth: Depth, timeframe: Timeframe) -> Url {
+        self.base_url()
+            .add_path_part(depth.str())
+            .add_path_part(timeframe.str())
+            .add_path_part(NOW)
+    }
+    fn one(self, depth: Depth, timeframe: Timeframe) -> Url {
+        self.base_url()
+            .add_path_part(depth.str())
+            .add_path_part(timeframe.str())
+            .add_path_part(ONE)
+    }
+    fn two(self, depth: Depth, timeframe: Timeframe) -> Url {
+        self.base_url()
+            .add_path_part(depth.str())
+            .add_path_part(timeframe.str())
+            .add_path_part(TWO)
+    }
+    fn three(self, depth: Depth, timeframe: Timeframe) -> Url {
+        self.base_url()
+            .add_path_part(depth.str())
+            .add_path_part(timeframe.str())
+            .add_path_part(THREE)
+    }
+    fn four(self, depth: Depth, timeframe: Timeframe) -> Url {
+        self.base_url()
+            .add_path_part(depth.str())
+            .add_path_part(timeframe.str())
+            .add_path_part(FOUR)
+    }
+    fn five(self, depth: Depth, timeframe: Timeframe) -> Url {
+        self.base_url()
+            .add_path_part(depth.str())
+            .add_path_part(timeframe.str())
+            .add_path_part(FIVE)
+    }
+    fn six(self, depth: Depth, timeframe: Timeframe) -> Url {
+        self.base_url()
+            .add_path_part(depth.str())
+            .add_path_part(timeframe.str())
+            .add_path_part(SIX)
+    }
+    fn seven(self, depth: Depth, timeframe: Timeframe) -> Url {
+        self.base_url()
+            .add_path_part(depth.str())
+            .add_path_part(timeframe.str())
+            .add_path_part(SEVEN)
     }
 }
 
@@ -179,13 +293,15 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 let token = model.ctx.clone().unwrap().token;
                 let depth_str = model.depth.clone().str();
                 let timeframe_str = model.timeframe.clone().str();
+                let timepoint_str = model.timepoint.clone().str();
                 async {
                     Msg::FetchedSummary(
-                        api::requests::get_html(
+                        api::requests::get_html_timepoint(
                             token,
                             API_TARGET.to_string(),
                             depth_str,
                             timeframe_str,
+                            timepoint_str,
                         )
                         .await,
                     )
@@ -216,7 +332,7 @@ pub fn view(model: &Model) -> Node<Msg> {
             a![
                 "Switch to 2",
                 attrs! {
-                    At::Href => Urls::new(&model.base_url).depth2(model.timeframe.clone())
+                    At::Href => Urls::new(&model.base_url).depth2(model.timeframe.clone(), model.timepoint.clone())
                 }
             ],
         ),
@@ -225,7 +341,7 @@ pub fn view(model: &Model) -> Node<Msg> {
             a![
                 "Switch to 3",
                 attrs! {
-                    At::Href => Urls::new(&model.base_url).depth3(model.timeframe.clone())
+                    At::Href => Urls::new(&model.base_url).depth3(model.timeframe.clone(), model.timepoint.clone())
                 }
             ],
         ),
@@ -234,7 +350,7 @@ pub fn view(model: &Model) -> Node<Msg> {
             a![
                 "Switch to All",
                 attrs! {
-                    At::Href => Urls::new(&model.base_url).depthall(model.timeframe.clone())
+                    At::Href => Urls::new(&model.base_url).depthall(model.timeframe.clone(), model.timepoint.clone())
                 }
             ],
         ),
@@ -245,7 +361,7 @@ pub fn view(model: &Model) -> Node<Msg> {
             a![
                 "Switch to Week",
                 attrs! {
-                    At::Href => Urls::new(&model.base_url).week(model.depth.clone())
+                    At::Href => Urls::new(&model.base_url).week(model.depth.clone(), model.timepoint.clone())
                 }
             ],
         ),
@@ -254,7 +370,7 @@ pub fn view(model: &Model) -> Node<Msg> {
             a![
                 "Switch to month",
                 attrs! {
-                    At::Href => Urls::new(&model.base_url).month(model.depth.clone())
+                    At::Href => Urls::new(&model.base_url).month(model.depth.clone(), model.timepoint.clone())
                 }
             ],
         ),
@@ -263,7 +379,7 @@ pub fn view(model: &Model) -> Node<Msg> {
             a![
                 "Switch to year",
                 attrs! {
-                    At::Href => Urls::new(&model.base_url).year(model.depth.clone())
+                    At::Href => Urls::new(&model.base_url).year(model.depth.clone(), model.timepoint.clone())
                 }
             ],
         ),
@@ -272,7 +388,7 @@ pub fn view(model: &Model) -> Node<Msg> {
             a![
                 "Switch to all",
                 attrs! {
-                    At::Href => Urls::new(&model.base_url).all(model.depth.clone())
+                    At::Href => Urls::new(&model.base_url).all(model.depth.clone(), model.timepoint.clone())
                 }
             ],
         ),
@@ -281,7 +397,81 @@ pub fn view(model: &Model) -> Node<Msg> {
             a![
                 "Switch to Day",
                 attrs! {
-                    At::Href => Urls::new(&model.base_url).day(model.depth.clone())
+                    At::Href => Urls::new(&model.base_url).day(model.depth.clone(), model.timepoint.clone())
+                }
+            ],
+        ),
+    };
+    let (timepoint, link_timepoint) = match &model.timepoint {
+        Timepoint::Now => (
+            NOW,
+            a![
+                "Switch to One",
+                attrs! {
+                    At::Href => Urls::new(&model.base_url).one(model.depth.clone(), model.timeframe.clone())
+                }
+            ],
+        ),
+        Timepoint::One => (
+            ONE,
+            a![
+                "Switch to Two",
+                attrs! {
+                    At::Href => Urls::new(&model.base_url).two(model.depth.clone(), model.timeframe.clone())
+                }
+            ],
+        ),
+        Timepoint::Two => (
+            TWO,
+            a![
+                "Switch to Three",
+                attrs! {
+                    At::Href => Urls::new(&model.base_url).three(model.depth.clone(), model.timeframe.clone())
+                }
+            ],
+        ),
+        Timepoint::Three => (
+            THREE,
+            a![
+                "Switch to Four",
+                attrs! {
+                    At::Href => Urls::new(&model.base_url).four(model.depth.clone(), model.timeframe.clone())
+                }
+            ],
+        ),
+        Timepoint::Four => (
+            FOUR,
+            a![
+                "Switch to Five",
+                attrs! {
+                    At::Href => Urls::new(&model.base_url).five(model.depth.clone(), model.timeframe.clone())
+                }
+            ],
+        ),
+        Timepoint::Five => (
+            FIVE,
+            a![
+                "Switch to Six",
+                attrs! {
+                    At::Href => Urls::new(&model.base_url).six(model.depth.clone(), model.timeframe.clone())
+                }
+            ],
+        ),
+        Timepoint::Six => (
+            SIX,
+            a![
+                "Switch to Seven",
+                attrs! {
+                    At::Href => Urls::new(&model.base_url).seven(model.depth.clone(), model.timeframe.clone())
+                }
+            ],
+        ),
+        Timepoint::Seven => (
+            SEVEN,
+            a![
+                "Switch to Now",
+                attrs! {
+                    At::Href => Urls::new(&model.base_url).now(model.depth.clone(), model.timeframe.clone())
                 }
             ],
         ),
@@ -290,6 +480,7 @@ pub fn view(model: &Model) -> Node<Msg> {
     div![
         div![format!("Depth:  {}    ", depth), link,],
         div![format!("Timeframe:  {}    ", timeframe), link_timeframe,],
+        div![format!("Timepoint:  {}    ", timepoint), link_timepoint,],
         raw![&finance_summary_html]
     ]
 }
