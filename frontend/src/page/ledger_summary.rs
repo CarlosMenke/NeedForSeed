@@ -4,6 +4,7 @@ use seed::{prelude::*, *};
 // TODO change it from depth to depth for thime (this and last)
 const DEPTH2: &str = "2";
 const DEPTH3: &str = "3";
+const DEPTH4: &str = "4";
 const DEPTHALL: &str = "all";
 const DAY: &str = "day";
 const WEEK: &str = "week";
@@ -33,12 +34,13 @@ pub fn init(
     let depth = match url.next_path_part() {
         Some(DEPTH2) => Depth::Depth2,
         Some(DEPTH3) => Depth::Depth3,
+        Some(DEPTH4) => Depth::Depth4,
         Some(DEPTHALL) => Depth::DepthAll,
         None => {
             Urls::new(&base_url).default().go_and_replace();
-            Depth::Depth3
+            Depth::DepthAll
         }
-        _ => Depth::Depth3,
+        _ => Depth::DepthAll,
     };
     let timeframe = match url.next_path_part() {
         Some(DAY) => Timeframe::Day,
@@ -48,9 +50,9 @@ pub fn init(
         Some(ALL) => Timeframe::All,
         None => {
             Urls::new(&base_url).default().go_and_replace();
-            Timeframe::Year
+            Timeframe::Day
         }
-        _ => Timeframe::All,
+        _ => Timeframe::Day,
     };
     let timepoint = match url.next_path_part() {
         Some(NOW) => Timepoint::Now,
@@ -63,9 +65,9 @@ pub fn init(
         Some(SEVEN) => Timepoint::Seven,
         None => {
             Urls::new(&base_url).default().go_and_replace();
-            Timepoint::One
+            Timepoint::Now
         }
-        _ => Timepoint::One,
+        _ => Timepoint::Now,
     };
     orders.skip().perform_cmd({
         let token = ctx.clone().unwrap().token;
@@ -117,6 +119,7 @@ pub struct Model {
 enum Depth {
     Depth2,
     Depth3,
+    Depth4,
     DepthAll,
 }
 impl Depth {
@@ -124,6 +127,7 @@ impl Depth {
         match self {
             Depth::Depth2 => DEPTH2.to_string(),
             Depth::Depth3 => DEPTH3.to_string(),
+            Depth::Depth4 => DEPTH4.to_string(),
             Depth::DepthAll => DEPTHALL.to_string(),
         }
     }
@@ -189,7 +193,7 @@ impl<'a> Urls<'a> {
         self.base_url()
     }
     pub fn default(self) -> Url {
-        self.depth3(Timeframe::All, Timepoint::One)
+        self.depthall(Timeframe::Day, Timepoint::Now)
     }
     fn depth2(self, time: Timeframe, point: Timepoint) -> Url {
         self.base_url()
@@ -200,6 +204,12 @@ impl<'a> Urls<'a> {
     fn depth3(self, time: Timeframe, point: Timepoint) -> Url {
         self.base_url()
             .add_path_part(DEPTH3)
+            .add_path_part(time.str())
+            .add_path_part(point.str())
+    }
+    fn depth4(self, time: Timeframe, point: Timepoint) -> Url {
+        self.base_url()
+            .add_path_part(DEPTH4)
             .add_path_part(time.str())
             .add_path_part(point.str())
     }
@@ -331,15 +341,6 @@ pub fn view(model: &Model) -> Node<Msg> {
         None => "".to_string(),
     };
     let (depth, link) = match &model.depth {
-        Depth::DepthAll => (
-            DEPTHALL,
-            a![
-                "Switch to 2",
-                attrs! {
-                    At::Href => Urls::new(&model.base_url).depth2(model.timeframe.clone(), model.timepoint.clone())
-                }
-            ],
-        ),
         Depth::Depth2 => (
             DEPTH2,
             a![
@@ -352,9 +353,27 @@ pub fn view(model: &Model) -> Node<Msg> {
         Depth::Depth3 => (
             DEPTH3,
             a![
-                "Switch to All",
+                "Switch to 4",
+                attrs! {
+                    At::Href => Urls::new(&model.base_url).depth4(model.timeframe.clone(), model.timepoint.clone())
+                }
+            ],
+        ),
+        Depth::Depth4 => (
+            DEPTH4,
+            a![
+                "Switch to all",
                 attrs! {
                     At::Href => Urls::new(&model.base_url).depthall(model.timeframe.clone(), model.timepoint.clone())
+                }
+            ],
+        ),
+        Depth::DepthAll => (
+            DEPTHALL,
+            a![
+                "Switch to 2",
+                attrs! {
+                    At::Href => Urls::new(&model.base_url).depth2(model.timeframe.clone(), model.timepoint.clone())
                 }
             ],
         ),
