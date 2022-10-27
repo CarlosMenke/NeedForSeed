@@ -217,7 +217,12 @@ pub fn ledger_create_time_entery(
     };
 
     // calculate number of tabs
-    let tabs = "\t".repeat(11 - (start_entery.account_target.chars().count() / 4));
+    let tab_count = if (start_entery.account_target.chars().count() / 4) < 11 {
+        start_entery.account_target.chars().count() / 4
+    } else {
+        10
+    };
+    let tabs = "\t".repeat(11 - tab_count);
     let entery = &format!(
         "\n{}\n{}\t\t\t{}\n \t{}\n \t{}{}{}m\n",
         time_span,
@@ -250,7 +255,12 @@ pub fn ledger_create_finance_entery(
         None => &date_now,
     };
     // calculate number of tabs
-    let tabs = "\t".repeat(11 - (new_entery.account_target.chars().count() / 4));
+    let tab_count = if (new_entery.account_target.chars().count() / 4) < 11 {
+        new_entery.account_target.chars().count() / 4
+    } else {
+        1
+    };
+    let tabs = "\t".repeat(11 - tab_count);
 
     let entery = &format!(
         "\n{}\t\t\t{}\n \t{}\n \t{}{}{}€\n",

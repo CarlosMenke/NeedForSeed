@@ -94,6 +94,15 @@ pub async fn set_time_entery_start(
         "Set ledger time function is called with Headline: \t{:?}\t account_origin: \t{:?}\t account_origin: \t{:?}\t duration: \t{:?}",
         &new_time_entery.headline, &new_time_entery.account_origin, &new_time_entery.account_target, &new_time_entery.duration);
 
+    if &new_time_entery.account_origin == "" {
+        return Err(ServiceError::BadRequest(
+            "Empty account_origin provided.".to_string(),
+        ));
+    } else if &new_time_entery.account_target == "" {
+        return Err(ServiceError::BadRequest(
+            "Empty account_target provided.".to_string(),
+        ));
+    }
     if new_time_entery.duration.is_none() {
         //start running entery, because it has not ended yet.
         utils::ledger_start_time_entery(new_time_entery.to_owned())?;
