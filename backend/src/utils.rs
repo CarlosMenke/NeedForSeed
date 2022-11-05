@@ -12,7 +12,7 @@ use std::io::Write;
 use crate::errors::ServiceError;
 
 pub const PATH_TIME_SPEND: &str = "./files/time_spend.dat";
-pub const PATH_FINANCE: &str = "./files/gesamt.dat";
+pub const PATH_FINANCE: &str = "./files/finance.dat";
 
 ///Hashes password with the same settings that are used in data table
 pub fn hash_password(password: &str) -> Result<String, ServiceError> {
