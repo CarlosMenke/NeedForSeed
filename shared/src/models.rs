@@ -82,7 +82,7 @@ pub struct StopLedgerTimeEntery {
 }
 
 ///Section with Finance Enterys
-#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
 pub struct NewFinanceEntery {
     pub headline: String,
     pub account_origin: String,
