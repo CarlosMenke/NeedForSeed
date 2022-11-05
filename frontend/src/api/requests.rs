@@ -20,7 +20,7 @@ pub async fn get_login(
     .await
 }
 
-/// this function returns raw html for finance and music summary
+/// this function returns raw html for finance and music summary.
 pub async fn get_html(
     token: String,
     target: String,
@@ -40,12 +40,27 @@ pub async fn get_html(
     .await
 }
 
-/// this function returns a BTreeMap, witch encodes the suggestions for a new time Tracking entery
+/// returns the suggestions for a new Time Tracking entery.
 pub async fn get_time_suggestion(
     token: String,
 ) -> fetch::Result<shared::models::HeadlineSuggestion> {
     Request::new(get_api_url(String::from(
         "api/auth/get_time_suggestions.json",
+    )))
+    .header(Header::bearer(token))
+    .fetch()
+    .await?
+    .check_status()?
+    .json()
+    .await
+}
+
+/// returns the suggestions for a new Finance Tracking entery.
+pub async fn get_finance_suggestion(
+    token: String,
+) -> fetch::Result<shared::models::FinanceEnterySuggestion> {
+    Request::new(get_api_url(String::from(
+        "api/auth/get_finance_suggestions.json",
     )))
     .header(Header::bearer(token))
     .fetch()
@@ -113,6 +128,24 @@ pub async fn kill_time_entery(
     fetch(
         Request::new(get_api_url(String::from(
             "api/auth/set_time_entery_kill.json",
+        )))
+        .method(Method::Post)
+        .header(Header::bearer(token))
+        .json(&new_entery)?,
+    )
+    .await?
+    .check_status()?
+    .json()
+    .await
+}
+
+pub async fn start_finance_entery(
+    token: String,
+    new_entery: shared::models::NewFinanceEntery,
+) -> fetch::Result<shared::models::ResponseStatus> {
+    fetch(
+        Request::new(get_api_url(String::from(
+            "api/auth/set_finance_entery_create.json",
         )))
         .method(Method::Post)
         .header(Header::bearer(token))

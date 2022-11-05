@@ -43,10 +43,12 @@ const MUSIC: &str = "Music";
 const FINANCE: &str = "Finance";
 const TIMEMANAGMENT: &str = "TimeManagment";
 const TIMEMANAGMENTCREATE: &str = "TimeManagmentCreate";
+const FINANCEMANAGMENTCREATE: &str = "FinanceManagmentCreate";
 pub enum Page {
     Home,
     LedgerSummary(page::ledger_summary::Model),
     TimeManagmentCreate(page::time_managment_create::Model),
+    FinanceManagmentCreate(page::finance_managment_create::Model),
     NotFound,
 }
 impl Page {
@@ -81,6 +83,13 @@ impl Page {
                     ctx.clone(),
                 ))
             }
+            Some(FINANCEMANAGMENTCREATE) => {
+                Self::FinanceManagmentCreate(page::finance_managment_create::init(
+                    url,
+                    &mut orders.proxy(Msg::FinanceManagmentCreateMsg),
+                    ctx.clone(),
+                ))
+            }
             None => Self::Home,
             _ => Self::NotFound,
         }
@@ -105,6 +114,9 @@ impl<'a> Urls<'a> {
     fn time_managment_create(self) -> Url {
         self.base_url().add_path_part(TIMEMANAGMENTCREATE)
     }
+    fn finance_managment_create(self) -> Url {
+        self.base_url().add_path_part(FINANCEMANAGMENTCREATE)
+    }
     fn home(self) -> Url {
         self.base_url()
     }
@@ -116,6 +128,7 @@ pub enum Msg {
     // ----- Page Msg
     LedgerSummaryMsg(page::ledger_summary::Msg),
     TimeManagmentCreateMsg(page::time_managment_create::Msg),
+    FinanceManagmentCreateMsg(page::finance_managment_create::Msg),
 
     SaveLoginUsername(String),
     SaveLoginPassword(String),
@@ -173,6 +186,15 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 )
             }
         }
+        Msg::FinanceManagmentCreateMsg(msg) => {
+            if let Page::FinanceManagmentCreate(model) = &mut model.page {
+                page::finance_managment_create::update(
+                    msg,
+                    model,
+                    &mut orders.proxy(Msg::FinanceManagmentCreateMsg),
+                )
+            }
+        }
     }
 }
 
@@ -191,6 +213,8 @@ fn view(model: &Model) -> Node<Msg> {
                 page::ledger_summary::view(&model).map_msg(Msg::LedgerSummaryMsg),
             Page::TimeManagmentCreate(model) =>
                 page::time_managment_create::view(&model).map_msg(Msg::TimeManagmentCreateMsg),
+            Page::FinanceManagmentCreate(model) =>
+                page::finance_managment_create::view(&model).map_msg(Msg::FinanceManagmentCreateMsg),
             Page::NotFound => page::not_found::view(),
         }
     ]
@@ -218,7 +242,11 @@ fn header(base_url: &Url) -> Node<Msg> {
         ]],
         li![a![
             attrs! { At::Href => Urls::new(base_url).time_managment_create() },
-            "Time Tracking Create Entery",
+            "Time Tracking",
+        ]],
+        li![a![
+            attrs! { At::Href => Urls::new(base_url).finance_managment_create() },
+            "Finance Tracking",
         ]],
     ]
 }
