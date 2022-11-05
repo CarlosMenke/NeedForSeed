@@ -197,6 +197,18 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             });
         }
         Msg::StopTimeEntery(remove_line) => {
+            //save offset if input is present
+            if let Some(editing_offset) = model.editing_offset.take() {
+                let offset = editing_offset.offset;
+                if offset == 0 {
+                } else if let Some(entery) = match data {
+                    Some(e) => e.running_entery.get_mut(&editing_offset.id),
+                    None => None,
+                } {
+                    entery.offset = Some(offset.to_owned());
+                }
+            }
+            log!("{:#?}", &model.running_entery);
             orders.skip().perform_cmd({
                 let token = model.ctx.clone().unwrap().token;
                 let new_entery = model
