@@ -163,8 +163,7 @@ pub async fn set_finance_entery_create(
 
 /// get suggestions for ledger finance entery
 #[has_permissions("GET_LEDGER_INFO")]
-pub async fn get_finance_entery_create() -> Result<web::Json<FinanceEnterySuggestion>, ServiceError>
-{
+pub async fn get_finance_suggestions() -> Result<web::Json<FinanceEnterySuggestion>, ServiceError> {
     debug!("Get Ledger Finance Suggestion.");
     Ok(web::Json(FinanceEnterySuggestion {
         suggestions: utils::ledger_finance_suggestion()?,

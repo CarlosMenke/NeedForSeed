@@ -296,6 +296,7 @@ pub fn ledger_finance_suggestion() -> Result<Vec<shared::models::NewFinanceEnter
     let get_ammount = Regex::new(r"[-]*\d{0,6}[.]*\d{1,6}€$").unwrap();
     let mut tracking: bool = false;
     let mut ammount = 0.0;
+    let mut content;
     for line in ledger.lines() {
         if check_beginning.is_match(line) {
             pos = 0;
@@ -307,17 +308,17 @@ pub fn ledger_finance_suggestion() -> Result<Vec<shared::models::NewFinanceEnter
                 .to_string();
             pos += 1;
             match get_ammount.find(&line) {
-                Some(e) => ammount = e.as_str().replace("€", "").parse::<f32>().unwrap_or(5.5),
+                Some(e) => ammount = e.as_str().replace("€", "").parse::<f32>().unwrap_or(0.0),
                 None => (),
             };
         } else if pos == 1 && tracking {
             match get_ammount.find(&line) {
-                Some(e) => ammount = e.as_str().replace("€", "").parse::<f32>().unwrap_or(5.5),
+                Some(e) => ammount = e.as_str().replace("€", "").parse::<f32>().unwrap_or(0.0),
                 None => (),
             };
             pos = 0;
             tracking = false;
-            content_headline.push(shared::models::NewFinanceEntery {
+            content = shared::models::NewFinanceEntery {
                 headline: headline.clone(),
                 account_target: remove_first_tab
                     .replace_all(&get_account.replace(line, "").to_string(), "")
@@ -325,7 +326,11 @@ pub fn ledger_finance_suggestion() -> Result<Vec<shared::models::NewFinanceEnter
                 account_origin: account_origin.clone(),
                 date: None,
                 ammount,
-            });
+            };
+            //check if entery exists in vec
+            if !content_headline.contains(&content) {
+                content_headline.push(content);
+            }
         } else {
             pos += 1;
         }
