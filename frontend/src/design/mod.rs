@@ -92,13 +92,13 @@ impl Default for General {
             },
             shape_first: style! {
                 St::Background => "linear-gradient(#1845ad,#23a2f6)",
-                St::Top => px(-85),
-                St::Left => px(-75),
+                St::Top => px(-75),
+                St::Left => px(-65),
             },
             shape_last: style! {
                 St::Background => "linear-gradient(to right, #ff512f,#f09819)",
-                St::Right => px(-60),
-                St::Bottom => px(-80),
+                St::Right => px(-55),
+                St::Bottom => px(-65),
             },
         }
     }
