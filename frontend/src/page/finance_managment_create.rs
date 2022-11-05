@@ -63,14 +63,17 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         Msg::SaveNewEnteryHeadline(content) => {
             model.new_entery.headline = content;
             update_suggestion_filter(model);
+            autofill(orders, model);
         }
         Msg::SaveNewEnteryTarget(content) => {
             model.new_entery.account_target = content;
             update_suggestion_filter(model);
+            autofill(orders, model);
         }
         Msg::SaveNewEnteryOrigin(content) => {
             model.new_entery.account_origin = content;
             update_suggestion_filter(model);
+            autofill(orders, model);
         }
         Msg::SaveNewEnteryAmmount(content) => {
             model.new_entery.ammount = match content.parse::<f32>() {
@@ -134,45 +137,12 @@ pub fn view(model: &Model) -> Node<Msg> {
         Some(m) => m.suggestions,
         None => Vec::new(),
     };
-    let matcher = SkimMatcherV2::default();
-    let threshhold: i64 = model
-        .new_entery
-        .account_target
-        .replace(" ", "")
-        .chars()
-        .count() as i64
-        * 5;
-
-    let suggestion_custom = suggestions.iter().rev().filter(|s| {
-        (&model.suggestion_filter == "account_target"
-            && matcher
-                .fuzzy_match(
-                    &s.account_target,
-                    &model.new_entery.account_target.replace(" ", ""),
-                )
-                .unwrap_or(0)
-                > threshhold)
-            || (&model.suggestion_filter == "account_origin"
-                && matcher
-                    .fuzzy_match(
-                        &s.account_origin,
-                        &model.new_entery.account_origin.replace(" ", ""),
-                    )
-                    .unwrap_or(0)
-                    > threshhold)
-            || (&model.suggestion_filter == "headline"
-                && matcher
-                    .fuzzy_match(&s.headline, &&model.new_entery.headline.replace(" ", ""))
-                    .unwrap_or(0)
-                    > threshhold)
-    });
 
     let empty = if &model.suggestion_filter == "" {
         true
     } else {
         false
     };
-
     //TODO add unique_by where usefull
     div![
         "Create new Finance Tracking Entery",
@@ -195,8 +165,7 @@ pub fn view(model: &Model) -> Node<Msg> {
                     .filter(|_s| empty)
                     .unique_by(|s| &s.account_origin)
                     .map(|s| { option![s.headline.clone()] }),
-                suggestion_custom
-                    .clone()
+                custom_suggestion(&suggestions, model)
                     .unique_by(|s| &s.headline)
                     .map(|s| { option![s.headline.clone()] })
             ],
@@ -218,10 +187,8 @@ pub fn view(model: &Model) -> Node<Msg> {
                     .filter(|_s| empty)
                     .unique_by(|s| &s.account_target)
                     .map(|s| { option![s.account_target.clone()] }),
-                suggestion_custom
-                    .clone()
+                custom_suggestion(&suggestions, model)
                     .unique_by(|s| &s.account_target)
-                    .rev()
                     .map(|s| { option![s.account_target.clone()] })
             ],
             input![
@@ -243,10 +210,8 @@ pub fn view(model: &Model) -> Node<Msg> {
                     .filter(|_s| empty)
                     .unique_by(|s| &s.account_origin)
                     .map(|s| { option![s.account_origin.clone()] }),
-                suggestion_custom
-                    .clone()
+                custom_suggestion(&suggestions, model)
                     .unique_by(|s| &s.account_origin)
-                    .rev()
                     .map(|s| { option![s.account_origin.clone()] })
             ],
             input![
@@ -261,16 +226,7 @@ pub fn view(model: &Model) -> Node<Msg> {
             ],
             datalist![
                 id!["suggestions_ammount"],
-                suggestions
-                    .iter()
-                    .rev()
-                    .filter(|s| matcher
-                        .fuzzy_match(
-                            &s.account_target,
-                            &model.new_entery.account_target.replace(" ", "")
-                        )
-                        .unwrap_or(0)
-                        > threshhold)
+                custom_suggestion(&suggestions, model)
                     .map(|s| { option![format!("{:.3}", s.ammount.clone())] }),
             ],
             input![
@@ -305,6 +261,85 @@ fn update_suggestion_filter(model: &mut Model) {
     {
         "account_target".to_string()
     } else {
-        return;
+        model.suggestion_filter.clone()
     };
+}
+
+fn autofill(orders: &mut impl Orders<Msg>, model: &Model) {
+    let suggestions = match model.suggestions.clone() {
+        Some(m) => m.suggestions,
+        None => Vec::new(),
+    };
+
+    let suggestion_custom = custom_suggestion(&suggestions, model)
+        .unique_by(|s| &s.headline)
+        .map(|s| &s.headline)
+        .collect_vec();
+    if &suggestion_custom.len() == &(1 as usize) && &model.new_entery.headline == "" {
+        let autofill = suggestion_custom[0].to_string().clone();
+        orders
+            .skip()
+            .perform_cmd(async { Msg::SaveNewEnteryHeadline(autofill) });
+    }
+    let suggestion_custom = custom_suggestion(&suggestions, model)
+        .unique_by(|s| &s.account_origin)
+        .map(|s| &s.account_origin)
+        .collect_vec();
+    if &suggestion_custom.len() == &(1 as usize) && &model.new_entery.account_origin == "" {
+        let autofill = suggestion_custom[0].to_string().clone();
+        orders
+            .skip()
+            .perform_cmd(async { Msg::SaveNewEnteryOrigin(autofill) });
+    }
+    let suggestion_custom = custom_suggestion(&suggestions, model)
+        .map(|s| &s.ammount)
+        .collect_vec();
+    if &suggestion_custom.len() == &(1 as usize) && &model.new_entery.ammount == &0.0 {
+        let autofill = suggestion_custom[0].to_string().clone();
+        orders
+            .skip()
+            .perform_cmd(async { Msg::SaveNewEnteryAmmount(autofill) });
+    }
+}
+
+pub fn custom_suggestion<'a>(
+    suggestions: &'a Vec<shared::models::NewFinanceEntery>,
+    model: &'a Model,
+) -> impl Iterator<Item = &'a shared::models::NewFinanceEntery> {
+    let matcher = SkimMatcherV2::default();
+    let threshhold: i64 = model
+        .new_entery
+        .account_target
+        .replace(" ", "")
+        .chars()
+        .count() as i64
+        * 5;
+    //autofill
+    return suggestions
+        .iter()
+        .rev()
+        .filter(move |s| {
+            (&model.suggestion_filter == "account_target"
+                && matcher
+                    .fuzzy_match(
+                        &s.account_target,
+                        &model.new_entery.account_target.replace(" ", ""),
+                    )
+                    .unwrap_or(0)
+                    > threshhold)
+                || (&model.suggestion_filter == "account_origin"
+                    && matcher
+                        .fuzzy_match(
+                            &s.account_origin,
+                            &model.new_entery.account_origin.replace(" ", ""),
+                        )
+                        .unwrap_or(0)
+                        > threshhold)
+                || (&model.suggestion_filter == "headline"
+                    && matcher
+                        .fuzzy_match(&s.headline, &&model.new_entery.headline.replace(" ", ""))
+                        .unwrap_or(0)
+                        > threshhold)
+        })
+        .rev();
 }
