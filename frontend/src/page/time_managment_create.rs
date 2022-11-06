@@ -40,6 +40,7 @@ pub fn init(
         ctx,
         suggestions: None,
         start_entery: shared::models::StartTimeEntery::default(),
+        suggestion_filter: "".to_string(),
         running_entery: None,
         editing_offset: None,
         refs: Refs::default(),
@@ -55,6 +56,7 @@ pub struct Model {
     ctx: Option<shared::auth::UserLoginResponse>,
     suggestions: Option<shared::models::HeadlineSuggestion>,
     start_entery: shared::models::StartTimeEntery,
+    suggestion_filter: String,
     running_entery: Option<shared::models::ResponseRunningLedgerTimeEntery>,
     editing_offset: Option<EditingNewTimeEntery>,
     refs: Refs,
@@ -99,9 +101,13 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     match msg {
         Msg::SaveNewEnteryHeadline(content) => {
             model.start_entery.headline = content;
+            update_suggestion_filter(model);
+            autofill(orders, model);
         }
         Msg::SaveNewEnteryTarget(content) => {
             model.start_entery.account_target = content;
+            update_suggestion_filter(model);
+            autofill(orders, model);
         }
         Msg::SaveNewEnteryDuration(content) => {
             model.start_entery.duration = match content.parse::<u32>() {
@@ -286,41 +292,34 @@ pub fn view(model: &Model) -> Node<Msg> {
         Some(m) => m.running_entery,
         None => BTreeMap::new(),
     };
-    let matcher = SkimMatcherV2::default();
-    let threshhold: i64 = model
-        .start_entery
-        .account_target
-        .replace(" ", "")
-        .chars()
-        .count() as i64
-        * 5;
-
+    let empty = if &model.suggestion_filter == "" {
+        true
+    } else {
+        false
+    };
     div![
         "Create new time Tracking Entery",
         div![
             input![
-                C!["input-content_origin"],
+                C!["input-content-headline"],
                 input_ev(Ev::Input, Msg::SaveNewEnteryHeadline),
                 attrs! {
                     At::Placeholder => "Headline",
                     At::AutoFocus => true.as_at_value();
                     At::Value => &model.start_entery.headline,
-                    At::List => "suggestions_origin",
+                    At::List => "suggestions-headline",
                 },
             ],
             datalist![
-                id!["suggestions_origin"],
+                id!["suggestions-headline"],
                 suggestions
                     .iter()
-                    .unique_by(|s| &s.account_target)
                     .rev()
-                    .filter(|s| matcher
-                        .fuzzy_match(
-                            &s.account_target,
-                            &model.start_entery.account_target.replace(" ", "")
-                        )
-                        .unwrap_or(0)
-                        > threshhold)
+                    .filter(|_s| empty)
+                    .unique_by(|s| &s.headline)
+                    .map(|s| { option![s.headline.clone()] }),
+                custom_suggestion(&suggestions, model)
+                    .unique_by(|s| &s.headline)
                     .map(|s| { option![s.headline.clone()] })
             ],
             input![
@@ -337,8 +336,12 @@ pub fn view(model: &Model) -> Node<Msg> {
                 id!["suggestions_target"],
                 suggestions
                     .iter()
-                    .unique_by(|s| &s.account_target)
                     .rev()
+                    .filter(|_s| empty)
+                    .unique_by(|s| &s.account_target)
+                    .map(|s| { option![s.account_target.clone()] }),
+                custom_suggestion(&suggestions, model)
+                    .unique_by(|s| &s.account_target)
                     .map(|s| { option![s.account_target.clone()] })
             ],
             input![
@@ -430,4 +433,78 @@ fn view_runing_enteries(
             ev(Ev::Click, enc!((id) move |_| Msg::StopTimeEntery(id)))
         ]
     ]
+}
+
+fn update_suggestion_filter(model: &mut Model) {
+    model.suggestion_filter =
+        if &model.start_entery.account_target == "" && &model.start_entery.headline != "" {
+            "headline".to_string()
+        } else if &model.start_entery.account_target != "" && &model.start_entery.headline == "" {
+            "account_target".to_string()
+        } else {
+            model.suggestion_filter.clone()
+        };
+}
+
+pub fn custom_suggestion<'a>(
+    suggestions: &'a Vec<shared::models::TimeEnterySuggestion>,
+    model: &'a Model,
+) -> impl Iterator<Item = &'a shared::models::TimeEnterySuggestion> {
+    let matcher = SkimMatcherV2::default();
+    let threshhold: i64 = model
+        .start_entery
+        .account_target
+        .replace(" ", "")
+        .chars()
+        .count() as i64
+        * 5;
+    //autofill
+    return suggestions
+        .iter()
+        .rev()
+        .filter(move |s| {
+            (&model.suggestion_filter == "account_target"
+                && matcher
+                    .fuzzy_match(
+                        &s.account_target,
+                        &model.start_entery.account_target.replace(" ", ""),
+                    )
+                    .unwrap_or(0)
+                    > threshhold)
+                || (&model.suggestion_filter == "headline"
+                    && matcher
+                        .fuzzy_match(&s.headline, &&model.start_entery.headline.replace(" ", ""))
+                        .unwrap_or(0)
+                        > threshhold)
+        })
+        .rev();
+}
+
+fn autofill(orders: &mut impl Orders<Msg>, model: &Model) {
+    let suggestions = match model.suggestions.clone() {
+        Some(m) => m.suggestions,
+        None => Vec::new(),
+    };
+
+    let suggestion_custom = custom_suggestion(&suggestions, model)
+        .unique_by(|s| &s.headline)
+        .map(|s| &s.headline)
+        .collect_vec();
+    if &suggestion_custom.len() == &(1 as usize) && &model.start_entery.headline == "" {
+        let autofill = suggestion_custom[0].to_string().clone();
+        orders
+            .skip()
+            .perform_cmd(async { Msg::SaveNewEnteryHeadline(autofill) });
+    }
+
+    let suggestion_custom = custom_suggestion(&suggestions, model)
+        .unique_by(|s| &s.account_target)
+        .map(|s| &s.account_target)
+        .collect_vec();
+    if &suggestion_custom.len() == &(1 as usize) && &model.start_entery.account_target == "" {
+        let autofill = suggestion_custom[0].to_string().clone();
+        orders
+            .skip()
+            .perform_cmd(async { Msg::SaveNewEnteryTarget(autofill) });
+    }
 }
