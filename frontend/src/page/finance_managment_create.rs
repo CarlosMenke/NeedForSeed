@@ -23,6 +23,7 @@ pub fn init(
         suggestions: None,
         new_entery: shared::models::NewFinanceEntery::default(),
         suggestion_filter: "".to_string(),
+        ammount: "".to_string(),
     }
 }
 
@@ -36,6 +37,7 @@ pub struct Model {
     suggestions: Option<shared::models::FinanceEnterySuggestion>,
     new_entery: shared::models::NewFinanceEntery,
     suggestion_filter: String,
+    ammount: String,
 }
 
 // ------ Frequency ------
@@ -76,10 +78,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             autofill(orders, model);
         }
         Msg::SaveNewEnteryAmmount(content) => {
-            model.new_entery.ammount = match content.parse::<f32>() {
-                Ok(n) => n,
-                Err(_) => 0.0,
-            };
+            model.ammount = content;
         }
         Msg::SaveNewEnteryDate(content) => {
             model.new_entery.date = if content == "".to_string() {
@@ -101,6 +100,10 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 return;
             }
             orders.skip().perform_cmd({
+                model.new_entery.ammount = match model.ammount.parse::<f32>() {
+                    Ok(n) => n,
+                    Err(_) => 0.0,
+                };
                 let token = model.ctx.clone().unwrap().token;
                 let mut new_entery = model.new_entery.clone();
                 new_entery.date = match new_entery.date {
@@ -220,14 +223,14 @@ pub fn view(model: &Model) -> Node<Msg> {
                 attrs! {
                     At::Placeholder => "Ammount",
                     At::AutoFocus => true.as_at_value();
-                    At::Value => &model.new_entery.ammount,
+                    At::Value => &model.ammount,
                     At::List => "suggestions_ammount",
                 }
             ],
             datalist![
                 id!["suggestions_ammount"],
                 custom_suggestion(&suggestions, model)
-                    .map(|s| { option![format!("{:.3}", s.ammount.clone())] }),
+                    .map(|s| { option![format!("{:.2}", s.ammount.clone())] }),
             ],
             input![
                 C!["input-content_date"],
@@ -304,7 +307,7 @@ fn autofill(orders: &mut impl Orders<Msg>, model: &Model) {
     let suggestion_custom = custom_suggestion(&suggestions, model)
         .map(|s| &s.ammount)
         .collect_vec();
-    if &suggestion_custom.len() == &(1 as usize) && &model.new_entery.ammount == &0.0 {
+    if &suggestion_custom.len() == &(1 as usize) && &model.ammount == "" {
         let autofill = suggestion_custom[0].to_string().clone();
         orders
             .skip()
