@@ -13,13 +13,14 @@ use std::iter::zip;
 use crate::errors::ServiceError;
 
 pub const PATH_TIME_SPEND: &str = "./files/time_spend.dat";
-pub const PATH_FINANCE: &str = "./files/finance.dat";
+// all finance files. First one is the default
 pub const PATH_FINANCE_FILES: [&'static str; 4] = [
     "./files/finance.dat",
     "./files/invest.dat",
     "./files/nachhilfe.dat",
     "./files/rent.dat",
 ];
+// the display names of finance files
 pub const NAME_FINANCE: [&'static str; 4] = ["Finance", "Invect", "Nachhilfe", "Wohung"];
 
 ///Hashes password with the same settings that are used in data table
@@ -250,6 +251,11 @@ pub fn ledger_create_time_entery(
 pub fn ledger_create_finance_entery(
     new_entery: shared::models::NewFinanceEntery,
 ) -> Result<String, ServiceError> {
+    let pos = NAME_FINANCE
+        .iter()
+        .position(|f| f.to_string() == new_entery.target_file)
+        .unwrap_or(0);
+    let path = PATH_FINANCE_FILES[pos];
     let chrono_date = chrono::Local::now();
     let date_now = format!(
         "{:?}/{:?}/{:02}",
@@ -280,7 +286,7 @@ pub fn ledger_create_finance_entery(
     );
     fs::OpenOptions::new()
         .append(true)
-        .open(PATH_FINANCE)?
+        .open(path)?
         .write_all(entery.as_bytes())?;
     Ok(entery.to_string())
 }
@@ -436,6 +442,7 @@ mod tests {
             account_target: "Girokonto:N2".to_owned(),
             ammount: 10 as f32,
             date: None,
+            target_file: "Finance".to_string(),
         };
         let mut remove_line = ledger_create_finance_entery(new_entery.clone()).unwrap();
         for _i in 1..1 {
