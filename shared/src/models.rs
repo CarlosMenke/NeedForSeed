@@ -89,6 +89,7 @@ pub struct NewFinanceEntery {
     pub account_target: String,
     pub ammount: f32,
     pub date: Option<String>,
+    pub target_file: String,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]

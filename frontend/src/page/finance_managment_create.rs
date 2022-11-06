@@ -53,6 +53,7 @@ pub enum Msg {
     SaveNewEnteryOrigin(String),
     SaveNewEnteryAmmount(String),
     SaveNewEnteryDate(String),
+    SaveNewEnteryTargetFile(String),
 
     NewFinanceEntery,
 }
@@ -87,6 +88,9 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 Some(content)
             };
             log!(model.new_entery.date);
+        }
+        Msg::SaveNewEnteryTargetFile(content) => {
+            model.new_entery.target_file = content;
         }
 
         Msg::GetSuggestion => {
@@ -233,6 +237,28 @@ pub fn view(model: &Model) -> Node<Msg> {
                     .map(|s| { option![format!("{:.2}", s.ammount.clone())] }),
             ],
             input![
+                C!["input-content-targetFile"],
+                input_ev(Ev::Input, Msg::SaveNewEnteryTargetFile),
+                attrs! {
+                    At::Placeholder => "Target File",
+                    At::AutoFocus => true.as_at_value();
+                    At::Value => &model.new_entery.target_file,
+                    At::List => "suggestions_target_file",
+                }
+            ],
+            datalist![
+                id!["suggestions_target_file"],
+                suggestions
+                    .iter()
+                    .rev()
+                    .filter(|_s| empty)
+                    .unique_by(|s| &s.target_file)
+                    .map(|s| { option![s.target_file.clone()] }),
+                custom_suggestion(&suggestions, model)
+                    .unique_by(|s| &s.target_file)
+                    .map(|s| { option![s.target_file.clone()] })
+            ],
+            input![
                 C!["input-content_date"],
                 input_ev(Ev::Input, Msg::SaveNewEnteryDate),
                 attrs! {
@@ -242,7 +268,7 @@ pub fn view(model: &Model) -> Node<Msg> {
                     At::Value => &model.new_entery.date.clone().unwrap_or("".to_string()),
                 }
             ],
-            button![ev(Ev::Click, |_| Msg::NewFinanceEntery), "Start Entery"],
+            button![ev(Ev::Click, |_| Msg::NewFinanceEntery), "Hinzufuegen"],
         ],
     ]
 }
@@ -312,6 +338,16 @@ fn autofill(orders: &mut impl Orders<Msg>, model: &Model) {
         orders
             .skip()
             .perform_cmd(async { Msg::SaveNewEnteryAmmount(autofill) });
+    }
+    let suggestion_custom = custom_suggestion(&suggestions, model)
+        .unique_by(|s| &s.target_file)
+        .map(|s| &s.target_file)
+        .collect_vec();
+    if &suggestion_custom.len() == &(1 as usize) && &model.new_entery.target_file == "" {
+        let autofill = suggestion_custom[0].to_string().clone();
+        orders
+            .skip()
+            .perform_cmd(async { Msg::SaveNewEnteryTargetFile(autofill) });
     }
 }
 
