@@ -118,7 +118,6 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             model.new_entery = shared::models::NewFinanceEntery::default();
         }
         Msg::FetchedSuggestion(Ok(response_data)) => {
-            //log!("{}", &response_data);
             model.suggestions = Some(response_data);
         }
         Msg::FetchedSuggestion(Err(fetch_error))
@@ -128,6 +127,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         }
     }
 }
+
 // ------ ------
 //     View
 // ------ ------
@@ -163,7 +163,7 @@ pub fn view(model: &Model) -> Node<Msg> {
                     .iter()
                     .rev()
                     .filter(|_s| empty)
-                    .unique_by(|s| &s.account_origin)
+                    .unique_by(|s| &s.headline)
                     .map(|s| { option![s.headline.clone()] }),
                 custom_suggestion(&suggestions, model)
                     .unique_by(|s| &s.headline)
@@ -215,7 +215,7 @@ pub fn view(model: &Model) -> Node<Msg> {
                     .map(|s| { option![s.account_origin.clone()] })
             ],
             input![
-                C!["input-content_origin"],
+                C!["input-content_ammount"],
                 input_ev(Ev::Input, Msg::SaveNewEnteryAmmount),
                 attrs! {
                     At::Placeholder => "Ammount",
@@ -290,6 +290,16 @@ fn autofill(orders: &mut impl Orders<Msg>, model: &Model) {
         orders
             .skip()
             .perform_cmd(async { Msg::SaveNewEnteryOrigin(autofill) });
+    }
+    let suggestion_custom = custom_suggestion(&suggestions, model)
+        .unique_by(|s| &s.account_target)
+        .map(|s| &s.account_target)
+        .collect_vec();
+    if &suggestion_custom.len() == &(1 as usize) && &model.new_entery.account_target == "" {
+        let autofill = suggestion_custom[0].to_string().clone();
+        orders
+            .skip()
+            .perform_cmd(async { Msg::SaveNewEnteryTarget(autofill) });
     }
     let suggestion_custom = custom_suggestion(&suggestions, model)
         .map(|s| &s.ammount)
