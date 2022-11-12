@@ -21,7 +21,7 @@ pub const PATH_FINANCE_FILES: [&'static str; 4] = [
     "./files/rent.dat",
 ];
 // the display names of finance files
-pub const NAME_FINANCE: [&'static str; 4] = ["Finance", "Invect", "Nachhilfe", "Wohung"];
+pub const NAME_FINANCE: [&'static str; 4] = ["Finance", "Invest", "Nachhilfe", "Wohung"];
 
 ///Hashes password with the same settings that are used in data table
 pub fn hash_password(password: &str) -> Result<String, ServiceError> {
@@ -64,6 +64,9 @@ pub fn ledger_time_suggestion() -> Result<Vec<shared::models::TimeEnterySuggesti
         } else if pos == 1 && tracking {
             pos = 0;
             tracking = false;
+            if headline == "" {
+                debug!("No headline{:?}", line);
+            }
             let account_target = remove_first_tab
                 .replace_all(&remove_time.replace(line, "").to_string(), "")
                 .to_string();
@@ -452,8 +455,8 @@ mod tests {
         //TODO find error
         assert!(ledger_kill_time_entery(remove_line.clone()).is_ok());
         //remove added line
-        let ledger = fs::read_to_string(PATH_FINANCE).unwrap();
-        fs::File::create(PATH_FINANCE)
+        let ledger = fs::read_to_string(PATH_FINANCE_FILES[0]).unwrap();
+        fs::File::create(PATH_FINANCE_FILES[0])
             .unwrap()
             .write(ledger.replace(&format!("{}", &remove_line), "").as_bytes())
             .unwrap();
