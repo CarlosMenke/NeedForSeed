@@ -3,6 +3,7 @@ use enclose::enc;
 use fuzzy_matcher::skim::SkimMatcherV2;
 use fuzzy_matcher::FuzzyMatcher;
 use itertools::Itertools;
+use regex::Regex;
 use seed::{prelude::*, *};
 use std::collections::BTreeMap;
 use web_sys::HtmlInputElement;
@@ -188,6 +189,8 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             if &model.start_entery.account_target == "" {
                 return;
             }
+            let remove_space_end = Regex::new(r" ^").unwrap();
+            let remove_space = Regex::new(r": ").unwrap();
             orders.skip().perform_cmd({
                 let token = model.ctx.clone().unwrap().token;
                 let mut start_entery = model.start_entery.clone();
@@ -195,6 +198,15 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                     Some(e) => Some(e.replace("-", "/")),
                     None => None,
                 };
+                // clean spaces from wrong input
+                start_entery.account_target = remove_space_end
+                    .replace(
+                        &remove_space
+                            .replace_all(&start_entery.account_target, ":")
+                            .to_string(),
+                        "",
+                    )
+                    .to_string();
                 async {
                     Msg::FetchedStartTimeEntery(
                         api::requests::start_time_entery(token, start_entery).await,
@@ -255,6 +267,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         }
         Msg::FetchedStartTimeEntery(Ok(_response_data))
         | Msg::FetchedKillTimeEntery(Ok(_response_data)) => {
+            model.suggestion_filter = "".to_string();
             model.start_entery = shared::models::StartTimeEntery::default();
             orders.skip().perform_cmd({
                 let token = model.ctx.clone().unwrap().token;
@@ -441,6 +454,8 @@ fn update_suggestion_filter(model: &mut Model) {
             "headline".to_string()
         } else if &model.start_entery.account_target != "" && &model.start_entery.headline == "" {
             "account_target".to_string()
+        } else if &model.start_entery.account_target == "" && &model.start_entery.headline == "" {
+            "".to_string()
         } else {
             model.suggestion_filter.clone()
         };
