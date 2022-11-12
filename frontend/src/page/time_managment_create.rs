@@ -474,25 +474,21 @@ pub fn custom_suggestion<'a>(
         .count() as i64
         * 5;
     //autofill
-    return suggestions
-        .iter()
-        .rev()
-        .filter(move |s| {
-            (&model.suggestion_filter == "account_target"
+    return suggestions.iter().rev().filter(move |s| {
+        (&model.suggestion_filter == "account_target"
+            && matcher
+                .fuzzy_match(
+                    &s.account_target,
+                    &model.start_entery.account_target.replace(" ", ""),
+                )
+                .unwrap_or(0)
+                > threshhold)
+            || (&model.suggestion_filter == "headline"
                 && matcher
-                    .fuzzy_match(
-                        &s.account_target,
-                        &model.start_entery.account_target.replace(" ", ""),
-                    )
+                    .fuzzy_match(&s.headline, &&model.start_entery.headline.replace(" ", ""))
                     .unwrap_or(0)
                     > threshhold)
-                || (&model.suggestion_filter == "headline"
-                    && matcher
-                        .fuzzy_match(&s.headline, &&model.start_entery.headline.replace(" ", ""))
-                        .unwrap_or(0)
-                        > threshhold)
-        })
-        .rev();
+    });
 }
 
 fn autofill(orders: &mut impl Orders<Msg>, model: &Model) {
