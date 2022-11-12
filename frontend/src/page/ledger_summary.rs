@@ -133,7 +133,7 @@ impl Depth {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 enum Timeframe {
     Day,
     Week,
@@ -219,35 +219,35 @@ impl<'a> Urls<'a> {
             .add_path_part(time.str())
             .add_path_part(point.str())
     }
-    fn day(self, depth: Depth, point: Timepoint) -> Url {
+    fn day(self, depth: Depth, _point: Timepoint) -> Url {
         self.base_url()
             .add_path_part(depth.str())
             .add_path_part(DAY)
-            .add_path_part(point.str())
+            .add_path_part("0".to_string())
     }
-    fn week(self, depth: Depth, point: Timepoint) -> Url {
+    fn week(self, depth: Depth, _point: Timepoint) -> Url {
         self.base_url()
             .add_path_part(depth.str())
             .add_path_part(WEEK)
-            .add_path_part(point.str())
+            .add_path_part("0".to_string())
     }
-    fn month(self, depth: Depth, point: Timepoint) -> Url {
+    fn month(self, depth: Depth, _point: Timepoint) -> Url {
         self.base_url()
             .add_path_part(depth.str())
             .add_path_part(MONTH)
-            .add_path_part(point.str())
+            .add_path_part("0".to_string())
     }
-    fn year(self, depth: Depth, point: Timepoint) -> Url {
+    fn year(self, depth: Depth, _point: Timepoint) -> Url {
         self.base_url()
             .add_path_part(depth.str())
             .add_path_part(YEAR)
-            .add_path_part(point.str())
+            .add_path_part("0".to_string())
     }
-    fn all(self, depth: Depth, point: Timepoint) -> Url {
+    fn all(self, depth: Depth, _point: Timepoint) -> Url {
         self.base_url()
             .add_path_part(depth.str())
             .add_path_part(ALL)
-            .add_path_part(point.str())
+            .add_path_part("1".to_string())
     }
     fn now(self, depth: Depth, timeframe: Timeframe) -> Url {
         self.base_url()
