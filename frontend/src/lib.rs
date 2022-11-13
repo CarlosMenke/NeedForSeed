@@ -42,6 +42,7 @@ pub struct Model {
 const MUSIC: &str = "Music";
 const FINANCE: &str = "Finance";
 const TIMEMANAGMENT: &str = "TimeManagment";
+const CALNEDER: &str = "Calender";
 const TIMEMANAGMENTCREATE: &str = "TimeManagmentCreate";
 const FINANCEMANAGMENTCREATE: &str = "FinanceManagmentCreate";
 pub enum Page {
@@ -76,6 +77,12 @@ impl Page {
                 ctx.clone(),
                 "timeManagment".to_string().clone(),
             )),
+            Some(CALNEDER) => Self::LedgerSummary(page::ledger_summary::init(
+                url,
+                &mut orders.proxy(Msg::LedgerSummaryMsg),
+                ctx.clone(),
+                "calender".to_string().clone(),
+            )),
             Some(TIMEMANAGMENTCREATE) => {
                 Self::TimeManagmentCreate(page::time_managment_create::init(
                     url,
@@ -107,6 +114,9 @@ impl<'a> Urls<'a> {
     }
     fn finance(self) -> page::ledger_summary::Urls<'a> {
         page::ledger_summary::Urls::new(self.base_url().add_path_part(FINANCE))
+    }
+    fn calender(self) -> page::ledger_summary::Urls<'a> {
+        page::ledger_summary::Urls::new(self.base_url().add_path_part(CALNEDER))
     }
     fn ledger_summary(self) -> page::ledger_summary::Urls<'a> {
         page::ledger_summary::Urls::new(self.base_url().add_path_part(TIMEMANAGMENT))
@@ -227,6 +237,10 @@ fn header(base_url: &Url) -> Node<Msg> {
         li![a![
             attrs! { At::Href => Urls::new(base_url).home() },
             "Home",
+        ]],
+        li![a![
+            attrs! { At::Href => Urls::new(base_url).calender().default() },
+            "Calender",
         ]],
         li![a![
             attrs! { At::Href => Urls::new(base_url).music().default() },
