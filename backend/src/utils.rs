@@ -15,13 +15,13 @@ use crate::errors::ServiceError;
 pub const PATH_TIME_SPEND: &str = "./files/time_spend.dat";
 // all finance files. First one is the default
 pub const PATH_FINANCE_FILES: [&'static str; 4] = [
-    "./files/finance.dat",
-    "./files/invest.dat",
     "./files/nachhilfe.dat",
+    "./files/invest.dat",
     "./files/rent.dat",
+    "./files/gesamt.dat",
 ];
-// the display names of finance files
-pub const NAME_FINANCE: [&'static str; 4] = ["Finance", "Invest", "Nachhilfe", "Wohung"];
+// the display names of finance files. They are matched by index with the PATH_FINANCE_FILES.
+pub const NAME_FINANCE: [&'static str; 4] = ["Nachhilfe", "Invest", "Wohung", "Gesamt"];
 
 ///Hashes password with the same settings that are used in data table
 pub fn hash_password(password: &str) -> Result<String, ServiceError> {
@@ -299,29 +299,37 @@ pub fn ledger_create_finance_entery(
 pub fn ledger_finance_suggestion() -> Result<Vec<shared::models::NewFinanceEntery>, ServiceError> {
     let mut content_headline = Vec::new();
 
+    let mut pos: i32 = 0; //log line number of entery
+    let mut headline: String = "".to_string(); //temp store of headline
+    let mut account_origin: String = "".to_string(); //temp store of headline
+
+    //checks if the line is the beginning if a new entery
+    let check_beginning = Regex::new(r"^\d{4}/\d{2}/\d{2}").unwrap();
+    let replace_date = Regex::new(r"^\d{4}/\d{2}/\d{2}[ ]*[\t]*[\s]*").unwrap();
+    let get_account = Regex::new(r"[\s, \t]*(-)?\d{1, 4}[\.]?\d{0,2}€").unwrap();
+    let remove_first_tab = Regex::new(r"^[\s, \t]*").unwrap();
+    let remove_last_tab = Regex::new(r"[\s, \t]*$").unwrap();
+    let get_ammount = Regex::new(r"[-]*\d{0,6}[.]*\d{1,6}€").unwrap();
+    let mut tracking: bool = false;
+    let mut ammount = 0.0;
+    let mut content;
+
     for (file, target_file) in zip(PATH_FINANCE_FILES, NAME_FINANCE) {
         let ledger = fs::read_to_string(file)?;
-        let mut pos: i32 = 0; //log line number of entery
-        let mut headline: String = "".to_string(); //temp store of headline
-        let mut account_origin: String = "".to_string(); //temp store of headline
-
-        //checks if the line is the beginning if a new entery
-        let check_beginning = Regex::new(r"^\d{4}/\d{2}/\d{2}").unwrap();
-        let replace_date = Regex::new(r"^\d{4}/\d{2}/\d{2}[ ]*[\t]*[ ]*").unwrap();
-        let get_account = Regex::new(r"[\s]*[ ,\t]*[-]*\d{1, 4}[\.]?\d{0,2}€").unwrap();
-        let remove_first_tab = Regex::new(r"[\s]*\t").unwrap();
-        let get_ammount = Regex::new(r"[-]*\d{0,6}[.]*\d{1,6}€$").unwrap();
-        let mut tracking: bool = false;
-        let mut ammount = 0.0;
-        let mut content;
+        //TODO add multi line enteryies
         for line in ledger.lines() {
             if check_beginning.is_match(line) {
                 pos = 0;
                 tracking = true;
                 headline = replace_date.replace(line, "").to_string();
             } else if pos == 0 && tracking {
-                account_origin = remove_first_tab
-                    .replace_all(&get_account.replace(line, "").to_string(), "")
+                account_origin = remove_last_tab
+                    .replace(
+                        &remove_first_tab
+                            .replace(&get_account.replace(line, "").to_string(), "")
+                            .to_string(),
+                        "",
+                    )
                     .to_string();
                 pos += 1;
                 match get_ammount.find(&line) {
@@ -337,8 +345,13 @@ pub fn ledger_finance_suggestion() -> Result<Vec<shared::models::NewFinanceEnter
                 tracking = false;
                 content = shared::models::NewFinanceEntery {
                     headline: headline.clone(),
-                    account_target: remove_first_tab
-                        .replace_all(&get_account.replace(line, "").to_string(), "")
+                    account_target: remove_last_tab
+                        .replace(
+                            &remove_first_tab
+                                .replace(&get_account.replace(line, "").to_string(), "")
+                                .to_string(),
+                            "",
+                        )
                         .to_string(),
                     account_origin: account_origin.clone(),
                     date: None,
