@@ -15,7 +15,7 @@ pub fn init(
 ) -> Model {
     orders.skip().perform_cmd({
         let token = ctx.clone().unwrap().token;
-        async { Msg::FetchedSuggestion(api::requests::get_finance_suggestion(token).await) }
+        async { Msg::GetSuggestion(token) }
     });
     Model {
         _base_url: url.to_base_url(),
@@ -43,8 +43,7 @@ pub struct Model {
 // ------ Frequency ------
 
 pub enum Msg {
-    GetSuggestion,
-
+    GetSuggestion(String),
     FetchedNewFinanceEntery(fetch::Result<shared::models::ResponseStatus>),
     FetchedSuggestion(fetch::Result<shared::models::FinanceEnterySuggestion>),
 
@@ -93,9 +92,9 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             model.new_entery.target_file = content;
         }
 
-        Msg::GetSuggestion => {
+        Msg::GetSuggestion(token) => {
             orders.skip().perform_cmd({
-                let token = model.ctx.clone().unwrap().token;
+                let token = token;
                 async { Msg::FetchedSuggestion(api::requests::get_finance_suggestion(token).await) }
             });
         }
