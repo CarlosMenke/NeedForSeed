@@ -415,7 +415,7 @@ fn view_runing_enteries(
             style! {St::Display => "flex", St::FlexDirection => "row", St::JustifyContent => "flex-start", St::MarginBottom => px(10)},
             label![
                 C!["input-running_entery_offset"],
-                ev(Ev::DblClick, enc!((id) move |_| Msg::StartOffsetEdit(id))),
+                ev(Ev::Click, enc!((id) move |_| Msg::StartOffsetEdit(id))),
                 "Offset: ",
             ],
             match editing_running_entery {
