@@ -346,6 +346,7 @@ pub fn ledger_finance_suggestion() -> Result<Vec<shared::models::NewFinanceEnter
                     target_file: target_file.to_string(),
                 };
                 //check if entery exists in vec
+                //TODO dont push, if just ammount is different
                 if !content_headline.contains(&content) {
                     content_headline.push(content);
                 }
@@ -465,7 +466,12 @@ mod tests {
     #[actix_web::test]
     async fn test_ledger_suggestion_finance_entery() {
         let suggestion = ledger_finance_suggestion();
-        println!("{:#?}", suggestion.as_ref().unwrap());
-        assert!(suggestion.is_ok());
+        //println!("{:#?}", suggestion.as_ref().unwrap());
+        for ent in suggestion.as_ref().unwrap() {
+            if ent.account_target.contains(char::is_whitespace) {
+                println!("{:#?}", ent);
+            }
+        }
+        assert!(suggestion.is_err());
     }
 }

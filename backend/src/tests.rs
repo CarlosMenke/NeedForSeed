@@ -297,6 +297,7 @@ mod unit_tests {
             account_target: "Girokonto:N2".to_owned(),
             ammount: 10 as f32,
             date: None,
+            target_file: "Finance".to_string(),
         };
 
         let auth = HttpAuthentication::bearer(validator);
@@ -317,8 +318,8 @@ mod unit_tests {
         let remove_line = ledger_create_finance_entery(new_entery).unwrap();
 
         //remove added line
-        let ledger = fs::read_to_string(utils::PATH_FINANCE).unwrap();
-        fs::File::create(utils::PATH_FINANCE)
+        let ledger = fs::read_to_string(utils::PATH_FINANCE_FILES[0]).unwrap();
+        fs::File::create(utils::PATH_FINANCE_FILES[0])
             .unwrap()
             .write(ledger.replace(&format!("{}", &remove_line), "").as_bytes())
             .unwrap();
