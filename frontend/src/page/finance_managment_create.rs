@@ -233,7 +233,8 @@ pub fn view(model: &Model) -> Node<Msg> {
             datalist![
                 id!["suggestions_ammount"],
                 custom_suggestion(&suggestions, model)
-                    .map(|s| { option![format!("{:.2}", s.ammount.clone())] }),
+                    .unique_by(|s| s.ammount.to_string())
+                    .map(|s| { option![format!("{:.2}", s.ammount)] }),
             ],
             input![
                 C!["input-content-targetFile"],
@@ -247,12 +248,6 @@ pub fn view(model: &Model) -> Node<Msg> {
             ],
             datalist![
                 id!["suggestions_target_file"],
-                suggestions
-                    .iter()
-                    .rev()
-                    .filter(|_s| empty)
-                    .unique_by(|s| &s.target_file)
-                    .map(|s| { option![s.target_file.clone()] }),
                 custom_suggestion(&suggestions, model)
                     .unique_by(|s| &s.target_file)
                     .map(|s| { option![s.target_file.clone()] })
