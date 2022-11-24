@@ -16,4 +16,5 @@ backend/certificates
 backend/files
 frontend/.env
 frontend/dist
+frontend/pkg
 scripts/
