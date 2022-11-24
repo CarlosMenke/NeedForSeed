@@ -47,7 +47,7 @@ pub fn init(
         suggestion_filter: "".to_string(),
         running_entery: None,
         editing_offset: None,
-        invserse_offset: 1,
+        inverse_offset: 1,
         refs: Refs::default(),
     }
 }
@@ -64,7 +64,7 @@ pub struct Model {
     suggestion_filter: String,
     running_entery: Option<shared::models::ResponseRunningLedgerTimeEntery>,
     editing_offset: Option<EditingNewTimeEntery>,
-    invserse_offset: i32,
+    inverse_offset: i32,
     refs: Refs,
 }
 
@@ -125,7 +125,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             };
         }
         Msg::InverseOffsetStart => {
-            model.invserse_offset *= -1;
+            model.inverse_offset *= -1;
         }
         Msg::SaveNewEnteryDuration(content) => {
             model.start_entery.duration = match content.parse::<u32>() {
@@ -225,7 +225,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                     )
                     .to_string();
                 start_entery.offset =
-                    Some(-1 * model.invserse_offset * start_entery.offset.unwrap_or(0));
+                    Some(-1 * model.inverse_offset * start_entery.offset.unwrap_or(0));
                 async {
                     Msg::FetchedStartTimeEntery(
                         api::requests::start_time_entery(token, start_entery).await,
@@ -394,7 +394,7 @@ pub fn view(model: &Model) -> Node<Msg> {
                     &general.button,
                     &general.button_small,
                     style! {St::Width => px(10), St::Padding => px(10) , St::BorderRadius => "50%"},
-                    match &model.invserse_offset {
+                    match &model.inverse_offset {
                         -1 => "-",
                         _ => "+",
                     },
