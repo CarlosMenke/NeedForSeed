@@ -279,6 +279,7 @@ fn view_login(login_data: &auth::UserLogin) -> Node<Msg> {
         div![
             C!["form"],
             general.form,
+            general.form_fix,
             h3!["Need for Seed by Carlos"],
             label!["Username", &general.label],
             input![

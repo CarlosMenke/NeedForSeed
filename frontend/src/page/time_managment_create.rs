@@ -338,8 +338,8 @@ pub fn view(model: &Model) -> Node<Msg> {
             h3!["Creat Time Entery"],
             C!["form"],
             &general.form,
-            &general.form_time_entery,
-            style! {St::Top => "20%"},
+            &general.form_fix,
+            style! { St::Top => "20%" },
             label!["Headline", &general.label],
             input![
                 C!["input-content-headline"],
@@ -469,15 +469,7 @@ fn view_runing_enteries(
     div![
         h3!["Running Time Entery"],
         &general.form,
-        style! {St::Display => "flex", St::FlexDirection => "column", St::JustifyContent => "flex-start", St::Position => "relative"},
-        style! {
-            St::Transform => "none",
-            St::Width => "auto",
-            St::Height => "auto",
-            St::Top => "auto",
-            St::Left => "auto",
-            St::Padding => "25px 25px",
-            St::Margin => "50px auto",
+        style! {St::Display => "flex", St::FlexDirection => "column", St::JustifyContent => "flex-start", St::Position => "relative", St::Padding => "25px 25px", St::Margin => "50px auto",
         },
         label![entery.headline.clone(), &general.label],
         label![entery.account_target.clone(), &general.label],
@@ -490,7 +482,6 @@ fn view_runing_enteries(
                         ev(Ev::Click, |_| Msg::InverseRunningEnteryOffset),
                         &general.button,
                         &general.button_small,
-                        //style! {St::Width => px(10), St::Padding => px(10) , St::BorderRadius => "50%", St::Margin => "auto", St::MarginRight => px(8), St::MarginLeft => px(8), St::Border=> "3px solid rgba(255,255,255,0.9)"},
                         style! {St::Width => px(10), St::Padding => px(10) , St::Margin => "auto", St::MarginRight => px(8) },
                         match &editing_running_entery.inverse {
                             -1 => "-",
