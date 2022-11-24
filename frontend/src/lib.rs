@@ -232,6 +232,7 @@ fn view(model: &Model) -> Node<Msg> {
 
 fn header(base_url: &Url) -> Node<Msg> {
     div![
+        //general.body,
         C!["navbar"],
         "Test Navbar",
         li![a![

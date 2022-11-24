@@ -19,6 +19,7 @@ type RunningEnteryId = String;
 pub struct EditingNewTimeEntery {
     pub id: RunningEnteryId,
     pub offset: i32,
+    pub inverse: i32,
 }
 
 // ------ ------
@@ -46,10 +47,7 @@ pub fn init(
         suggestion_filter: "".to_string(),
         running_entery: None,
         editing_offset: None,
-        inverse_input: InverseInput {
-            offset_start: -1,
-            offset_end: 1,
-        },
+        invserse_offset: 1,
         refs: Refs::default(),
     }
 }
@@ -66,15 +64,8 @@ pub struct Model {
     suggestion_filter: String,
     running_entery: Option<shared::models::ResponseRunningLedgerTimeEntery>,
     editing_offset: Option<EditingNewTimeEntery>,
-    inverse_input: InverseInput,
+    invserse_offset: i32,
     refs: Refs,
-}
-
-/// make intput inverse
-#[derive(Default)]
-struct InverseInput {
-    offset_start: i32,
-    offset_end: i32,
 }
 
 #[derive(Default)]
@@ -103,6 +94,7 @@ pub enum Msg {
     EditingRunningEnteryOffsetChanged(String),
     SaveEditingRunningEnteryOffset,
     CancelRunningEnteryOffsetEdit,
+    InverseRunningEnteryOffset,
 
     StartTimeEntery,
     StopTimeEntery(RunningEnteryId),
@@ -133,7 +125,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             };
         }
         Msg::InverseOffsetStart => {
-            model.inverse_input.offset_start *= -1;
+            model.invserse_offset *= -1;
         }
         Msg::SaveNewEnteryDuration(content) => {
             model.start_entery.duration = match content.parse::<u32>() {
@@ -163,6 +155,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                     EditingNewTimeEntery {
                         id: running_entery_id,
                         offset: running_entery.offset.unwrap_or(0),
+                        inverse: 1,
                     }
                 });
             }
@@ -183,12 +176,13 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         Msg::SaveEditingRunningEnteryOffset => {
             if let Some(editing_offset) = model.editing_offset.take() {
                 let offset = editing_offset.offset;
+                let inverse = editing_offset.inverse;
                 if offset == 0 {
                 } else if let Some(entery) = match data {
                     Some(e) => e.running_entery.get_mut(&editing_offset.id),
                     None => None,
                 } {
-                    entery.offset = Some(offset.to_owned());
+                    entery.offset = Some(offset.to_owned() * inverse);
                 }
             }
             log!("{:#?}", &model.running_entery);
@@ -196,6 +190,11 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
 
         Msg::CancelRunningEnteryOffsetEdit => {
             model.editing_offset = None;
+        }
+        Msg::InverseRunningEnteryOffset => {
+            if let Some(ref mut editing_running_entery) = model.editing_offset {
+                editing_running_entery.inverse *= -1;
+            }
         }
         Msg::GetSuggestion => {
             orders.skip().perform_cmd({
@@ -226,7 +225,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                     )
                     .to_string();
                 start_entery.offset =
-                    Some(model.inverse_input.offset_start * start_entery.offset.unwrap_or(0));
+                    Some(-1 * model.invserse_offset * start_entery.offset.unwrap_or(0));
                 async {
                     Msg::FetchedStartTimeEntery(
                         api::requests::start_time_entery(token, start_entery).await,
@@ -395,7 +394,7 @@ pub fn view(model: &Model) -> Node<Msg> {
                     &general.button,
                     &general.button_small,
                     style! {St::Width => px(10), St::Padding => px(10) , St::BorderRadius => "50%"},
-                    match &model.inverse_input.offset_start {
+                    match &model.invserse_offset {
                         -1 => "-",
                         _ => "+",
                     },
@@ -469,51 +468,50 @@ fn view_runing_enteries(
     //TODO use entery for button name
     div![
         h3!["Running Time Entery"],
+        &general.form,
         style! {St::Display => "flex", St::FlexDirection => "column", St::JustifyContent => "flex-start", St::Position => "relative"},
-        //&general.form,
-        //&general.form_time_entery,
         style! {
-            //St::Transform => "translate(-50%,-50%)",
-            //St::Width => px(460),
-            //St::Height => px(580),
-            St::BackgroundColor => "rgba(255, 255, 255, 0.13)",
-            St::BorderRadius =>  px(10),
-            St::BackdropFilter =>  "blur(10px)",
-            St::Border => "2px solid rgba(255,255,255,0.1)",
-            St::BorderRadius => px(10),
-            St::FontFamily => "'Poppins', sans-serif",
-            St::Color => "#ffffff",
-            St::LetterSpacing => px(0.5),
-            St::Outline => "none",
-            St::Border => "none",
-            St::FontSize => px(32),
-            St::FontWeight => "500",
-            St::LineHeight => px(42),
-            St::TextAlign => "center",
+            St::Transform => "none",
+            St::Width => "auto",
+            St::Height => "auto",
+            St::Top => "auto",
+            St::Left => "auto",
             St::Padding => "25px 25px",
             St::Margin => "50px auto",
         },
         label![entery.headline.clone(), &general.label],
         label![entery.account_target.clone(), &general.label],
         label![format!("Duration: {}", entery.duration), &general.label],
-        //style! {St::Display => "flex", St::FlexDirection => "row", St::JustifyContent => "flex-start", St::MarginBottom => px(10)},
-        //]
         match editing_running_entery {
             Some(editing_running_entery) if editing_running_entery.id == id => {
-                input![
-                    el_ref(editing_running_entery_input),
-                    C!["input"],
-                    attrs! {At::Value => editing_running_entery.offset},
-                    input_ev(Ev::Input, Msg::EditingRunningEnteryOffsetChanged),
-                    keyboard_ev(Ev::KeyDown, |keyboard_event| {
-                        match keyboard_event.key_code() {
-                            ENTER_KEY => Some(Msg::SaveEditingRunningEnteryOffset),
-                            ESC_KEY => Some(Msg::CancelRunningEnteryOffsetEdit),
-                            _ => None,
-                        }
-                    }),
-                    &general.input,
-                    style! {St::Width => px(100), St::Margin => "auto"},
+                div![
+                    style! {St::Display => "flex", St::FlexDirection => "row", St::JustifyContent => "flex-center", St::Width => "100%"},
+                    button![
+                        ev(Ev::Click, |_| Msg::InverseRunningEnteryOffset),
+                        &general.button,
+                        &general.button_small,
+                        //style! {St::Width => px(10), St::Padding => px(10) , St::BorderRadius => "50%", St::Margin => "auto", St::MarginRight => px(8), St::MarginLeft => px(8), St::Border=> "3px solid rgba(255,255,255,0.9)"},
+                        style! {St::Width => px(10), St::Padding => px(10) , St::Margin => "auto", St::MarginRight => px(8) },
+                        match &editing_running_entery.inverse {
+                            -1 => "-",
+                            _ => "+",
+                        },
+                    ],
+                    input![
+                        el_ref(editing_running_entery_input),
+                        C!["input"],
+                        attrs! {At::Value => editing_running_entery.offset},
+                        input_ev(Ev::Input, Msg::EditingRunningEnteryOffsetChanged),
+                        keyboard_ev(Ev::KeyDown, |keyboard_event| {
+                            match keyboard_event.key_code() {
+                                ENTER_KEY => Some(Msg::SaveEditingRunningEnteryOffset),
+                                ESC_KEY => Some(Msg::CancelRunningEnteryOffsetEdit),
+                                _ => None,
+                            }
+                        }),
+                        &general.input,
+                        style! {St::Width => px(100), St::Margin => "auto", St::MarginLeft => px(8)},
+                    ]
                 ]
             }
             _ => {
