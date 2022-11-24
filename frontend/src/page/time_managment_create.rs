@@ -8,6 +8,8 @@ use seed::{prelude::*, *};
 use std::collections::BTreeMap;
 use web_sys::HtmlInputElement;
 
+use crate::design::General;
+
 const ENTER_KEY: u32 = 13;
 const ESC_KEY: u32 = 27;
 
@@ -44,6 +46,10 @@ pub fn init(
         suggestion_filter: "".to_string(),
         running_entery: None,
         editing_offset: None,
+        inverse_input: InverseInput {
+            offset_start: -1,
+            offset_end: 1,
+        },
         refs: Refs::default(),
     }
 }
@@ -60,7 +66,15 @@ pub struct Model {
     suggestion_filter: String,
     running_entery: Option<shared::models::ResponseRunningLedgerTimeEntery>,
     editing_offset: Option<EditingNewTimeEntery>,
+    inverse_input: InverseInput,
     refs: Refs,
+}
+
+/// make intput inverse
+#[derive(Default)]
+struct InverseInput {
+    offset_start: i32,
+    offset_end: i32,
 }
 
 #[derive(Default)]
@@ -83,6 +97,7 @@ pub enum Msg {
     SaveNewEnteryDuration(String),
     SaveNewEnteryDate(String),
     SaveNewEnteryOffset(String),
+    InverseOffsetStart,
 
     StartOffsetEdit(RunningEnteryId),
     EditingRunningEnteryOffsetChanged(String),
@@ -110,6 +125,16 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             update_suggestion_filter(model);
             autofill(orders, model);
         }
+        Msg::SaveNewEnteryOffset(content) => {
+            model.start_entery.offset = match content.parse::<i32>() {
+                Ok(0) => None,
+                Ok(n) => Some(n),
+                Err(_) => None,
+            };
+        }
+        Msg::InverseOffsetStart => {
+            model.inverse_input.offset_start *= -1;
+        }
         Msg::SaveNewEnteryDuration(content) => {
             model.start_entery.duration = match content.parse::<u32>() {
                 Ok(0) => None,
@@ -124,13 +149,6 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 Some(content)
             };
             log!(model.start_entery.date);
-        }
-        Msg::SaveNewEnteryOffset(content) => {
-            model.start_entery.offset = match content.parse::<i32>() {
-                Ok(0) => None,
-                Ok(n) => Some(n),
-                Err(_) => None,
-            };
         }
 
         Msg::StartOffsetEdit(running_entery_id) => {
@@ -207,6 +225,8 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                         "",
                     )
                     .to_string();
+                start_entery.offset =
+                    Some(model.inverse_input.offset_start * start_entery.offset.unwrap_or(0));
                 async {
                     Msg::FetchedStartTimeEntery(
                         api::requests::start_time_entery(token, start_entery).await,
@@ -310,9 +330,18 @@ pub fn view(model: &Model) -> Node<Msg> {
     } else {
         false
     };
+    let general = General::default();
     div![
+        &general.body,
         "Create new time Tracking Entery",
+        style! {St::Display => "flex", St::FlexDirection => "column", St::JustifyContent => "flex-start"},
         div![
+            h3!["Creat Time Entery"],
+            C!["form"],
+            &general.form,
+            &general.form_time_entery,
+            style! {St::Top => "20%"},
+            label!["Headline", &general.label],
             input![
                 C!["input-content-headline"],
                 input_ev(Ev::Input, Msg::SaveNewEnteryHeadline),
@@ -322,6 +351,7 @@ pub fn view(model: &Model) -> Node<Msg> {
                     At::Value => &model.start_entery.headline,
                     At::List => "suggestions-headline",
                 },
+                &general.input,
             ],
             datalist![
                 id!["suggestions-headline"],
@@ -343,7 +373,8 @@ pub fn view(model: &Model) -> Node<Msg> {
                     At::AutoFocus => true.as_at_value();
                     At::Value => &model.start_entery.account_target,
                     At::List => "suggestions_target",
-                }
+                },
+                &general.input,
             ],
             datalist![
                 id!["suggestions_target"],
@@ -357,43 +388,72 @@ pub fn view(model: &Model) -> Node<Msg> {
                     .unique_by(|s| &s.account_target)
                     .map(|s| { option![s.account_target.clone()] })
             ],
-            input![
-                C!["input-content_duration"],
-                input_ev(Ev::Input, Msg::SaveNewEnteryDuration),
-                attrs! {
-                    At::Placeholder => "Duration",
-                    At::AutoFocus => true.as_at_value();
-                    At::Value => &model.start_entery.duration.clone().unwrap_or(0),
-                }
+            div![
+                style! {St::Display => "flex", St::FlexDirection => "row", St::JustifyContent => "flex-center", St::Width => "100%"},
+                button![
+                    ev(Ev::Click, |_| Msg::InverseOffsetStart),
+                    &general.button,
+                    &general.button_small,
+                    style! {St::Width => px(10), St::Padding => px(10) , St::BorderRadius => "50%"},
+                    match &model.inverse_input.offset_start {
+                        -1 => "-",
+                        _ => "+",
+                    },
+                ],
+                input![
+                    C!["input-content_offset"],
+                    input_ev(Ev::Input, Msg::SaveNewEnteryOffset),
+                    attrs! {
+                        At::Placeholder => "Offset",
+                        At::AutoFocus => true.as_at_value();
+                        At::Value => &model.start_entery.offset.clone().unwrap_or(0),
+                    },
+                    &general.input,
+                    style! {St::Width => "40%"},
+                ],
             ],
-            input![
-                C!["input-content_date"],
-                input_ev(Ev::Input, Msg::SaveNewEnteryDate),
-                attrs! {
-                    At::Placeholder => "Date",
-                    At::AutoFocus => true.as_at_value();
-                    At::Type => "date",
-                    At::Value => &model.start_entery.date.clone().unwrap_or("".to_string()),
-                }
+            div![
+                style! {St::Display => "flex", St::FlexDirection => "row", St::JustifyContent => "flex-center", St::Width => "100%"},
+                input![
+                    C!["input-content_duration"],
+                    input_ev(Ev::Input, Msg::SaveNewEnteryDuration),
+                    attrs! {
+                        At::Placeholder => "Duration",
+                        At::AutoFocus => true.as_at_value();
+                        At::Value => &model.start_entery.duration.clone().unwrap_or(0),
+                    },
+                    &general.input,
+                    style! {St::Width => "40%"},
+                ],
+                input![
+                    C!["input-content_date"],
+                    input_ev(Ev::Input, Msg::SaveNewEnteryDate),
+                    attrs! {
+                        At::Placeholder => "Date",
+                        At::AutoFocus => true.as_at_value();
+                        At::Type => "date",
+                        At::Value => &model.start_entery.date.clone().unwrap_or("".to_string()),
+                    },
+                    &general.input,
+                    style! {St::Width => "40%", St::Margin => "auto"},
+                ],
             ],
-            input![
-                C!["input-content_offset"],
-                input_ev(Ev::Input, Msg::SaveNewEnteryOffset),
-                attrs! {
-                    At::Placeholder => "Offset",
-                    At::AutoFocus => true.as_at_value();
-                    At::Value => &model.start_entery.offset.clone().unwrap_or(0),
-                }
+            button![
+                ev(Ev::Click, |_| Msg::StartTimeEntery),
+                "Start Entery",
+                &general.button,
             ],
-            button![ev(Ev::Click, |_| Msg::StartTimeEntery), "Start Entery"],
-            ul![running_entery.iter().filter_map(|(remove_line, entery)| {
+        ],
+        div![
+            style! {St::Display => "flex", St::FlexDirection => "row", St::JustifyContent => "flex-center", St::Top => "45%", St::Width => "100%", St::Position => "absolute", St::FlexWrap => "wrap"},
+            running_entery.iter().filter_map(|(remove_line, entery)| {
                 Some(view_runing_enteries(
                     remove_line.to_string(),
                     entery,
                     &model.editing_offset,
                     &model.refs.editing_running_entery_input,
                 ))
-            })]
+            },),
         ],
     ]
 }
@@ -405,45 +465,80 @@ fn view_runing_enteries(
     editing_running_entery: &Option<EditingNewTimeEntery>,
     editing_running_entery_input: &ElRef<HtmlInputElement>,
 ) -> Node<Msg> {
+    let general = General::default();
     //TODO use entery for button name
     div![
-        style! {St::Display => "flex", St::FlexDirection => "column", St::JustifyContent => "flex-start" , St::MaxWidth => px(500), St::Margin => "auto", St::MarginTop => px(30)},
-        p![entery.headline.clone()],
-        p![entery.account_target.clone()],
-        p![format!("Duration: {}", entery.duration)],
-        div![
-            style! {St::Display => "flex", St::FlexDirection => "row", St::JustifyContent => "flex-start", St::MarginBottom => px(10)},
-            label![
-                C!["input-running_entery_offset"],
-                ev(Ev::Click, enc!((id) move |_| Msg::StartOffsetEdit(id))),
-                "Offset: ",
-            ],
-            match editing_running_entery {
-                Some(editing_running_entery) if editing_running_entery.id == id => {
-                    input![
-                        el_ref(editing_running_entery_input),
-                        C!["input"],
-                        attrs! {At::Value => editing_running_entery.offset},
-                        input_ev(Ev::Input, Msg::EditingRunningEnteryOffsetChanged),
-                        keyboard_ev(Ev::KeyDown, |keyboard_event| {
-                            match keyboard_event.key_code() {
-                                ENTER_KEY => Some(Msg::SaveEditingRunningEnteryOffset),
-                                ESC_KEY => Some(Msg::CancelRunningEnteryOffsetEdit),
-                                _ => None,
-                            }
-                        }),
-                    ]
-                }
-                _ => label![entery.offset.clone()],
-            },
-        ],
+        h3!["Running Time Entery"],
+        style! {St::Display => "flex", St::FlexDirection => "column", St::JustifyContent => "flex-start", St::Position => "relative"},
+        //&general.form,
+        //&general.form_time_entery,
+        style! {
+            //St::Transform => "translate(-50%,-50%)",
+            //St::Width => px(460),
+            //St::Height => px(580),
+            St::BackgroundColor => "rgba(255, 255, 255, 0.13)",
+            St::BorderRadius =>  px(10),
+            St::BackdropFilter =>  "blur(10px)",
+            St::Border => "2px solid rgba(255,255,255,0.1)",
+            St::BorderRadius => px(10),
+            St::FontFamily => "'Poppins', sans-serif",
+            St::Color => "#ffffff",
+            St::LetterSpacing => px(0.5),
+            St::Outline => "none",
+            St::Border => "none",
+            St::FontSize => px(32),
+            St::FontWeight => "500",
+            St::LineHeight => px(42),
+            St::TextAlign => "center",
+            St::Padding => "25px 25px",
+            St::Margin => "50px auto",
+        },
+        label![entery.headline.clone(), &general.label],
+        label![entery.account_target.clone(), &general.label],
+        label![format!("Duration: {}", entery.duration), &general.label],
+        //style! {St::Display => "flex", St::FlexDirection => "row", St::JustifyContent => "flex-start", St::MarginBottom => px(10)},
+        //]
+        match editing_running_entery {
+            Some(editing_running_entery) if editing_running_entery.id == id => {
+                input![
+                    el_ref(editing_running_entery_input),
+                    C!["input"],
+                    attrs! {At::Value => editing_running_entery.offset},
+                    input_ev(Ev::Input, Msg::EditingRunningEnteryOffsetChanged),
+                    keyboard_ev(Ev::KeyDown, |keyboard_event| {
+                        match keyboard_event.key_code() {
+                            ENTER_KEY => Some(Msg::SaveEditingRunningEnteryOffset),
+                            ESC_KEY => Some(Msg::CancelRunningEnteryOffsetEdit),
+                            _ => None,
+                        }
+                    }),
+                    &general.input,
+                    style! {St::Width => px(100), St::Margin => "auto"},
+                ]
+            }
+            _ => {
+                let label =
+                    "Offset: ".to_string() + &entery.offset.unwrap_or(0).to_string().clone();
+                label![
+                    C!["input-running_entery_offset"],
+                    ev(Ev::Click, enc!((id) move |_| Msg::StartOffsetEdit(id))),
+                    label,
+                    &general.label
+                ]
+                //label![entery.offset.clone()]
+            }
+        },
         button![
             "kill",
-            ev(Ev::Click, enc!((id) move |_| Msg::KillTimeEntery(id)))
+            ev(Ev::Click, enc!((id) move |_| Msg::KillTimeEntery(id))),
+            &general.button,
+            &general.button_small,
         ],
         button![
             "Stop",
-            ev(Ev::Click, enc!((id) move |_| Msg::StopTimeEntery(id)))
+            ev(Ev::Click, enc!((id) move |_| Msg::StopTimeEntery(id))),
+            &general.button,
+            style! {St::MarginTop => px(25)},
         ]
     ]
 }

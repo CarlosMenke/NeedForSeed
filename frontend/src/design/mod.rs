@@ -2,9 +2,11 @@ use seed::{prelude::*, *};
 
 pub struct General {
     pub button: Style,
+    pub button_small: Style,
     pub input: Style,
     pub label: Style,
     pub form: Style,
+    pub form_time_entery: Style,
     pub body: Style,
     pub background: Style,
     pub shape: Style,
@@ -27,11 +29,17 @@ impl Default for General {
                 St::Cursor => "Pointer",
                 St::Border => "0",
             },
+            button_small: style! {
+                St::MarginTop => px(5),
+                St::BackgroundColor => "rgba(0, 0, 0, 0.00)",
+                St::Color => "#ffffff",
+            },
             input: style! {
                 St::Display => "block",
                 St::Height => px(50),
                 St::Width => "100%",
                 St::BackgroundColor => "rgba(255, 255, 255, 0.007)",
+                St::Color => "rgba(255, 255, 255, 1.00)",
                 St::BorderRadius => px(3),
                 St::Padding => "0 10px",
                 St::MarginTop => px(8);
@@ -67,6 +75,11 @@ impl Default for General {
                 St::FontWeight => "500",
                 St::LineHeight => px(42),
                 St::TextAlign => "center",
+            },
+            form_time_entery: style! {
+                St::Top => "20%";
+                St::Width => px(460),
+                St::Height => px(540),
             },
             body: style! {
                 St::BackgroundColor => "#080710",
