@@ -3,16 +3,24 @@ use seed::{prelude::*, *};
 pub struct General {
     pub button: Style,
     pub button_small: Style,
+
     pub input: Style,
     pub label: Style,
+
     pub form: Style,
     pub form_fix: Style,
     pub form_time_entery: Style,
+
     pub body: Style,
+    pub body_navbar: Style,
     pub background: Style,
+
     pub shape: Style,
     pub shape_first: Style,
     pub shape_last: Style,
+
+    pub navbar: Style,
+    pub navbar_item: Style,
 }
 
 impl Default for General {
@@ -35,6 +43,7 @@ impl Default for General {
                 St::BackgroundColor => "rgba(0, 0, 0, 0.00)",
                 St::Color => "#ffffff",
             },
+
             input: style! {
                 St::Display => "block",
                 St::Height => px(50),
@@ -54,6 +63,7 @@ impl Default for General {
                 St::FontSize => px(16),
                 St::FontWeight => 500,
             },
+
             form: style! {
                 St::BackgroundColor => "rgba(255, 255, 255, 0.13)",
                 St::BorderRadius =>  px(10),
@@ -100,6 +110,7 @@ impl Default for General {
                 St::Top => "50%",
                 St::Left => "50%",
             },
+
             shape: style! {
                 St::Height => px(200),
                 St::Width => px(200),
@@ -115,6 +126,22 @@ impl Default for General {
                 St::Background => "linear-gradient(to right, #ff512f,#f09819)",
                 St::Right => px(-55),
                 St::Bottom => px(-65),
+            },
+
+            navbar: style! {
+                St::ListStyleType => "none",
+            },
+            navbar_item: style! {
+                St::TextDecoration => "none",
+                St::TextAlign => "center",
+                St::Color => "rgba(255, 255, 255, 0.96)",
+                St::Padding => "auto",
+                St::Margin => px(8),
+                St::FontFamily => "'Poppins', sans-serif",
+                St::LetterSpacing => px(0.5),
+                St::FontSize => px(16),
+                St::FontWeight => "500",
+                St::Width => "100%",
             },
         }
     }

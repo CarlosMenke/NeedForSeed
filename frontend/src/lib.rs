@@ -231,38 +231,48 @@ fn view(model: &Model) -> Node<Msg> {
 }
 
 fn header(base_url: &Url) -> Node<Msg> {
-    div![
-        //general.body,
+    let general = General::default();
+    ul![
         C!["navbar"],
         "Test Navbar",
-        li![a![
+        &general.body_navbar,
+        &general.navbar,
+        style! {St::Display => "flex", St::FlexDirection => "row", St::JustifyContent => "center", St::Width => "100%", St::FlexWrap => "wrap"},
+        a![
             attrs! { At::Href => Urls::new(base_url).home() },
             "Home",
-        ]],
-        li![a![
+            &general.navbar_item,
+        ],
+        a![
             attrs! { At::Href => Urls::new(base_url).calender().default() },
             "Calender",
-        ]],
-        li![a![
+            &general.navbar_item,
+        ],
+        a![
             attrs! { At::Href => Urls::new(base_url).music().default() },
             "Music",
-        ]],
-        li![a![
+            &general.navbar_item,
+        ],
+        a![
             attrs! { At::Href => Urls::new(base_url).finance().default() },
             "Finance",
-        ]],
-        li![a![
+            &general.navbar_item,
+        ],
+        a![
             attrs! { At::Href => Urls::new(base_url).ledger_summary().default() },
             "Time Tracking",
-        ]],
-        li![a![
+            &general.navbar_item,
+        ],
+        a![
             attrs! { At::Href => Urls::new(base_url).time_managment_create() },
             "Time Tracking",
-        ]],
-        li![a![
+            &general.navbar_item,
+        ],
+        a![
             attrs! { At::Href => Urls::new(base_url).finance_managment_create() },
             "Finance Tracking",
-        ]],
+            &general.navbar_item,
+        ],
     ]
 }
 
