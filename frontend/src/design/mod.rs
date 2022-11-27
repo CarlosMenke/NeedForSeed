@@ -19,7 +19,6 @@ pub struct General {
     pub shape_first: Style,
     pub shape_last: Style,
 
-    pub navbar: Style,
     pub navbar_item: Style,
 }
 
@@ -104,9 +103,13 @@ impl Default for General {
                 St::Position => "absolute",
             },
             body_navbar: style! {
-                St::BackgroundColor => "#080710",
+                //St::BackgroundColor => "#080710",
                 St::Height => px(300),
-                St::Width => px(1000);
+                St::Display => "flex",
+                St::FlexDirection => "row",
+                St::JustifyContent => "space-evenly",
+                St::FlexBasis => "120%",
+                St::FlexWrap => "wrap"
             },
 
             background: style! {
@@ -135,9 +138,6 @@ impl Default for General {
                 St::Bottom => px(-65),
             },
 
-            navbar: style! {
-                St::ListStyleType => "none",
-            },
             navbar_item: style! {
                 St::TextDecoration => "none",
                 St::TextAlign => "center",

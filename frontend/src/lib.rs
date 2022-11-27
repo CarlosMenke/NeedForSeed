@@ -229,10 +229,13 @@ fn view(model: &Model) -> Node<Msg> {
     div![
         style! {
                 St::BackgroundColor => "#080710",
-                St::Position => "absolute",
+                St::Position => "fixed",
                 St::MinWidth => px(1000),
-                St::Height => px(333),
+                //St::Height => px(333),
                 St::Width => "100%",
+                St::Left => px(0),
+                St::Top => px(0),
+                St::Margin => px(0),
         },
         IF!( ! &model.ctx.is_none() => header(&model.base_url)),
         match &model.page {
@@ -263,8 +266,13 @@ fn header(base_url: &Url) -> Node<Msg> {
         C!["navbar"],
         "Test Navbar",
         &general.body_navbar,
-        &general.navbar,
-        style! {St::Display => "flex", St::FlexDirection => "row", St::JustifyContent => "center", St::Width => "100%", St::FlexWrap => "wrap"},
+        style! {
+            St::ListStyleType => "none",
+            St::Display => "flex",
+            St::FlexDirection => "row",
+            St::JustifyContent => "space-evenly",
+            St::FlexBasis => "120%",
+        },
         a![
             attrs! { At::Href => Urls::new(base_url).home() },
             "Home",
