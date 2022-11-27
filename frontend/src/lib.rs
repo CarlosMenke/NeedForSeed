@@ -147,6 +147,7 @@ pub enum Msg {
     SaveLoginPassword(String),
 
     GetLoginRequest,
+    GetLogoutRequest,
     FetchedLogin(fetch::Result<auth::UserLoginResponse>),
 }
 
@@ -174,6 +175,10 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             orders
                 .skip()
                 .perform_cmd(async { Msg::FetchedLogin(get_login(name, pwd).await) });
+        }
+        Msg::GetLogoutRequest => {
+            LocalStorage::remove(STORAGE_KEY_CTX).expect("remove logedin user.");
+            model.ctx = None;
         }
         Msg::FetchedLogin(Ok(response_data)) => {
             log!("fetched data: {:?}", &response_data);
@@ -219,6 +224,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
 
 // `view` describes what to display.
 fn view(model: &Model) -> Node<Msg> {
+    let general = General::default();
     div![
         style! {
                 St::BackgroundColor => "#080710",
@@ -227,6 +233,11 @@ fn view(model: &Model) -> Node<Msg> {
                 St::Width => "100%",
         },
         IF!( ! &model.ctx.is_none() => header(&model.base_url)),
+        IF!(! &model.ctx.is_none() => button![
+            ev(Ev::Click, |_| Msg::GetLogoutRequest),
+            &general.button,
+            "Logout"
+        ]),
         IF!( model.ctx.is_none() => view_login(&model.login_data)),
         match &model.page {
             Page::Home => page::home::view(),
