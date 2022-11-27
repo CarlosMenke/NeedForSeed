@@ -48,6 +48,7 @@ const TIMEMANAGMENT: &str = "TimeManagment";
 const CALNEDER: &str = "Calender";
 const TIMEMANAGMENTCREATE: &str = "TimeManagmentCreate";
 const FINANCEMANAGMENTCREATE: &str = "FinanceManagmentCreate";
+
 pub enum Page {
     Home,
     LedgerSummary(page::ledger_summary::Model),
@@ -230,14 +231,18 @@ fn view(model: &Model) -> Node<Msg> {
                 St::BackgroundColor => "#080710",
                 St::Position => "absolute",
                 St::MinWidth => px(1000),
+                St::Height => px(333),
                 St::Width => "100%",
         },
         IF!( ! &model.ctx.is_none() => header(&model.base_url)),
-        IF!(! &model.ctx.is_none() => button![
-            ev(Ev::Click, |_| Msg::GetLogoutRequest),
-            &general.button,
-            "Logout"
-        ]),
+        match &model.page {
+            Page::Home => button![
+                ev(Ev::Click, |_| Msg::GetLogoutRequest),
+                &general.button,
+                "Logout"
+            ],
+            _ => empty![],
+        },
         IF!( model.ctx.is_none() => view_login(&model.login_data)),
         match &model.page {
             Page::Home => page::home::view(),
