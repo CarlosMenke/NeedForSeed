@@ -220,6 +220,12 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
 // `view` describes what to display.
 fn view(model: &Model) -> Node<Msg> {
     div![
+        style! {
+                St::BackgroundColor => "#080710",
+                St::Position => "absolute",
+                St::MinWidth => px(1000),
+                St::Width => "100%",
+        },
         IF!( ! &model.ctx.is_none() => header(&model.base_url)),
         IF!( model.ctx.is_none() => view_login(&model.login_data)),
         match &model.page {

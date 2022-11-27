@@ -491,7 +491,7 @@ fn view_runing_enteries(
             St::Display => "flex",
             St::FlexDirection => "column",
             St::JustifyContent => "flex-start",
-            St::Padding => "25px 25px",
+            St::Padding => "25px 25px 25px 25px",
             St::Margin => "25px auto 25px auto",
         },
         label![entery.headline.clone(), &general.label],
