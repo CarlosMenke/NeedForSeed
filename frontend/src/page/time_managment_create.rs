@@ -331,15 +331,25 @@ pub fn view(model: &Model) -> Node<Msg> {
     };
     let general = General::default();
     div![
-        &general.body,
+        style! {
+            St::BackgroundColor => "#080710",
+            St::MinWidth => px(1000),
+            St::Width => "100%",
+        },
         "Create new time Tracking Entery",
-        style! {St::Display => "flex", St::FlexDirection => "column", St::JustifyContent => "flex-start"},
+        style! {St::Display => "flex", St::FlexDirection => "column", St::JustifyContent => "start", St::Height => px(950)},
         div![
             h3!["Creat Time Entery"],
             C!["form"],
             &general.form,
-            &general.form_fix,
-            style! { St::Top => "20%" },
+            //&general.form_fix,
+            style! {
+                St::Height => px(530),
+                St::Width => px(400),
+                //St::Transform => "translate(-50%,-50%)",
+                St::Padding => "50px 35px",
+                St::Margin => "50px auto",
+            },
             label!["Headline", &general.label],
             input![
                 C!["input-content-headline"],
@@ -388,7 +398,7 @@ pub fn view(model: &Model) -> Node<Msg> {
                     .map(|s| { option![s.account_target.clone()] })
             ],
             div![
-                style! {St::Display => "flex", St::FlexDirection => "row", St::JustifyContent => "flex-center", St::Width => "100%"},
+                style! {St::Display => "flex", St::FlexDirection => "row", St::JustifyContent => "center", St::Width => "100%"},
                 button![
                     ev(Ev::Click, |_| Msg::InverseOffsetStart),
                     &general.button,
@@ -444,7 +454,15 @@ pub fn view(model: &Model) -> Node<Msg> {
             ],
         ],
         div![
-            style! {St::Display => "flex", St::FlexDirection => "row", St::JustifyContent => "flex-center", St::Top => "45%", St::Width => "100%", St::Position => "absolute", St::FlexWrap => "wrap"},
+            style! {
+            St::BackgroundColor => "#080710",
+            St::Top => px(1500),
+            St::Width => "100%",
+            St::Display => "flex",
+            St::FlexDirection => "row",
+            St::JustifyContent => "space-evenly",
+            St::FlexBasis => "120%",
+            St::FlexWrap => "wrap"},
             running_entery.iter().filter_map(|(remove_line, entery)| {
                 Some(view_runing_enteries(
                     remove_line.to_string(),
@@ -469,7 +487,12 @@ fn view_runing_enteries(
     div![
         h3!["Running Time Entery"],
         &general.form,
-        style! {St::Display => "flex", St::FlexDirection => "column", St::JustifyContent => "flex-start", St::Position => "relative", St::Padding => "25px 25px", St::Margin => "50px auto",
+        style! {
+            St::Display => "flex",
+            St::FlexDirection => "column",
+            St::JustifyContent => "flex-start",
+            St::Padding => "25px 25px",
+            St::Margin => "25px auto 25px auto",
         },
         label![entery.headline.clone(), &general.label],
         label![entery.account_target.clone(), &general.label],

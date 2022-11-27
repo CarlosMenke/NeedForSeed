@@ -94,14 +94,21 @@ impl Default for General {
                 St::Width => px(460),
                 St::Height => px(540),
             },
+
             body: style! {
                 St::BackgroundColor => "#080710",
-                St::MinHeight => "2000px",
-                St::MinWidth => "1000px",
+                St::MinHeight => px(2000),
                 St::Height => "100%",
+                St::MinWidth => px(1000),
                 St::Width => "100%",
                 St::Position => "absolute",
             },
+            body_navbar: style! {
+                St::BackgroundColor => "#080710",
+                St::Height => px(300),
+                St::Width => px(1000);
+            },
+
             background: style! {
                 St::Height => px(630),
                 St::Width => px(520),
