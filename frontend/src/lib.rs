@@ -10,6 +10,8 @@ use api::requests::*;
 use design::General;
 use shared::*;
 
+const STORAGE_KEY_CTX: &str = "ctx";
+
 // ------ ------
 //     Init
 // ------ ------
@@ -20,10 +22,11 @@ fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
     orders
         .subscribe(Msg::UrlChanged)
         .notify(subs::UrlChanged(url.clone()));
+    let ctx = LocalStorage::get(STORAGE_KEY_CTX).ok();
     Model {
         base_url: url.to_base_url(),
         page: Page::init(url, orders, &None),
-        ctx: None,
+        ctx,
         login_data: shared::auth::UserLogin::default(),
     }
 }
@@ -174,6 +177,8 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         }
         Msg::FetchedLogin(Ok(response_data)) => {
             log!("fetched data: {:?}", &response_data);
+            LocalStorage::insert(STORAGE_KEY_CTX, &response_data)
+                .expect("Failed to insert CTX to Local Storage.");
             model.ctx = Some(response_data);
         }
 
