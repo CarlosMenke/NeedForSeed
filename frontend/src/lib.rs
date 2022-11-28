@@ -238,10 +238,20 @@ fn view(model: &Model) -> Node<Msg> {
         },],
         IF!( ! &model.ctx.is_none() => header(&model.base_url)),
         match &model.page {
-            Page::Home => button![
-                ev(Ev::Click, |_| Msg::GetLogoutRequest),
-                &general.button,
-                "Logout"
+            Page::Home => div![
+                style! {
+                    St::ListStyleType => "none",
+                    St::Display => "flex",
+                    St::FlexDirection => "row",
+                    St::JustifyContent => "space-evenly",
+                    St::FlexBasis => "120%",
+                },
+                button![
+                    ev(Ev::Click, |_| Msg::GetLogoutRequest),
+                    &general.button,
+                    "Logout",
+                    style! {St::Width => "10em"},
+                ]
             ],
             _ => empty![],
         },
@@ -349,7 +359,7 @@ fn view_login(login_data: &auth::UserLogin) -> Node<Msg> {
             button![
                 ev(Ev::Click, |_| Msg::GetLoginRequest),
                 &general.button,
-                "Get Login message"
+                "Login"
             ],
         ]
     ]
