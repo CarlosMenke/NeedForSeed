@@ -331,11 +331,6 @@ pub fn view(model: &Model) -> Node<Msg> {
     };
     let general = General::default();
     div![
-        style! {
-            St::BackgroundColor => "#080710",
-            St::MinWidth => px(1000),
-            St::Width => "100%",
-        },
         "Create new time Tracking Entery",
         style! {St::Display => "flex", St::FlexDirection => "column", St::JustifyContent => "start", St::Height => px(950)},
         div![

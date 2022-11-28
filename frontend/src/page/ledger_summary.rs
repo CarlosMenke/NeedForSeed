@@ -501,9 +501,15 @@ pub fn view(model: &Model) -> Node<Msg> {
     };
 
     div![
+        style! {
+            //St::Height => px(10000);
+        },
         div![format!("Depth:  {}    ", depth), link,],
         div![format!("Timeframe:  {}    ", timeframe), link_timeframe,],
         div![format!("Timepoint:  {}    ", timepoint), link_timepoint,],
-        raw![&summary_html]
+        div![
+            raw![&summary_html],
+            style! {St::Display => "flex", St::FlexDirection => "row", St::JustifyContent => "center"},
+        ],
     ]
 }

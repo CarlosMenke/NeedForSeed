@@ -227,16 +227,15 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
 fn view(model: &Model) -> Node<Msg> {
     let general = General::default();
     div![
-        style! {
+        div![style! {
                 St::BackgroundColor => "#080710",
                 St::Position => "fixed",
-                St::MinWidth => px(1000),
-                //St::Height => px(333),
                 St::Width => "100%",
+                St::Height => "100%",
                 St::Left => px(0),
                 St::Top => px(0),
-                St::Margin => px(0),
-        },
+                St::ZIndex => -100,
+        },],
         IF!( ! &model.ctx.is_none() => header(&model.base_url)),
         match &model.page {
             Page::Home => button![
@@ -314,10 +313,8 @@ fn header(base_url: &Url) -> Node<Msg> {
 fn view_login(login_data: &auth::UserLogin) -> Node<Msg> {
     let general = General::default();
     div![
-        general.body,
         div![
             C!["background"],
-            general.background,
             div![C!["shape"], &general.shape, &general.shape_first],
             div![C!["shape"], &general.shape, &general.shape_last],
         ],
