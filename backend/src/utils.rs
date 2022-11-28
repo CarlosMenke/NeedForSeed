@@ -41,7 +41,6 @@ pub fn verify(password_hash: &str, password: &str) -> Result<bool, ServiceError>
     }
 }
 
-//TODO make function more generic: give the file path
 /// converts the ledger file for Time tracking and extracts the Heandline and the target account
 pub fn ledger_time_suggestion() -> Result<Vec<shared::models::TimeEnterySuggestion>, ServiceError> {
     let mut content_headline = Vec::new();
@@ -89,7 +88,7 @@ pub fn ledger_start_time_entery(
     println!("{:?}", start_entery.headline);
     let dt = chrono::Local::now();
     let minutes_count = (i64::from(dt.hour() * 60 + dt.minute())
-        - i64::from(start_entery.offset.unwrap_or(0))
+        + i64::from(start_entery.offset.unwrap_or(0))
         + 24 * 60)
         % (24 * 60);
     let chrono_date = chrono::Local::now();
@@ -209,7 +208,7 @@ pub fn ledger_create_time_entery(
         chrono_date.day()
     );
     let start_minute: i64 =
-        (stop_minute - start_entery.duration as i64 - offset_end as i64 + 24 * 60) % (24 * 60); //TODO adjust
+        (stop_minute - start_entery.duration as i64 + offset_end as i64 + 24 * 60) % (24 * 60); //TODO adjust
     let time_span = format!(
         "; {:02}:{:02} - {:02}:{:02}",
         start_minute / 60,
@@ -222,10 +221,7 @@ pub fn ledger_create_time_entery(
         None => &date_now,
     };
 
-    let duration = match &start_entery.offset {
-        Some(o) => (i64::from(start_entery.duration) + i64::from(*o) + 24 * 60) % (24 * 60),
-        None => start_entery.duration as i64,
-    };
+    let duration = (i64::from(start_entery.duration) + i64::from(offset_end) + 24 * 60) % (24 * 60);
 
     // calculate number of tabs
     let tab_count = if (start_entery.account_target.chars().count() / 4) < 11 {

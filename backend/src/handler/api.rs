@@ -91,8 +91,8 @@ pub async fn set_time_entery_start(
     new_time_entery: web::Json<StartTimeEntery>,
 ) -> Result<web::Json<ResponseStatus>, ServiceError> {
     debug!(
-        "Set ledger time function is called with Headline: \t{:?}\t account_origin: \t{:?}\t account_origin: \t{:?}\t duration: \t{:?}",
-        &new_time_entery.headline, &new_time_entery.account_origin, &new_time_entery.account_target, &new_time_entery.duration);
+        "Set ledger time function is called with Headline: \t{:?}\t account_origin: \t{:?}\t account_origin: \t{:?}\t duration: \t{:?}\t offset: \t{:?}",
+        &new_time_entery.headline, &new_time_entery.account_origin, &new_time_entery.account_target, &new_time_entery.duration, &new_time_entery.offset);
 
     if &new_time_entery.account_origin == "" {
         return Err(ServiceError::BadRequest(

@@ -47,7 +47,7 @@ pub fn init(
         suggestion_filter: "".to_string(),
         running_entery: None,
         editing_offset: None,
-        inverse_offset: 1,
+        inverse_offset: -1,
         refs: Refs::default(),
     }
 }
@@ -224,8 +224,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                         "",
                     )
                     .to_string();
-                start_entery.offset =
-                    Some(-1 * model.inverse_offset * start_entery.offset.unwrap_or(0));
+                start_entery.offset = Some(model.inverse_offset * start_entery.offset.unwrap_or(0));
                 async {
                     Msg::FetchedStartTimeEntery(
                         api::requests::start_time_entery(token, start_entery).await,
