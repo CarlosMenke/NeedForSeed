@@ -155,7 +155,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                     EditingNewTimeEntery {
                         id: running_entery_id,
                         offset: running_entery.offset.unwrap_or(0),
-                        inverse: 1,
+                        inverse: -1,
                     }
                 });
             }
@@ -449,14 +449,12 @@ pub fn view(model: &Model) -> Node<Msg> {
         ],
         div![
             style! {
-            St::BackgroundColor => "#080710",
             St::Top => px(1500),
             St::Width => "100%",
             St::Display => "flex",
             St::FlexDirection => "row",
             St::JustifyContent => "space-evenly",
             St::FlexBasis => "120%",
-            St::FlexWrap => "wrap"
             },
             running_entery.iter().filter_map(|(remove_line, entery)| {
                 Some(view_runing_enteries(

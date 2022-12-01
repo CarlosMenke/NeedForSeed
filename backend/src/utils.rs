@@ -208,7 +208,7 @@ pub fn ledger_create_time_entery(
         chrono_date.day()
     );
     let start_minute: i64 =
-        (stop_minute - start_entery.duration as i64 + offset_end as i64 + 24 * 60) % (24 * 60); //TODO adjust
+        (stop_minute - start_entery.duration as i64 - offset_end as i64 + 24 * 60) % (24 * 60); //TODO adjust
     let time_span = format!(
         "; {:02}:{:02} - {:02}:{:02}",
         start_minute / 60,
