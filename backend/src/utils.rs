@@ -77,10 +77,71 @@ pub fn ledger_time_suggestion() -> Result<Vec<shared::models::TimeEnterySuggesti
             pos += 1;
         }
     }
-    Ok(content_headline)
+    Ok(suggestion)
 }
 
-//TODO find better return type
+/// get the n last time enteries
+pub fn ledger_time_history() -> Result<Vec<shared::models::TimeEnteryHistory>, ServiceError> {
+    let mut history = Vec::new();
+    let ledger = fs::read_to_string(PATH_TIME_SPEND)?;
+    let mut pos: i32 = 0; //log line number of entery
+    let mut headline: String = "".to_string(); //temp store of headline
+    let mut date: String = "".to_string(); //temp store of date
+    let mut timespan: String = "".to_string(); //temp store of timespan
+    let mut remove_entery: String = "".to_string(); //temp store of timespan
+
+    //checks if the line is the beginning if a new entery
+    let check_beginning = Regex::new(r"^\d{4}/\d{2}/\d{2}").unwrap();
+    let check_timespan = Regex::new(r"^; \d{2}:\d{2} - \d{2}:\d{2}").unwrap();
+    let replace_date = Regex::new(r"^\d{4}/\d{2}/\d{2}[ ]*[\t]*[ ]*").unwrap();
+    let get_timespan = Regex::new(r"^; ").unwrap();
+    let get_date = Regex::new(r"^\d{4}/\d{2}/\d{2}").unwrap();
+    let remove_time = Regex::new(r"[\s]*[\t]*\d{1, 3}[\.]?\d{0,2}[m,h]").unwrap();
+    let remove_first_tab = Regex::new(r"[\s]*\t").unwrap();
+    let mut tracking: bool = false;
+    for line in ledger.lines() {
+        //TODO only date date, if it is one line befor headline.
+        if check_timespan.is_match(line) {
+            remove_entery = line.to_string();
+            timespan = get_timespan.replace(line, "").to_string();
+        }
+        if check_beginning.is_match(line) {
+            remove_entery += line;
+            pos = 0;
+            tracking = true;
+            date = match get_date.find(&line) {
+                Some(t) => t.as_str().to_string(),
+                _ => "0000/00/00".to_string(),
+            };
+            headline = replace_date.replace(line, "").to_string();
+        } else if pos == 0 && tracking {
+            remove_entery += line;
+            pos += 1;
+        } else if pos == 1 && tracking {
+            pos = 0;
+            tracking = false;
+            if headline == "" {
+                debug!("No headline{:?}", line);
+            }
+            remove_entery += line;
+            let account_target = remove_first_tab
+                .replace_all(&remove_time.replace(line, "").to_string(), "")
+                .to_string();
+            history.push(shared::models::TimeEnteryHistory {
+                remove_entery: remove_entery.clone(),
+                headline: headline.clone(),
+                account_target,
+                date: date.clone(),
+                timespan: timespan.clone(),
+            });
+            remove_entery = "".to_string();
+        } else {
+            pos += 1;
+        }
+    }
+    Ok(history)
+}
+
 /// Starts time Entery in ledger time File.
 pub fn ledger_start_time_entery(
     start_entery: shared::models::StartTimeEntery,
@@ -481,6 +542,13 @@ mod tests {
                 println!("{:#?}", ent);
             }
         }
-        assert!(suggestion.is_err());
+        assert!(suggestion.is_ok());
+    }
+
+    #[actix_web::test]
+    async fn test_ledger_history_time_entery() {
+        let suggestion = ledger_time_history();
+        println!("{:#?}", suggestion.as_ref().unwrap());
+        assert!(suggestion.is_ok());
     }
 }

@@ -150,7 +150,16 @@ pub async fn set_time_entery_kill(
     return Ok(web::Json(ResponseStatus { status: 0 }));
 }
 
-/// LEDGER FINANCE INTERACTION ///
+/// get history for ledger time entery
+#[has_permissions("GET_LEDGER_INFO")]
+pub async fn get_time_history() -> Result<web::Json<ResponseTimeEnteryHistory>, ServiceError> {
+    debug!("Get Ledger Time History.");
+    Ok(web::Json(shared::models::ResponseTimeEnteryHistory {
+        entery_history: utils::ledger_time_history()?,
+    }))
+}
+
+/// --- LEDGER FINANCE INTERACTION --- ///
 /// create ledger finance entery
 #[has_permissions("SET_LEDGER_INFO")]
 pub async fn set_finance_entery_create(
