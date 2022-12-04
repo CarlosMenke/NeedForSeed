@@ -39,11 +39,12 @@ pub struct TimeEnteryHistory {
     pub account_target: String,
     pub date: String,
     pub timespan: String,
+    pub duration: u32,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct ResponseTimeEnteryHistory {
-    pub entery_history: Vec<TimeEnteryHistory>,
+    pub history: Vec<TimeEnteryHistory>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]

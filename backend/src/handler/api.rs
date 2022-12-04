@@ -154,8 +154,9 @@ pub async fn set_time_entery_kill(
 #[has_permissions("GET_LEDGER_INFO")]
 pub async fn get_time_history() -> Result<web::Json<ResponseTimeEnteryHistory>, ServiceError> {
     debug!("Get Ledger Time History.");
+    //TODO add filter for history elements. (date)
     Ok(web::Json(shared::models::ResponseTimeEnteryHistory {
-        entery_history: utils::ledger_time_history()?,
+        history: utils::ledger_time_history()?,
     }))
 }
 

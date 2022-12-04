@@ -457,7 +457,6 @@ pub fn view(model: &Model) -> Node<Msg> {
             St::Display => "flex",
             St::FlexDirection => "row",
             St::JustifyContent => "space-evenly",
-            //St::FlexBasis => "120%",
             St::FlexWrap => "wrap",
             },
             running_entery.iter().filter_map(|(remove_line, entery)| {
