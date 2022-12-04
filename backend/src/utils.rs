@@ -89,6 +89,7 @@ pub fn ledger_time_history() -> Result<Vec<shared::models::TimeEnteryHistory>, S
     let mut date: String = "".to_string(); //temp store of date
     let mut timespan: String = "".to_string(); //temp store of timespan
     let mut remove_entery: String = "".to_string(); //temp store of timespan
+    let mut duration = 0;
 
     //checks if the line is the beginning if a new entery
     let check_beginning = Regex::new(r"^\d{4}/\d{2}/\d{2}").unwrap();
@@ -96,6 +97,7 @@ pub fn ledger_time_history() -> Result<Vec<shared::models::TimeEnteryHistory>, S
     let replace_date = Regex::new(r"^\d{4}/\d{2}/\d{2}[ ]*[\t]*[ ]*").unwrap();
     let get_timespan = Regex::new(r"^; ").unwrap();
     let get_date = Regex::new(r"^\d{4}/\d{2}/\d{2}").unwrap();
+    let get_duration = Regex::new(r"[-]*\d{1,3}[m, h]+").unwrap();
     let remove_time = Regex::new(r"[\s]*[\t]*\d{1, 3}[\.]?\d{0,2}[m,h]").unwrap();
     let remove_first_tab = Regex::new(r"[\s]*\t").unwrap();
     let mut tracking: bool = false;
@@ -117,6 +119,10 @@ pub fn ledger_time_history() -> Result<Vec<shared::models::TimeEnteryHistory>, S
         } else if pos == 0 && tracking {
             remove_entery += line;
             pos += 1;
+            match get_duration.find(&line) {
+                Some(e) => duration = e.as_str().replace("m", "").parse::<u32>().unwrap_or(0),
+                None => (),
+            };
         } else if pos == 1 && tracking {
             pos = 0;
             tracking = false;
@@ -127,12 +133,17 @@ pub fn ledger_time_history() -> Result<Vec<shared::models::TimeEnteryHistory>, S
             let account_target = remove_first_tab
                 .replace_all(&remove_time.replace(line, "").to_string(), "")
                 .to_string();
+            match get_duration.find(&line) {
+                Some(e) => duration = e.as_str().replace("m", "").parse::<u32>().unwrap_or(0),
+                None => (),
+            };
             history.push(shared::models::TimeEnteryHistory {
                 remove_entery: remove_entery.clone(),
-                headline: headline.clone(),
-                account_target,
                 date: date.clone(),
                 timespan: timespan.clone(),
+                headline: headline.clone(),
+                account_target,
+                duration,
             });
             remove_entery = "".to_string();
         } else {
