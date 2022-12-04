@@ -2,6 +2,7 @@
 name = "backend"
 version = "0.0.1"
 edition = "2021"
+authors = ["Maximilian Carlos Menke"]
 
 [dependencies]
 actix-web = { version = "4", features = ["openssl"] }
