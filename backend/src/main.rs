@@ -48,6 +48,7 @@ async fn main() -> std::io::Result<()> {
     //add https support
     HttpServer::new(move || {
         let cors = Cors::permissive()
+            //TODO setup tight policy
             //.allow_any_origin()
             //.allowed_origin("http://127.0.0.1:8080")
             //.allowed_methods(vec!["GET", "POST"])
