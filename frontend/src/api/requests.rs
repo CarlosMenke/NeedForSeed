@@ -85,6 +85,21 @@ pub async fn get_time_running_entery(
     .await
 }
 
+/// this function returns a Vector, witch holds all history of time Enteries.
+pub async fn get_time_history_entery(
+    token: String,
+) -> fetch::Result<shared::models::ResponseTimeEnteryHistory> {
+    Request::new(get_api_url(String::from(
+        "api/auth/get_time_entery_history.json",
+    )))
+    .header(Header::bearer(token))
+    .fetch()
+    .await?
+    .check_status()?
+    .json()
+    .await
+}
+
 pub async fn start_time_entery(
     token: String,
     new_entery: shared::models::StartTimeEntery,

@@ -39,6 +39,10 @@ pub fn init(
         let token = ctx.clone().unwrap().token;
         async { Msg::FetchedRunningEntery(api::requests::get_time_running_entery(token).await) }
     });
+    orders.skip().perform_cmd({
+        let token = ctx.clone().unwrap().token;
+        async { Msg::FetchedHistoryEntery(api::requests::get_time_history_entery(token).await) }
+    });
     Model {
         _base_url: url.to_base_url(),
         ctx,
@@ -330,6 +334,10 @@ pub fn view(model: &Model) -> Node<Msg> {
         Some(m) => m.running_entery,
         None => BTreeMap::new(),
     };
+    let history_entery = match model.history_entery.clone() {
+        Some(m) => m.history,
+        None => Vec::new(),
+    };
     let empty = if &model.suggestion_filter == "" {
         true
     } else {
@@ -468,6 +476,20 @@ pub fn view(model: &Model) -> Node<Msg> {
                 ))
             },),
         ],
+        div![
+            style! {
+            St::Width => "100%",
+            St::Display => "flex",
+            St::FlexDirection => "row",
+            St::JustifyContent => "space-evenly",
+            St::FlexWrap => "wrap",
+            },
+            history_entery
+                .iter()
+                .rev()
+                .take(23)
+                .map(|entery| { Some(view_history_enteries(entery)) },),
+        ],
     ]
 }
 
@@ -548,6 +570,32 @@ fn view_runing_enteries(
             &general.button,
             style! {St::MarginTop => px(25)},
         ]
+    ]
+}
+
+fn view_history_enteries(history: &shared::models::TimeEnteryHistory) -> Node<Msg> {
+    let general = General::default();
+    div![
+        &general.form,
+        style! {
+            St::Display => "flex",
+            St::FlexDirection => "column",
+            St::JustifyContent => "flex-start",
+            St::Padding => "25px 25px 25px 25px",
+            St::Margin => "25px auto 25px auto",
+        },
+        h3![history.headline.clone()],
+        label![history.account_target.clone(), &general.label],
+        label![
+            format!(
+                "{} [ {} ] {}m",
+                history.timespan,
+                history.date.clone().replace("/", " "),
+                history.duration,
+            ),
+            &general.label
+        ],
+        button!["Delete", &general.button, style! {St::MarginTop => px(25)},]
     ]
 }
 
