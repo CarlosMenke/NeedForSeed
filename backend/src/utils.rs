@@ -43,7 +43,7 @@ pub fn verify(password_hash: &str, password: &str) -> Result<bool, ServiceError>
 
 /// converts the ledger file for Time tracking and extracts the Heandline and the target account
 pub fn ledger_time_suggestion() -> Result<Vec<shared::models::TimeEnterySuggestion>, ServiceError> {
-    let mut content_headline = Vec::new();
+    let mut suggestion = Vec::new();
 
     let ledger = fs::read_to_string(PATH_TIME_SPEND)?;
     let mut pos: i32 = 0; //log line number of entery
@@ -69,7 +69,7 @@ pub fn ledger_time_suggestion() -> Result<Vec<shared::models::TimeEnterySuggesti
             let account_target = remove_first_tab
                 .replace_all(&remove_time.replace(line, "").to_string(), "")
                 .to_string();
-            content_headline.push(shared::models::TimeEnterySuggestion {
+            suggestion.push(shared::models::TimeEnterySuggestion {
                 headline: headline.clone(),
                 account_target,
             });
@@ -293,7 +293,7 @@ pub fn ledger_create_finance_entery(
 /// converts the ledger file for Finance tracking and extracts the Heandline and ammount, target
 /// and origin account
 pub fn ledger_finance_suggestion() -> Result<Vec<shared::models::NewFinanceEntery>, ServiceError> {
-    let mut content_headline = Vec::new();
+    let mut content_finance = Vec::new();
 
     let mut pos: i32 = 0; //log line number of entery
     let mut headline: String = "".to_string(); //temp store of headline
@@ -356,15 +356,15 @@ pub fn ledger_finance_suggestion() -> Result<Vec<shared::models::NewFinanceEnter
                 };
                 //check if entery exists in vec
                 //TODO dont push, if just ammount is different
-                if !content_headline.contains(&content) {
-                    content_headline.push(content);
+                if !content_finance.contains(&content) {
+                    content_finance.push(content);
                 }
             } else {
                 pos += 1;
             }
         }
     }
-    Ok(content_headline)
+    Ok(content_finance)
 }
 
 #[cfg(test)]
