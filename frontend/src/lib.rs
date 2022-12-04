@@ -230,8 +230,8 @@ fn view(model: &Model) -> Node<Msg> {
         div![style! {
                 St::BackgroundColor => "#080710",
                 St::Position => "fixed",
-                St::Width => "100%",
-                St::Height => "100vh",
+                St::Width => "2000vw",
+                St::Height => "3000vh",
                 St::Left => px(0),
                 St::Top => px(0),
                 St::ZIndex => -100,

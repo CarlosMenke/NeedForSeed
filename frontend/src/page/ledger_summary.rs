@@ -509,7 +509,7 @@ pub fn view(model: &Model) -> Node<Msg> {
         div![format!("Timepoint:  {}    ", timepoint), link_timepoint,],
         div![
             raw![&summary_html],
-            style! {St::Display => "flex", St::FlexDirection => "row", St::JustifyContent => "center"},
+            style! { St::Margin => "40px 40px 40px 40px"},
         ],
     ]
 }
