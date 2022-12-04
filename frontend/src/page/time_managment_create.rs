@@ -46,6 +46,7 @@ pub fn init(
         start_entery: shared::models::StartTimeEntery::default(),
         suggestion_filter: "".to_string(),
         running_entery: None,
+        history_entery: None,
         editing_offset: None,
         inverse_offset: -1,
         refs: Refs::default(),
@@ -63,6 +64,7 @@ pub struct Model {
     start_entery: shared::models::StartTimeEntery,
     suggestion_filter: String,
     running_entery: Option<shared::models::ResponseRunningLedgerTimeEntery>,
+    history_entery: Option<shared::models::ResponseTimeEnteryHistory>,
     editing_offset: Option<EditingNewTimeEntery>,
     inverse_offset: i32,
     refs: Refs,
@@ -80,6 +82,7 @@ pub enum Msg {
 
     FetchedSuggestion(fetch::Result<shared::models::HeadlineSuggestion>),
     FetchedRunningEntery(fetch::Result<shared::models::ResponseRunningLedgerTimeEntery>),
+    FetchedHistoryEntery(fetch::Result<shared::models::ResponseTimeEnteryHistory>),
     FetchedStartTimeEntery(fetch::Result<shared::models::ResponseStatus>),
     FetchedKillTimeEntery(fetch::Result<shared::models::ResponseStatus>),
 
@@ -301,8 +304,12 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             log!(response_data);
             model.running_entery = Some(response_data);
         }
+        Msg::FetchedHistoryEntery(Ok(response_data)) => {
+            model.history_entery = Some(response_data);
+        }
         Msg::FetchedSuggestion(Err(fetch_error))
         | Msg::FetchedRunningEntery(Err(fetch_error))
+        | Msg::FetchedHistoryEntery(Err(fetch_error))
         | Msg::FetchedStartTimeEntery(Err(fetch_error))
         | Msg::FetchedKillTimeEntery(Err(fetch_error)) => {
             log!("Fetch error:", fetch_error);
@@ -338,9 +345,6 @@ pub fn view(model: &Model) -> Node<Msg> {
             &general.form,
             //&general.form_fix,
             style! {
-                St::Height => px(530),
-                St::Width => px(400),
-                //St::Transform => "translate(-50%,-50%)",
                 St::Padding => "50px 35px",
                 St::Margin => "50px auto",
             },
@@ -449,12 +453,12 @@ pub fn view(model: &Model) -> Node<Msg> {
         ],
         div![
             style! {
-            St::Top => px(1500),
             St::Width => "100%",
             St::Display => "flex",
             St::FlexDirection => "row",
             St::JustifyContent => "space-evenly",
-            St::FlexBasis => "120%",
+            //St::FlexBasis => "120%",
+            St::FlexWrap => "wrap",
             },
             running_entery.iter().filter_map(|(remove_line, entery)| {
                 Some(view_runing_enteries(
