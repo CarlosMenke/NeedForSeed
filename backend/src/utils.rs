@@ -259,7 +259,10 @@ pub fn ledger_stop_time_entery(
             .replace(&format!("{}\n", &info.remove_line), "")
             .as_bytes(),
     )?;
-    ledger_create_time_entery(info.new_entery.clone())?;
+    let mut create_entery = info.new_entery.clone();
+    create_entery.duration =
+        (create_entery.duration as i32 + create_entery.offset.unwrap_or(0)) as u32;
+    ledger_create_time_entery(create_entery)?;
     Ok(())
 }
 
@@ -279,8 +282,7 @@ pub fn ledger_create_time_entery(
         chrono_date.month(),
         chrono_date.day()
     );
-    let start_minute: i64 =
-        (stop_minute - start_entery.duration as i64 - offset_end as i64 + 24 * 60) % (24 * 60); //TODO adjust
+    let start_minute: i64 = (stop_minute - start_entery.duration as i64 + 24 * 60) % (24 * 60); //TODO adjust
     let time_span = format!(
         "; {:02}:{:02} - {:02}:{:02}",
         start_minute / 60,
@@ -292,8 +294,6 @@ pub fn ledger_create_time_entery(
         Some(d) => d,
         None => &date_now,
     };
-
-    let duration = (i64::from(start_entery.duration) + i64::from(offset_end) + 24 * 60) % (24 * 60);
 
     // calculate number of tabs
     let tab_count = if (start_entery.account_target.chars().count() / 4) < 11 {
@@ -310,7 +310,7 @@ pub fn ledger_create_time_entery(
         start_entery.account_origin,
         start_entery.account_target,
         tabs,
-        duration,
+        start_entery.duration,
     );
     fs::OpenOptions::new()
         .append(true)
