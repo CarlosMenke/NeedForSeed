@@ -104,11 +104,11 @@ pub fn ledger_time_history() -> Result<Vec<shared::models::TimeEnteryHistory>, S
     for line in ledger.lines() {
         //TODO only date date, if it is one line befor headline.
         if check_timespan.is_match(line) {
-            remove_entery = line.to_string();
+            remove_entery = format!("\n{}\n", line);
             timespan = get_timespan.replace(line, "").to_string();
         }
         if check_beginning.is_match(line) {
-            remove_entery += line;
+            remove_entery += &format!("{}\n", line);
             pos = 0;
             tracking = true;
             date = match get_date.find(&line) {
@@ -117,7 +117,7 @@ pub fn ledger_time_history() -> Result<Vec<shared::models::TimeEnteryHistory>, S
             };
             headline = replace_date.replace(line, "").to_string();
         } else if pos == 0 && tracking {
-            remove_entery += line;
+            remove_entery += &format!("{}\n", line);
             pos += 1;
             match get_duration.find(&line) {
                 Some(e) => duration = e.as_str().replace("m", "").parse::<u32>().unwrap_or(0),
@@ -129,7 +129,7 @@ pub fn ledger_time_history() -> Result<Vec<shared::models::TimeEnteryHistory>, S
             if headline == "" {
                 debug!("No headline{:?}", line);
             }
-            remove_entery += line;
+            remove_entery += &format!("{}", line);
             let account_target = remove_first_tab
                 .replace_all(&remove_time.replace(line, "").to_string(), "")
                 .to_string();
