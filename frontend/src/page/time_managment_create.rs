@@ -243,12 +243,13 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             //save offset if input is present
             if let Some(editing_offset) = model.editing_offset.take() {
                 let offset = editing_offset.offset;
+                let inverse = editing_offset.inverse;
                 if offset == 0 {
                 } else if let Some(entery) = match data {
                     Some(e) => e.running_entery.get_mut(&editing_offset.id),
                     None => None,
                 } {
-                    entery.offset = Some(offset.to_owned());
+                    entery.offset = Some(offset.to_owned() * inverse);
                 }
             }
             log!("{:#?}", &model.running_entery);
@@ -278,14 +279,14 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         Msg::KillTimeEntery(remove_line) => {
             orders.skip().perform_cmd({
                 let token = model.ctx.clone().unwrap().token;
-                let stop_entery = shared::models::StopLedgerTimeEntery {
+                let kill_entery = shared::models::StopLedgerTimeEntery {
                     remove_line,
                     new_entery: shared::models::NewTimeEntery::default(),
                 };
-                log!(stop_entery);
+                log!(kill_entery);
                 async {
                     Msg::FetchedKillTimeEntery(
-                        api::requests::kill_time_entery(token, stop_entery).await,
+                        api::requests::kill_time_entery(token, kill_entery).await,
                     )
                 }
             });
@@ -484,11 +485,12 @@ pub fn view(model: &Model) -> Node<Msg> {
             St::JustifyContent => "space-evenly",
             St::FlexWrap => "wrap",
             },
-            history_entery
-                .iter()
-                .rev()
-                .take(23)
-                .map(|entery| { Some(view_history_enteries(entery)) },),
+            history_entery.iter().rev().take(23).map(|entery| {
+                Some(view_history_enteries(
+                    entery,
+                    entery.remove_entery.to_string(),
+                ))
+            },),
         ],
     ]
 }
@@ -573,7 +575,10 @@ fn view_runing_enteries(
     ]
 }
 
-fn view_history_enteries(history: &shared::models::TimeEnteryHistory) -> Node<Msg> {
+fn view_history_enteries(
+    history: &shared::models::TimeEnteryHistory,
+    id: RunningEnteryId,
+) -> Node<Msg> {
     let general = General::default();
     div![
         &general.form,
@@ -595,7 +600,12 @@ fn view_history_enteries(history: &shared::models::TimeEnteryHistory) -> Node<Ms
             ),
             &general.label
         ],
-        button!["Delete", &general.button, style! {St::MarginTop => px(25)},]
+        button![
+            "Delete",
+            ev(Ev::Click, enc!((id) move |_| Msg::KillTimeEntery(id))),
+            &general.button,
+            style! {St::MarginTop => px(25)},
+        ]
     ]
 }
 
