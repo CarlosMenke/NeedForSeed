@@ -1,12 +1,13 @@
 use actix_web::{web, Result};
 use actix_web_grants::proc_macro::has_permissions;
+use actix_web_httpauth::extractors::bearer::BearerAuth;
 use diesel::PgConnection;
 use log::debug;
 
 use std::fs;
 
 use crate::{
-    auth::*,
+    auth::{create_token, decode_jwt},
     db::users::{check_login, insert_user},
     errors::ServiceError,
     models::db::{Pool, User},
@@ -58,11 +59,13 @@ pub async fn create_user(
 #[has_permissions("GET_LEDGER_INFO")]
 pub async fn get_html(
     path: web::Path<(String, String, String, String)>,
+    credentials: BearerAuth,
 ) -> Result<web::Json<ResponseHtml>, ServiceError> {
+    let user = decode_jwt(credentials.token()).unwrap().username;
     let (target, depth, timeframe, timepoint) = path.into_inner();
     debug!(
-        "Get HTML function called for target: \t {:#?} \tdepth: \t{:#?} \ttimeframe: \t{:#?}\ttimepoint: \t{:#?}",
-        &target, &depth, &timeframe, &timepoint
+        "User '{}' Get HTML function called for target: \t {:#?} \tdepth: \t{:#?} \ttimeframe: \t{:#?}\ttimepoint: \t{:#?}",
+        &target, &depth, &timeframe, &timepoint, &user
     );
     //TODO make path more general. right now, it only works, if cargo run is executed one dir above
     //main.rs
@@ -77,8 +80,11 @@ pub async fn get_html(
 /// get Headline and Content BTreeMap from Ledger Music
 #[has_permissions("GET_LEDGER_INFO")]
 //TODO make the function more generic in the future
-pub async fn get_time_suggetstions() -> Result<web::Json<HeadlineSuggestion>, ServiceError> {
-    debug!("Get Ledger Time Suggestion.");
+pub async fn get_time_suggetstions(
+    credentials: BearerAuth,
+) -> Result<web::Json<HeadlineSuggestion>, ServiceError> {
+    let user = decode_jwt(credentials.token()).unwrap().username;
+    debug!("User '{}' Get Ledger Time Suggestion.", &user);
     Ok(web::Json(HeadlineSuggestion {
         suggestions: utils::ledger_time_suggestion()?,
     }))
@@ -89,10 +95,12 @@ pub async fn get_time_suggetstions() -> Result<web::Json<HeadlineSuggestion>, Se
 //TODO think of better return type
 pub async fn set_time_entery_start(
     new_time_entery: web::Json<StartTimeEntery>,
+    credentials: BearerAuth,
 ) -> Result<web::Json<ResponseStatus>, ServiceError> {
+    let user = decode_jwt(credentials.token()).unwrap().username;
     debug!(
-        "Set ledger time function is called with Headline: \t{:?}\t account_origin: \t{:?}\t account_origin: \t{:?}\t duration: \t{:?}\t offset: \t{:?}",
-        &new_time_entery.headline, &new_time_entery.account_origin, &new_time_entery.account_target, &new_time_entery.duration, &new_time_entery.offset);
+        "User '{}' Set ledger time function is called with Headline: \t{:?}\t account_origin: \t{:?}\t account_origin: \t{:?}\t duration: \t{:?}\t offset: \t{:?}",
+        &new_time_entery.headline, &new_time_entery.account_origin, &new_time_entery.account_target, &new_time_entery.duration, &new_time_entery.offset, &user);
 
     if &new_time_entery.account_origin == "" {
         return Err(ServiceError::BadRequest(
@@ -123,8 +131,10 @@ pub async fn set_time_entery_start(
 /// get all running time Enteries
 #[has_permissions("GET_LEDGER_INFO")]
 pub async fn get_time_entery_running(
+    credentials: BearerAuth,
 ) -> Result<web::Json<ResponseRunningLedgerTimeEntery>, ServiceError> {
-    debug!("Get all Running Time Enteries.");
+    let user = decode_jwt(credentials.token()).unwrap().username;
+    debug!("User '{}' Get all Running Time Enteries.", &user);
     return Ok(web::Json(ResponseRunningLedgerTimeEntery {
         running_entery: utils::ledger_get_running_time_entery()?,
     }));
@@ -134,8 +144,13 @@ pub async fn get_time_entery_running(
 #[has_permissions("SET_LEDGER_INFO")]
 pub async fn set_time_entery_stop(
     payload: web::Json<StopLedgerTimeEntery>,
+    credentials: BearerAuth,
 ) -> Result<web::Json<ResponseStatus>, ServiceError> {
-    debug!("Stop running Time Entery {:#?}", payload.new_entery);
+    let user = decode_jwt(credentials.token()).unwrap().username;
+    debug!(
+        "User '{}' Stop running Time Entery {:#?}",
+        &user, payload.new_entery
+    );
     utils::ledger_stop_time_entery(&payload)?;
     return Ok(web::Json(ResponseStatus { status: 0 }));
 }
@@ -144,16 +159,24 @@ pub async fn set_time_entery_stop(
 #[has_permissions("SET_LEDGER_INFO")]
 pub async fn set_time_entery_kill(
     payload: web::Json<StopLedgerTimeEntery>,
+    credentials: BearerAuth,
 ) -> Result<web::Json<ResponseStatus>, ServiceError> {
-    debug!("Kill running Time Entery {:#?}", payload.new_entery);
+    let user = decode_jwt(credentials.token()).unwrap().username;
+    debug!(
+        "User '{}' Kill / Delete Time Entery {:#?}",
+        &user, payload.new_entery
+    );
     utils::ledger_kill_time_entery(payload.remove_line.to_owned())?;
     return Ok(web::Json(ResponseStatus { status: 0 }));
 }
 
 /// get history for ledger time entery
 #[has_permissions("GET_LEDGER_INFO")]
-pub async fn get_time_history() -> Result<web::Json<ResponseTimeEnteryHistory>, ServiceError> {
-    debug!("Get Ledger Time History.");
+pub async fn get_time_history(
+    credentials: BearerAuth,
+) -> Result<web::Json<ResponseTimeEnteryHistory>, ServiceError> {
+    let user = decode_jwt(credentials.token()).unwrap().username;
+    debug!("User '{}' Get Ledger Time History.", &user);
     //TODO add filter for history elements. (date)
     Ok(web::Json(shared::models::ResponseTimeEnteryHistory {
         history: utils::ledger_time_history()?,
@@ -165,16 +188,25 @@ pub async fn get_time_history() -> Result<web::Json<ResponseTimeEnteryHistory>, 
 #[has_permissions("SET_LEDGER_INFO")]
 pub async fn set_finance_entery_create(
     payload: web::Json<NewFinanceEntery>,
+    credentials: BearerAuth,
 ) -> Result<web::Json<ResponseStatus>, ServiceError> {
-    debug!("Create new Finacen Entery {:#?}", payload.to_owned());
+    let user = decode_jwt(credentials.token()).unwrap().username;
+    debug!(
+        "User '{}' Create new Finacen Entery {:#?}",
+        &user,
+        payload.to_owned()
+    );
     utils::ledger_create_finance_entery(payload.to_owned())?;
     return Ok(web::Json(ResponseStatus { status: 0 }));
 }
 
 /// get suggestions for ledger finance entery
 #[has_permissions("GET_LEDGER_INFO")]
-pub async fn get_finance_suggestions() -> Result<web::Json<FinanceEnterySuggestion>, ServiceError> {
-    debug!("Get Ledger Finance Suggestion.");
+pub async fn get_finance_suggestions(
+    credentials: BearerAuth,
+) -> Result<web::Json<FinanceEnterySuggestion>, ServiceError> {
+    let user = decode_jwt(credentials.token()).unwrap().username;
+    debug!("User '{}' Get Ledger Finance Suggestion.", &user);
     Ok(web::Json(FinanceEnterySuggestion {
         suggestions: utils::ledger_finance_suggestion()?,
     }))

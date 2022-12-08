@@ -41,7 +41,7 @@ const JWT_EXPIRATION_HOURS: i64 = 24 * 7;
 const SECRET: &str = "SECRET";
 
 #[derive(Debug, Serialize, Deserialize)]
-struct Claims {
+pub struct Claims {
     pub username: String,
     pub permissions: Vec<String>,
     exp: i64,
@@ -66,8 +66,9 @@ fn create_jwt(claims: Claims) -> Result<String, Error> {
 }
 
 //TODO change to RSA for securety
+//TODO think about to make it public
 /// Decode a json web token (JWT)
-fn decode_jwt(token: &str) -> Result<Claims, Error> {
+pub fn decode_jwt(token: &str) -> Result<Claims, Error> {
     let decoding_key = DecodingKey::from_secret(SECRET.as_bytes());
 
     jsonwebtoken::decode::<Claims>(token, &decoding_key, &Validation::default())
