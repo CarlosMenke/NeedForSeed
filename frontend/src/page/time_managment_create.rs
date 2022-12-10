@@ -14,6 +14,7 @@ const ENTER_KEY: u32 = 13;
 const ESC_KEY: u32 = 27;
 
 type RunningEnteryId = String;
+type DeleteEnteryId = String;
 
 #[derive(Clone, Debug)]
 pub struct EditingNewTimeEntery {
@@ -89,6 +90,7 @@ pub enum Msg {
     FetchedHistoryEntery(fetch::Result<shared::models::ResponseTimeEnteryHistory>),
     FetchedStartTimeEntery(fetch::Result<shared::models::ResponseStatus>),
     FetchedKillTimeEntery(fetch::Result<shared::models::ResponseStatus>),
+    FetchedDeleteTimeEntery(fetch::Result<shared::models::ResponseStatus>),
 
     SaveNewEnteryHeadline(String),
     SaveNewEnteryTarget(String),
@@ -106,6 +108,8 @@ pub enum Msg {
     StartTimeEntery,
     StopTimeEntery(RunningEnteryId),
     KillTimeEntery(RunningEnteryId),
+
+    DeleteTimeEntery(DeleteEnteryId),
 }
 // ------ ------
 //     Urls
@@ -270,9 +274,8 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 log!(stop_entery);
                 async {
                     Msg::FetchedStartTimeEntery(
-                        api::requests::stop_time_entery(token.clone(), stop_entery).await,
-                    );
-                    Msg::FetchedRunningEntery(api::requests::get_time_running_entery(token).await)
+                        api::requests::stop_time_entery(token, stop_entery).await,
+                    )
                 }
             });
         }
@@ -291,14 +294,49 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 }
             });
         }
-        Msg::FetchedStartTimeEntery(Ok(_response_data))
-        | Msg::FetchedKillTimeEntery(Ok(_response_data)) => {
+        Msg::DeleteTimeEntery(remove_line) => {
+            orders.skip().perform_cmd({
+                let token = model.ctx.clone().unwrap().token;
+                let delete_entery = shared::models::StopLedgerTimeEntery {
+                    remove_line,
+                    new_entery: shared::models::NewTimeEntery::default(),
+                };
+                log!(delete_entery);
+                async {
+                    Msg::FetchedDeleteTimeEntery(
+                        api::requests::kill_time_entery(token, delete_entery).await,
+                    )
+                }
+            });
+        }
+        Msg::FetchedStartTimeEntery(Ok(_response_data)) => {
             model.suggestion_filter = "".to_string();
             model.start_entery = shared::models::StartTimeEntery::default();
             orders.skip().perform_cmd({
                 let token = model.ctx.clone().unwrap().token;
                 async {
+                    Msg::FetchedRunningEntery(
+                        api::requests::get_time_running_entery(token.clone()).await,
+                    );
+                    Msg::FetchedHistoryEntery(api::requests::get_time_history_entery(token).await)
+                }
+            });
+        }
+        Msg::FetchedKillTimeEntery(Ok(_response_data)) => {
+            model.start_entery = shared::models::StartTimeEntery::default();
+            orders.skip().perform_cmd({
+                let token = model.ctx.clone().unwrap().token;
+                async {
                     Msg::FetchedRunningEntery(api::requests::get_time_running_entery(token).await)
+                }
+            });
+        }
+        Msg::FetchedDeleteTimeEntery(Ok(_response_data)) => {
+            model.start_entery = shared::models::StartTimeEntery::default();
+            orders.skip().perform_cmd({
+                let token = model.ctx.clone().unwrap().token;
+                async {
+                    Msg::FetchedHistoryEntery(api::requests::get_time_history_entery(token).await)
                 }
             });
         }
@@ -316,7 +354,8 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         | Msg::FetchedRunningEntery(Err(fetch_error))
         | Msg::FetchedHistoryEntery(Err(fetch_error))
         | Msg::FetchedStartTimeEntery(Err(fetch_error))
-        | Msg::FetchedKillTimeEntery(Err(fetch_error)) => {
+        | Msg::FetchedKillTimeEntery(Err(fetch_error))
+        | Msg::FetchedDeleteTimeEntery(Err(fetch_error)) => {
             log!("Fetch error:", fetch_error);
             orders.skip();
         }
@@ -602,7 +641,7 @@ fn view_history_enteries(
         ],
         button![
             "Delete",
-            ev(Ev::Click, enc!((id) move |_| Msg::KillTimeEntery(id))),
+            ev(Ev::Click, enc!((id) move |_| Msg::DeleteTimeEntery(id))),
             &general.button,
             style! {St::MarginTop => px(25)},
         ]
