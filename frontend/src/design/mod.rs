@@ -3,6 +3,7 @@ use seed::{prelude::*, *};
 pub struct General {
     pub button: Style,
     pub button_small: Style,
+    pub button_headline: Style,
 
     pub input: Style,
     pub label: Style,
@@ -39,6 +40,12 @@ impl Default for General {
                 St::MarginTop => px(5),
                 St::BackgroundColor => "rgba(0, 0, 0, 0.00)",
                 St::Color => "#ffffff",
+            },
+            button_headline: style! {
+                St::MarginTop => px(0),
+                St::BackgroundColor => "rgba(0, 0, 0, 0.00)",
+                St::Color => "#ffffff",
+                St::FontSize => "1.3em",
             },
 
             input: style! {

@@ -83,8 +83,6 @@ struct Refs {
 // ------ Frequency ------
 
 pub enum Msg {
-    GetSuggestion,
-
     FetchedSuggestion(fetch::Result<shared::models::HeadlineSuggestion>),
     FetchedRunningEntery(fetch::Result<shared::models::ResponseRunningLedgerTimeEntery>),
     FetchedHistoryEntery(fetch::Result<shared::models::ResponseTimeEnteryHistory>),
@@ -93,24 +91,24 @@ pub enum Msg {
     FetchedStopTimeEntery(fetch::Result<shared::models::ResponseStatus>),
     FetchedDeleteTimeEntery(fetch::Result<shared::models::ResponseStatus>),
 
+    StartTimeEntery,
+    StopTimeEntery(RunningEnteryId),
+    KillTimeEntery(RunningEnteryId),
+    DeleteTimeEntery(DeleteEnteryId),
+
     SaveNewEnteryHeadline(String),
     SaveNewEnteryTarget(String),
     SaveNewEnteryDuration(String),
     SaveNewEnteryDate(String),
     SaveNewEnteryOffset(String),
     InverseOffsetStart,
+    RefreshAutocomplete,
 
     StartOffsetEdit(RunningEnteryId),
     EditingRunningEnteryOffsetChanged(String),
     SaveEditingRunningEnteryOffset,
     CancelRunningEnteryOffsetEdit,
     InverseRunningEnteryOffset,
-
-    StartTimeEntery,
-    StopTimeEntery(RunningEnteryId),
-    KillTimeEntery(RunningEnteryId),
-
-    DeleteTimeEntery(DeleteEnteryId),
 }
 // ------ ------
 //     Urls
@@ -138,6 +136,10 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         }
         Msg::InverseOffsetStart => {
             model.inverse_offset *= -1;
+        }
+        Msg::RefreshAutocomplete => {
+            model.start_entery = shared::models::StartTimeEntery::default();
+            update_suggestion_filter(model);
         }
         Msg::SaveNewEnteryDuration(content) => {
             model.start_entery.duration = match content.parse::<u32>() {
@@ -206,12 +208,6 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             if let Some(ref mut editing_running_entery) = model.editing_offset {
                 editing_running_entery.inverse *= -1;
             }
-        }
-        Msg::GetSuggestion => {
-            orders.skip().perform_cmd({
-                let token = model.ctx.clone().unwrap().token;
-                async { Msg::FetchedSuggestion(api::requests::get_time_suggestion(token).await) }
-            });
         }
         Msg::StartTimeEntery => {
             if &model.start_entery.account_target == "" {
@@ -405,10 +401,14 @@ pub fn view(model: &Model) -> Node<Msg> {
     };
     let general = General::default();
     div![
-        "Create new time Tracking Entery",
         style! {St::Display => "flex", St::FlexDirection => "column", St::JustifyContent => "start", St::Height => px(950)},
         div![
-            h3!["Creat Time Entery"],
+            button![
+                ev(Ev::Click, |_| Msg::RefreshAutocomplete),
+                "Create Time Entery",
+                &general.button,
+                &general.button_headline,
+            ],
             C!["form"],
             &general.form,
             //&general.form_fix,
@@ -416,7 +416,6 @@ pub fn view(model: &Model) -> Node<Msg> {
                 St::Padding => "50px 35px",
                 St::Margin => "50px auto",
             },
-            label!["Headline", &general.label],
             input![
                 C!["input-content-headline"],
                 input_ev(Ev::Input, Msg::SaveNewEnteryHeadline),
