@@ -151,7 +151,6 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             } else {
                 Some(content)
             };
-            log!(model.start_entery.date);
         }
 
         Msg::StartOffsetEdit(running_entery_id) => {
@@ -196,7 +195,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                     entery.offset = Some(offset.to_owned() * inverse);
                 }
             }
-            log!("{:#?}", &model.running_entery);
+            log!("Save offset: {:#?}", &model.running_entery);
         }
 
         Msg::CancelRunningEnteryOffsetEdit => {
@@ -236,6 +235,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                     )
                     .to_string();
                 start_entery.offset = Some(model.inverse_offset * start_entery.offset.unwrap_or(0));
+                log!("Start Entery {:#?}", &start_entery);
                 async {
                     Msg::FetchedStartTimeEntery(
                         api::requests::start_time_entery(token, start_entery).await,
@@ -256,7 +256,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                     entery.offset = Some(offset.to_owned() * inverse);
                 }
             }
-            log!("{:#?}", &model.running_entery);
+            log!("Stop {:#?}", data);
             orders.skip().perform_cmd({
                 let token = model.ctx.clone().unwrap().token;
                 let new_entery = model
