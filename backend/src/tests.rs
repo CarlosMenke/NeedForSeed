@@ -13,10 +13,15 @@ mod unit_tests {
     use crate::db;
     use crate::handler::*;
     use crate::models;
-    use crate::utils::{self, ledger_create_finance_entery};
-    use crate::utils::{ledger_get_running_time_entery, ledger_start_time_entery};
+    use crate::utils;
     use shared::auth::UserLogin;
     use shared::models::*;
+
+    pub const FILE_DIR: &str = "./files";
+    pub const PATH_TIME_SPEND: &str = "time_spend.dat";
+    // all finance files. First one is the default
+    pub const PATH_FINANCE_FILES: [&'static str; 4] =
+        ["nachhilfe.dat", "invest.dat", "rent.dat", "gesamt.dat"];
 
     #[actix_web::test]
     async fn test_login() {
@@ -118,12 +123,12 @@ mod unit_tests {
 
         let auth = HttpAuthentication::bearer(validator);
         let app = test::init_service(App::new().wrap(auth).route(
-            "/get_{target}/depth_{depth}/timeframe_{timeframe}.json",
+            "/get_{target}/depth_{depth}/timeframe_{timeframe}/timepoint_{timepoint}.json",
             web::get().to(api::get_html),
         ))
         .await;
         let req = test::TestRequest::get()
-            .uri("/get_music/depth_1/timeframe_all.json")
+            .uri("/get_music/depth_1/timeframe_all/timepoint_0.json")
             .insert_header((AUTHORIZATION, format!("Bearer {}", token_str)))
             .to_request();
         let resp = test::call_service(&app, req).await;
@@ -158,12 +163,10 @@ mod unit_tests {
 
     #[actix_web::test]
     async fn test_set_time_start() {
-        let token_str = create_token(
-            "Carlos-test".to_string(),
-            Vec::from(["SET_LEDGER_INFO".to_string()]),
-        )
-        .await
-        .expect("Failed to unwrap Token");
+        let user = "Carlos-test".to_string();
+        let token_str = create_token(user.clone(), Vec::from(["SET_LEDGER_INFO".to_string()]))
+            .await
+            .expect("Failed to unwrap Token");
         let start_entery = shared::models::StartTimeEntery {
             headline: "Carlos is programming".to_owned(),
             account_origin: "FreeTime".to_owned(),
@@ -188,11 +191,12 @@ mod unit_tests {
         let resp = test::call_service(&app, req).await;
         println!("Valid Request {:?}", resp);
         assert!(resp.status().is_success());
-        let remove_line = ledger_start_time_entery(start_entery).unwrap();
+        let remove_line = utils::ledger_start_time_entery(&user, start_entery).unwrap();
 
         //remove added line
-        let ledger = fs::read_to_string(utils::PATH_TIME_SPEND).unwrap();
-        fs::File::create(utils::PATH_TIME_SPEND)
+        let ledger =
+            fs::read_to_string(format!("{}/{}/{}", FILE_DIR, &user, PATH_TIME_SPEND)).unwrap();
+        fs::File::create(format!("{}/{}/{}", FILE_DIR, &user, PATH_TIME_SPEND))
             .unwrap()
             .write(
                 ledger
@@ -204,12 +208,10 @@ mod unit_tests {
 
     #[actix_web::test]
     async fn test_get_time_running() {
-        let token_str = create_token(
-            "Carlos-test".to_string(),
-            Vec::from(["GET_LEDGER_INFO".to_string()]),
-        )
-        .await
-        .expect("Failed to unwrap Token");
+        let user = "Carlos-test".to_string();
+        let token_str = create_token(user.clone(), Vec::from(["GET_LEDGER_INFO".to_string()]))
+            .await
+            .expect("Failed to unwrap Token");
 
         let auth = HttpAuthentication::bearer(validator);
         let app = test::init_service(
@@ -230,12 +232,10 @@ mod unit_tests {
     ///tests also basic ledger functions
     #[actix_web::test]
     async fn test_set_time_stop() {
-        let token_str = create_token(
-            "Carlos-test".to_string(),
-            Vec::from(["SET_LEDGER_INFO".to_string()]),
-        )
-        .await
-        .expect("Failed to unwrap Token");
+        let user = "Carlos-test".to_string();
+        let token_str = create_token(user.clone(), Vec::from(["SET_LEDGER_INFO".to_string()]))
+            .await
+            .expect("Failed to unwrap Token");
         let start_entery = shared::models::StartTimeEntery {
             headline: "Carlos is programming".to_owned(),
             account_origin: "FreeTime".to_owned(),
@@ -244,9 +244,9 @@ mod unit_tests {
             date: None,
             offset: None,
         };
-        let remove_line = ledger_start_time_entery(start_entery).unwrap();
+        let remove_line = utils::ledger_start_time_entery(&user, start_entery).unwrap();
         //TODO find error
-        let new_entery = ledger_get_running_time_entery()
+        let new_entery = utils::ledger_get_running_time_entery(&user)
             .unwrap()
             .get(&remove_line)
             .unwrap()
@@ -272,12 +272,16 @@ mod unit_tests {
         assert!(resp.status().is_success());
 
         //remove added line
-        let ledger = fs::read_to_string(utils::PATH_TIME_SPEND).unwrap();
-        fs::File::create(utils::PATH_TIME_SPEND)
+        let ledger =
+            fs::read_to_string(format!("{}/{}/{}", FILE_DIR, &user, PATH_TIME_SPEND)).unwrap();
+        fs::File::create(format!("{}/{}/{}", FILE_DIR, &user, PATH_TIME_SPEND))
             .unwrap()
             .write(
                 ledger
-                    .replace(&utils::ledger_create_time_entery(new_entery).unwrap(), "")
+                    .replace(
+                        &utils::ledger_create_time_entery(&user, new_entery).unwrap(),
+                        "",
+                    )
                     .as_bytes(),
             )
             .unwrap();
@@ -285,12 +289,10 @@ mod unit_tests {
 
     #[actix_web::test]
     async fn test_set_finance_create() {
-        let token_str = create_token(
-            "Carlos-test".to_string(),
-            Vec::from(["SET_LEDGER_INFO".to_string()]),
-        )
-        .await
-        .expect("Failed to unwrap Token");
+        let user = "Carlos-test".to_string();
+        let token_str = create_token(user.clone(), Vec::from(["SET_LEDGER_INFO".to_string()]))
+            .await
+            .expect("Failed to unwrap Token");
         let new_entery = shared::models::NewFinanceEntery {
             headline: "Carlos is programming".to_owned(),
             account_origin: "FreeTime".to_owned(),
@@ -315,13 +317,17 @@ mod unit_tests {
         let resp = test::call_service(&app, req).await;
         println!("Valid Request {:?}", resp);
         assert!(resp.status().is_success());
-        let remove_line = ledger_create_finance_entery(new_entery).unwrap();
+        let remove_line = utils::ledger_create_finance_entery(&user, new_entery).unwrap();
 
         //remove added line
-        let ledger = fs::read_to_string(utils::PATH_FINANCE_FILES[0]).unwrap();
-        fs::File::create(utils::PATH_FINANCE_FILES[0])
+        let ledger =
+            fs::read_to_string(format!("{}/{}/{}", FILE_DIR, &user, PATH_FINANCE_FILES[0]))
+                .unwrap();
+        fs::File::create(format!("{}/{}/{}", FILE_DIR, &user, PATH_FINANCE_FILES[0]))
             .unwrap()
             .write(ledger.replace(&format!("{}", &remove_line), "").as_bytes())
             .unwrap();
     }
+    //TODO add finance test
+    //TODO add history test.
 }
