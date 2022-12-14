@@ -70,8 +70,8 @@ pub async fn get_html(
     //TODO make path more general. right now, it only works, if cargo run is executed one dir above
     //main.rs
     let file = fs::read_to_string(format!(
-        "./files/{}_{}_{}_{}.html",
-        target, depth, timeframe, timepoint
+        "./files/{}/{}_{}_{}_{}.html",
+        &user, target, depth, timeframe, timepoint
     ))?;
     Ok(web::Json(ResponseHtml { html: file }))
 }
@@ -86,7 +86,7 @@ pub async fn get_time_suggetstions(
     let user = decode_jwt(credentials.token()).unwrap().username;
     debug!("User '{}' Get Ledger Time Suggestion.", &user);
     Ok(web::Json(HeadlineSuggestion {
-        suggestions: utils::ledger_time_suggestion()?,
+        suggestions: utils::ledger_time_suggestion(&user)?,
     }))
 }
 
@@ -113,17 +113,20 @@ pub async fn set_time_entery_start(
     }
     if new_time_entery.duration.is_none() {
         //start running entery, because it has not ended yet.
-        utils::ledger_start_time_entery(new_time_entery.to_owned())?;
+        utils::ledger_start_time_entery(&user, new_time_entery.to_owned())?;
     } else {
         //if duration is given, create the time entery.
-        utils::ledger_create_time_entery(shared::models::NewTimeEntery {
-            headline: String::from(&new_time_entery.headline),
-            account_origin: String::from(&new_time_entery.account_origin),
-            account_target: String::from(&new_time_entery.account_target),
-            duration: new_time_entery.duration.unwrap(),
-            date: new_time_entery.date.to_owned(),
-            offset: new_time_entery.offset,
-        })?;
+        utils::ledger_create_time_entery(
+            &user,
+            shared::models::NewTimeEntery {
+                headline: String::from(&new_time_entery.headline),
+                account_origin: String::from(&new_time_entery.account_origin),
+                account_target: String::from(&new_time_entery.account_target),
+                duration: new_time_entery.duration.unwrap(),
+                date: new_time_entery.date.to_owned(),
+                offset: new_time_entery.offset,
+            },
+        )?;
     };
     Ok(web::Json(ResponseStatus { status: 0 }))
 }
@@ -136,7 +139,7 @@ pub async fn get_time_entery_running(
     let user = decode_jwt(credentials.token()).unwrap().username;
     debug!("User '{}' Get all Running Time Enteries.", &user);
     return Ok(web::Json(ResponseRunningLedgerTimeEntery {
-        running_entery: utils::ledger_get_running_time_entery()?,
+        running_entery: utils::ledger_get_running_time_entery(&user)?,
     }));
 }
 
@@ -151,7 +154,7 @@ pub async fn set_time_entery_stop(
         "User '{}' Stop running Time Entery {:#?}",
         &user, payload.new_entery
     );
-    utils::ledger_stop_time_entery(&payload)?;
+    utils::ledger_stop_time_entery(&user, &payload)?;
     return Ok(web::Json(ResponseStatus { status: 0 }));
 }
 
@@ -166,7 +169,7 @@ pub async fn set_time_entery_kill(
         "User '{}' Kill / Delete Time Entery {:#?}",
         &user, payload.new_entery
     );
-    utils::ledger_kill_time_entery(payload.remove_line.to_owned())?;
+    utils::ledger_kill_time_entery(&user, payload.remove_line.to_owned())?;
     return Ok(web::Json(ResponseStatus { status: 0 }));
 }
 
@@ -179,7 +182,7 @@ pub async fn get_time_history(
     debug!("User '{}' Get Ledger Time History.", &user);
     //TODO add filter for history elements. (date)
     Ok(web::Json(shared::models::ResponseTimeEnteryHistory {
-        history: utils::ledger_time_history()?,
+        history: utils::ledger_time_history(&user)?,
     }))
 }
 
@@ -196,7 +199,7 @@ pub async fn set_finance_entery_create(
         &user,
         payload.to_owned()
     );
-    utils::ledger_create_finance_entery(payload.to_owned())?;
+    utils::ledger_create_finance_entery(&user, payload.to_owned())?;
     return Ok(web::Json(ResponseStatus { status: 0 }));
 }
 
@@ -208,6 +211,6 @@ pub async fn get_finance_suggestions(
     let user = decode_jwt(credentials.token()).unwrap().username;
     debug!("User '{}' Get Ledger Finance Suggestion.", &user);
     Ok(web::Json(FinanceEnterySuggestion {
-        suggestions: utils::ledger_finance_suggestion()?,
+        suggestions: utils::ledger_finance_suggestion(&user)?,
     }))
 }
