@@ -455,6 +455,9 @@ mod tests {
     use shared::models::NewTimeEntery;
 
     use super::*;
+
+    pub const TEST_USER: &str = "test";
+
     #[actix_web::test]
     async fn test_password_hash_and_verify() {
         let pwd = "jkl";
@@ -464,7 +467,6 @@ mod tests {
 
     #[actix_web::test]
     async fn test_ledger_create_time_entery() {
-        let user = "Carlos".to_string();
         let new_entery = NewTimeEntery {
             headline: "Carlos is programming".to_owned(),
             account_origin: "FreeTime".to_owned(),
@@ -473,16 +475,19 @@ mod tests {
             date: Some("2022/10/10".to_string()),
             offset: None,
         };
-        assert!(ledger_create_time_entery(&user, new_entery.clone()).is_ok());
+        assert!(ledger_create_time_entery(&TEST_USER, new_entery.clone()).is_ok());
 
         //remove added line
         let ledger =
-            fs::read_to_string(format!("{}/{}/{}", FILE_DIR, &user, PATH_TIME_SPEND)).unwrap();
-        fs::File::create(format!("{}/{}/{}", FILE_DIR, &user, PATH_TIME_SPEND))
+            fs::read_to_string(format!("{}/{}/{}", FILE_DIR, &TEST_USER, PATH_TIME_SPEND)).unwrap();
+        fs::File::create(format!("{}/{}/{}", FILE_DIR, &TEST_USER, PATH_TIME_SPEND))
             .unwrap()
             .write(
                 ledger
-                    .replace(&ledger_create_time_entery(&user, new_entery).unwrap(), "")
+                    .replace(
+                        &ledger_create_time_entery(&TEST_USER, new_entery).unwrap(),
+                        "",
+                    )
                     .as_bytes(),
             )
             .unwrap();
@@ -490,7 +495,6 @@ mod tests {
 
     #[actix_web::test]
     async fn test_ledger_stop_time_entery() {
-        let user = "Carlos".to_string();
         let start_entery = shared::models::StartTimeEntery {
             headline: "Carlos is programming".to_owned(),
             account_origin: "FreeTime".to_owned(),
@@ -499,18 +503,18 @@ mod tests {
             date: None,
             offset: None,
         };
-        let remove_line = ledger_start_time_entery(&user, start_entery).unwrap();
+        let remove_line = ledger_start_time_entery(&TEST_USER, start_entery).unwrap();
         println!("{}", &remove_line);
         //TODO find error
-        assert!(ledger_get_running_time_entery(&user)
+        assert!(ledger_get_running_time_entery(&TEST_USER)
             .unwrap()
             .get(&remove_line)
             .is_some());
 
         //remove added line
         let ledger =
-            fs::read_to_string(format!("{}/{}/{}", FILE_DIR, &user, PATH_TIME_SPEND)).unwrap();
-        fs::File::create(format!("{}/{}/{}", FILE_DIR, &user, PATH_TIME_SPEND))
+            fs::read_to_string(format!("{}/{}/{}", FILE_DIR, &TEST_USER, PATH_TIME_SPEND)).unwrap();
+        fs::File::create(format!("{}/{}/{}", FILE_DIR, &TEST_USER, PATH_TIME_SPEND))
             .unwrap()
             .write(
                 ledger
@@ -522,7 +526,6 @@ mod tests {
 
     #[actix_web::test]
     async fn test_ledger_kill_time_entery() {
-        let user = "Carlos".to_string();
         let start_entery = shared::models::StartTimeEntery {
             headline: "Carlos is programming".to_owned(),
             account_origin: "FreeTime".to_owned(),
@@ -531,14 +534,13 @@ mod tests {
             date: None,
             offset: None,
         };
-        let remove_line = ledger_start_time_entery(&user, start_entery).unwrap();
+        let remove_line = ledger_start_time_entery(&TEST_USER, start_entery).unwrap();
         //TODO find error
-        assert!(ledger_kill_time_entery(&user, remove_line).is_ok());
+        assert!(ledger_kill_time_entery(&TEST_USER, remove_line).is_ok());
     }
 
     #[actix_web::test]
     async fn test_ledger_create_finance_entery() {
-        let user = "Carlos".to_string();
         let mut new_entery = shared::models::NewFinanceEntery {
             headline: "Carlos is programming".to_owned(),
             account_origin: "FreeTime".to_owned(),
@@ -547,27 +549,31 @@ mod tests {
             date: None,
             target_file: "Finance".to_string(),
         };
-        let mut remove_line = ledger_create_finance_entery(&user, new_entery.clone()).unwrap();
+        let mut remove_line = ledger_create_finance_entery(&TEST_USER, new_entery.clone()).unwrap();
         for _i in 1..1 {
             new_entery.account_target += "6";
-            remove_line = ledger_create_finance_entery(&user, new_entery.clone()).unwrap();
+            remove_line = ledger_create_finance_entery(&TEST_USER, new_entery.clone()).unwrap();
         }
         //TODO find error
-        assert!(ledger_kill_time_entery(&user, remove_line.clone()).is_ok());
+        assert!(ledger_kill_time_entery(&TEST_USER, remove_line.clone()).is_ok());
         //remove added line
-        let ledger =
-            fs::read_to_string(format!("{}/{}/{}", FILE_DIR, &user, PATH_FINANCE_FILES[0]))
-                .unwrap();
-        fs::File::create(format!("{}/{}/{}", FILE_DIR, &user, PATH_FINANCE_FILES[0]))
-            .unwrap()
-            .write(ledger.replace(&format!("{}", &remove_line), "").as_bytes())
-            .unwrap();
+        let ledger = fs::read_to_string(format!(
+            "{}/{}/{}",
+            FILE_DIR, &TEST_USER, PATH_FINANCE_FILES[0]
+        ))
+        .unwrap();
+        fs::File::create(format!(
+            "{}/{}/{}",
+            FILE_DIR, &TEST_USER, PATH_FINANCE_FILES[0]
+        ))
+        .unwrap()
+        .write(ledger.replace(&format!("{}", &remove_line), "").as_bytes())
+        .unwrap();
     }
 
     #[actix_web::test]
     async fn test_ledger_suggestion_finance_entery() {
-        let user = "Carlos".to_string();
-        let suggestion = ledger_finance_suggestion(&user);
+        let suggestion = ledger_finance_suggestion(&TEST_USER);
         //println!("{:#?}", suggestion.as_ref().unwrap());
         for ent in suggestion.as_ref().unwrap() {
             if ent.account_target.contains(char::is_whitespace) {
@@ -579,8 +585,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_ledger_history_time_entery() {
-        let user = "Carlos".to_string();
-        let suggestion = ledger_time_history(&user);
+        let suggestion = ledger_time_history(&TEST_USER);
         println!("{:#?}", suggestion.as_ref().unwrap());
         assert!(suggestion.is_ok());
     }

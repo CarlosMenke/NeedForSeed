@@ -23,6 +23,8 @@ mod unit_tests {
     pub const PATH_FINANCE_FILES: [&'static str; 4] =
         ["nachhilfe.dat", "invest.dat", "rent.dat", "gesamt.dat"];
 
+    pub const TEST_USER: &str = "test";
+
     #[actix_web::test]
     async fn test_login() {
         dotenv().ok();
@@ -40,7 +42,7 @@ mod unit_tests {
         let req = test::TestRequest::post()
             .uri("/")
             .set_json(&UserLogin {
-                username: "Carlos-test".to_owned(),
+                username: TEST_USER.to_owned(),
                 password: "12345678".to_owned(),
             })
             .to_request();
@@ -51,7 +53,7 @@ mod unit_tests {
         println!("Test if response was korrekt.");
         let body_bytes = to_bytes(resp.into_body()).await.unwrap();
         let token_str = create_token(
-            "Carlos-test".to_string(),
+            TEST_USER.to_string(),
             Vec::from([
                 "ADMIN_ROLE".to_string(),
                 "GET_LEDGER_INFO".to_string(),
@@ -64,8 +66,8 @@ mod unit_tests {
         assert_eq!(
             body_bytes,
             web::Bytes::from(format!(
-                r##"{{"username":"Carlos-test","token":"{}"}}"##,
-                token_str
+                r##"{{"username":"{}","token":"{}"}}"##,
+                TEST_USER, token_str
             ))
         );
     }
@@ -115,7 +117,7 @@ mod unit_tests {
     #[actix_web::test]
     async fn test_get_html() {
         let token_str = create_token(
-            "Carlos-test".to_string(),
+            TEST_USER.to_string(),
             Vec::from(["GET_LEDGER_INFO".to_string()]),
         )
         .await
@@ -139,7 +141,7 @@ mod unit_tests {
     #[actix_web::test]
     async fn test_get_time_suggestion() {
         let token_str = create_token(
-            "Carlos-test".to_string(),
+            TEST_USER.to_string(),
             Vec::from(["GET_LEDGER_INFO".to_string()]),
         )
         .await
@@ -163,10 +165,12 @@ mod unit_tests {
 
     #[actix_web::test]
     async fn test_set_time_start() {
-        let user = "Carlos-test".to_string();
-        let token_str = create_token(user.clone(), Vec::from(["SET_LEDGER_INFO".to_string()]))
-            .await
-            .expect("Failed to unwrap Token");
+        let token_str = create_token(
+            TEST_USER.to_string(),
+            Vec::from(["SET_LEDGER_INFO".to_string()]),
+        )
+        .await
+        .expect("Failed to unwrap Token");
         let start_entery = shared::models::StartTimeEntery {
             headline: "Carlos is programming".to_owned(),
             account_origin: "FreeTime".to_owned(),
@@ -191,12 +195,12 @@ mod unit_tests {
         let resp = test::call_service(&app, req).await;
         println!("Valid Request {:?}", resp);
         assert!(resp.status().is_success());
-        let remove_line = utils::ledger_start_time_entery(&user, start_entery).unwrap();
+        let remove_line = utils::ledger_start_time_entery(TEST_USER, start_entery).unwrap();
 
         //remove added line
         let ledger =
-            fs::read_to_string(format!("{}/{}/{}", FILE_DIR, &user, PATH_TIME_SPEND)).unwrap();
-        fs::File::create(format!("{}/{}/{}", FILE_DIR, &user, PATH_TIME_SPEND))
+            fs::read_to_string(format!("{}/{}/{}", FILE_DIR, TEST_USER, PATH_TIME_SPEND)).unwrap();
+        fs::File::create(format!("{}/{}/{}", FILE_DIR, TEST_USER, PATH_TIME_SPEND))
             .unwrap()
             .write(
                 ledger
@@ -208,10 +212,12 @@ mod unit_tests {
 
     #[actix_web::test]
     async fn test_get_time_running() {
-        let user = "Carlos-test".to_string();
-        let token_str = create_token(user.clone(), Vec::from(["GET_LEDGER_INFO".to_string()]))
-            .await
-            .expect("Failed to unwrap Token");
+        let token_str = create_token(
+            TEST_USER.to_string(),
+            Vec::from(["GET_LEDGER_INFO".to_string()]),
+        )
+        .await
+        .expect("Failed to unwrap Token");
 
         let auth = HttpAuthentication::bearer(validator);
         let app = test::init_service(
@@ -232,10 +238,12 @@ mod unit_tests {
     ///tests also basic ledger functions
     #[actix_web::test]
     async fn test_set_time_stop() {
-        let user = "Carlos-test".to_string();
-        let token_str = create_token(user.clone(), Vec::from(["SET_LEDGER_INFO".to_string()]))
-            .await
-            .expect("Failed to unwrap Token");
+        let token_str = create_token(
+            TEST_USER.to_string(),
+            Vec::from(["SET_LEDGER_INFO".to_string()]),
+        )
+        .await
+        .expect("Failed to unwrap Token");
         let start_entery = shared::models::StartTimeEntery {
             headline: "Carlos is programming".to_owned(),
             account_origin: "FreeTime".to_owned(),
@@ -244,9 +252,9 @@ mod unit_tests {
             date: None,
             offset: None,
         };
-        let remove_line = utils::ledger_start_time_entery(&user, start_entery).unwrap();
+        let remove_line = utils::ledger_start_time_entery(TEST_USER, start_entery).unwrap();
         //TODO find error
-        let new_entery = utils::ledger_get_running_time_entery(&user)
+        let new_entery = utils::ledger_get_running_time_entery(TEST_USER)
             .unwrap()
             .get(&remove_line)
             .unwrap()
@@ -273,13 +281,13 @@ mod unit_tests {
 
         //remove added line
         let ledger =
-            fs::read_to_string(format!("{}/{}/{}", FILE_DIR, &user, PATH_TIME_SPEND)).unwrap();
-        fs::File::create(format!("{}/{}/{}", FILE_DIR, &user, PATH_TIME_SPEND))
+            fs::read_to_string(format!("{}/{}/{}", FILE_DIR, TEST_USER, PATH_TIME_SPEND)).unwrap();
+        fs::File::create(format!("{}/{}/{}", FILE_DIR, TEST_USER, PATH_TIME_SPEND))
             .unwrap()
             .write(
                 ledger
                     .replace(
-                        &utils::ledger_create_time_entery(&user, new_entery).unwrap(),
+                        &utils::ledger_create_time_entery(TEST_USER, new_entery).unwrap(),
                         "",
                     )
                     .as_bytes(),
@@ -289,10 +297,12 @@ mod unit_tests {
 
     #[actix_web::test]
     async fn test_set_finance_create() {
-        let user = "Carlos-test".to_string();
-        let token_str = create_token(user.clone(), Vec::from(["SET_LEDGER_INFO".to_string()]))
-            .await
-            .expect("Failed to unwrap Token");
+        let token_str = create_token(
+            TEST_USER.to_string(),
+            Vec::from(["SET_LEDGER_INFO".to_string()]),
+        )
+        .await
+        .expect("Failed to unwrap Token");
         let new_entery = shared::models::NewFinanceEntery {
             headline: "Carlos is programming".to_owned(),
             account_origin: "FreeTime".to_owned(),
@@ -317,16 +327,21 @@ mod unit_tests {
         let resp = test::call_service(&app, req).await;
         println!("Valid Request {:?}", resp);
         assert!(resp.status().is_success());
-        let remove_line = utils::ledger_create_finance_entery(&user, new_entery).unwrap();
+        let remove_line = utils::ledger_create_finance_entery(TEST_USER, new_entery).unwrap();
 
         //remove added line
-        let ledger =
-            fs::read_to_string(format!("{}/{}/{}", FILE_DIR, &user, PATH_FINANCE_FILES[0]))
-                .unwrap();
-        fs::File::create(format!("{}/{}/{}", FILE_DIR, &user, PATH_FINANCE_FILES[0]))
-            .unwrap()
-            .write(ledger.replace(&format!("{}", &remove_line), "").as_bytes())
-            .unwrap();
+        let ledger = fs::read_to_string(format!(
+            "{}/{}/{}",
+            FILE_DIR, TEST_USER, PATH_FINANCE_FILES[0]
+        ))
+        .unwrap();
+        fs::File::create(format!(
+            "{}/{}/{}",
+            FILE_DIR, TEST_USER, PATH_FINANCE_FILES[0]
+        ))
+        .unwrap()
+        .write(ledger.replace(&format!("{}", &remove_line), "").as_bytes())
+        .unwrap();
     }
     //TODO add finance test
     //TODO add history test.
