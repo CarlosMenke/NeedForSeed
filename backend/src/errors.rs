@@ -75,7 +75,7 @@ impl From<ActixWebError> for ServiceError {
 impl From<std::io::Error> for ServiceError {
     fn from(error: std::io::Error) -> ServiceError {
         match error {
-            _ => ServiceError::InternalServerError("File not found".to_string()),
+            _ => ServiceError::InternalServerError("std::io Error [File interaction]".to_string()),
         }
     }
 }
