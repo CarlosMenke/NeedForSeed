@@ -32,6 +32,9 @@ pub fn init(
     orders: &mut impl Orders<Msg>,
     ctx: Option<shared::auth::UserLoginResponse>,
 ) -> Model {
+    orders.stream(streams::interval(2000 * 60, || {
+        Msg::UpdateRunningEnteryDuration
+    }));
     orders.skip().perform_cmd({
         let token = ctx.clone().unwrap().token;
         async { Msg::FetchedSuggestion(api::requests::get_time_suggestion(token).await) }
@@ -95,6 +98,7 @@ pub enum Msg {
     StopTimeEntery(RunningEnteryId),
     KillTimeEntery(RunningEnteryId),
     DeleteTimeEntery(DeleteEnteryId),
+    UpdateRunningEnteryDuration,
 
     SaveNewEnteryHeadline(String),
     SaveNewEnteryTarget(String),
@@ -306,6 +310,13 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 }
             });
         }
+        Msg::UpdateRunningEnteryDuration => {
+            if let Some(enteries) = data {
+                for (_, entery) in enteries.running_entery.iter_mut() {
+                    entery.duration += 1;
+                }
+            }
+        }
         Msg::FetchedStartTimeEntery(Ok(_response_data)) => {
             model.suggestion_filter = "".to_string();
             model.start_entery = shared::models::StartTimeEntery::default();
@@ -359,7 +370,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             model.suggestions = Some(response_data);
         }
         Msg::FetchedRunningEntery(Ok(response_data)) => {
-            log!(response_data);
+            log!("Running Enteries: ", response_data);
             model.running_entery = Some(response_data);
         }
         Msg::FetchedHistoryEntery(Ok(response_data)) => {
