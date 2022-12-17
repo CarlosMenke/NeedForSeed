@@ -16,9 +16,9 @@ pub const FILE_DIR: &str = "./files";
 pub const PATH_TIME_SPEND: &str = "time_spend.dat";
 // all finance files. First one is the default
 pub const PATH_FINANCE_FILES: [&'static str; 4] =
-    ["nachhilfe.dat", "invest.dat", "rent.dat", "gesamt.dat"];
+    ["gesamt.dat", "nachhilfe.dat", "invest.dat", "rent.dat"];
 // the display names of finance files. They are matched by index with the PATH_FINANCE_FILES.
-pub const NAME_FINANCE: [&'static str; 4] = ["Nachhilfe", "Invest", "Wohung", "Gesamt"];
+pub const NAME_FINANCE: [&'static str; 4] = ["Gesamt", "Invest", "Wohung", "Nachhilfe"];
 
 ///Hashes password with the same settings that are used in data table
 pub fn hash_password(password: &str) -> Result<String, ServiceError> {

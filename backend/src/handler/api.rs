@@ -68,7 +68,6 @@ pub async fn get_html(
         &target, &depth, &timeframe, &timepoint, &user
     );
     //TODO make path more general. right now, it only works, if cargo run is executed one dir above
-    //main.rs
     let file = fs::read_to_string(format!(
         "./files/{}/{}_{}_{}_{}.html",
         &user, target, depth, timeframe, timepoint
