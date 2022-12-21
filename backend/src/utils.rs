@@ -3,12 +3,14 @@ use argon2::{
     Argon2,
 };
 use chrono::*;
+use glob::glob;
 use log::debug;
 use regex::Regex;
 use std::collections::BTreeMap;
 use std::fs;
 use std::io::Write;
 use std::iter::zip;
+use std::path::Path;
 
 use crate::errors::ServiceError;
 
@@ -36,6 +38,48 @@ pub fn verify(password_hash: &str, password: &str) -> Result<bool, ServiceError>
         Ok(_) => Ok(true),
         Err(_) => Ok(false),
     }
+}
+
+//TODO just get suggestion for one target die (timeManagment or so)
+/// get html file suggestions
+pub fn html_suggestion(user: &str) -> Result<Vec<shared::models::HtmlSuggestion>, ServiceError> {
+    let mut content_html = Vec::new();
+    let files = format!("./files/{}/*/*.html", &user);
+
+    let get_date = Regex::new(r"-.*$").unwrap();
+    let get_depth = Regex::new(r"^.*-").unwrap();
+    let get_category = Regex::new(r"^.*/").unwrap();
+
+    for path in glob(&files).unwrap().filter_map(Result::ok) {
+        let file = Path::new(&path.display().to_string())
+            .file_stem()
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .to_string();
+        let date = get_date.replace(&file, "").to_string();
+        let depth = get_depth.replace(&file, "").to_string();
+        let category = get_category
+            .replace(
+                &path
+                    .display()
+                    .to_string()
+                    .replace(&format!("/{}.html", file), "")
+                    .to_string(),
+                "",
+            )
+            .to_string();
+        let content = shared::models::HtmlSuggestion {
+            target: category,
+            timespan: file
+                .replace(&format!("{}-", &date), "")
+                .replace(&format!("-{}", &depth), ""),
+            date,
+            depth,
+        };
+        content_html.push(content);
+    }
+    Ok(content_html)
 }
 
 /// converts the ledger file for Time tracking and extracts the Heandline and the target account
@@ -586,6 +630,13 @@ mod tests {
     #[actix_web::test]
     async fn test_ledger_history_time_entery() {
         let suggestion = ledger_time_history(&TEST_USER);
+        println!("{:#?}", suggestion.as_ref().unwrap());
+        assert!(suggestion.is_ok());
+    }
+
+    #[actix_web::test]
+    async fn test_html_suggestion() {
+        let suggestion = html_suggestion(&"Carlos");
         println!("{:#?}", suggestion.as_ref().unwrap());
         assert!(suggestion.is_ok());
     }

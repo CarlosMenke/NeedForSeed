@@ -139,6 +139,30 @@ mod unit_tests {
     }
 
     #[actix_web::test]
+    async fn test_get_html_suggestion() {
+        let token_str = create_token(
+            TEST_USER.to_string(),
+            Vec::from(["GET_LEDGER_INFO".to_string()]),
+        )
+        .await
+        .expect("Failed to unwrap Token");
+
+        let auth = HttpAuthentication::bearer(validator);
+        let app = test::init_service(
+            App::new()
+                .wrap(auth)
+                .route("/", web::get().to(api::get_html_suggetstions)),
+        )
+        .await;
+        let req = test::TestRequest::get()
+            .uri("/")
+            .insert_header((AUTHORIZATION, format!("Bearer {}", token_str)))
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        println!("Valid Request {:?}", resp);
+        assert!(resp.status().is_success());
+    }
+    #[actix_web::test]
     async fn test_get_time_suggestion() {
         let token_str = create_token(
             TEST_USER.to_string(),

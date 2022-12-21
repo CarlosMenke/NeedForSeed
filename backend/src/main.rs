@@ -68,9 +68,10 @@ async fn main() -> std::io::Result<()> {
                     .service(
                         web::scope("/auth")
                             .wrap(auth)
+                            .route("get_html.json", web::post().to(api::get_html))
                             .route(
-                                "get_{target}/depth_{depth}/timeframe_{timeframe}/timepoint_{timepoint}.json",
-                                web::get().to(api::get_html),
+                                "get_html_suggestions.json",
+                                web::get().to(api::get_html_suggetstions),
                             )
                             .route(
                                 "get_time_suggestions.json",

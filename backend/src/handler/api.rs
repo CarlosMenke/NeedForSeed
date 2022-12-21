@@ -58,27 +58,37 @@ pub async fn create_user(
 /// get Html files
 #[has_permissions("GET_LEDGER_INFO")]
 pub async fn get_html(
-    path: web::Path<(String, String, String, String)>,
+    info: web::Json<HtmlSuggestion>,
     credentials: BearerAuth,
 ) -> Result<web::Json<ResponseHtml>, ServiceError> {
     let user = decode_jwt(credentials.token()).unwrap().username;
-    let (target, depth, timeframe, timepoint) = path.into_inner();
     debug!(
-        "User '{}' Get HTML function called for target: \t {:#?} \tdepth: \t{:#?} \ttimeframe: \t{:#?}\ttimepoint: \t{:#?}",
-        &target, &depth, &timeframe, &timepoint, &user
+        "User '{}' Get HTML function called for target: \t {:#?} \tdate: \t {:#?} \ttimespan: \t{:#?} \tdepth: \t{:#?}",
+        &user, &info.target, &info.date, &info.timespan, &info.depth
     );
     //TODO make path more general. right now, it only works, if cargo run is executed one dir above
     let file = fs::read_to_string(format!(
-        "./files/{}/{}_{}_{}_{}.html",
-        &user, target, depth, timeframe, timepoint
+        "./files/{}/{}/{}-{}-{}.html",
+        &user, &info.target, &info.date, &info.timespan, &info.depth
     ))?;
     Ok(web::Json(ResponseHtml { html: file }))
+}
+
+/// get Html Suggestions
+#[has_permissions("GET_LEDGER_INFO")]
+pub async fn get_html_suggetstions(
+    credentials: BearerAuth,
+) -> Result<web::Json<ResponseHtmlSuggestion>, ServiceError> {
+    let user = decode_jwt(credentials.token()).unwrap().username;
+    debug!("User '{}' Get Html Suggestion.", &user);
+    Ok(web::Json(ResponseHtmlSuggestion {
+        suggestions: utils::html_suggestion(&user)?,
+    }))
 }
 
 /// LEDGER TIME INTERACTION ///
 /// get Headline and Content BTreeMap from Ledger Music
 #[has_permissions("GET_LEDGER_INFO")]
-//TODO make the function more generic in the future
 pub async fn get_time_suggetstions(
     credentials: BearerAuth,
 ) -> Result<web::Json<HeadlineSuggestion>, ServiceError> {

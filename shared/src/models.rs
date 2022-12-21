@@ -16,11 +16,23 @@ pub struct User {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct HtmlSuggestion {
+    pub target: String,
+    pub date: String,
+    pub timespan: String,
+    pub depth: String,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct ResponseHtmlSuggestion {
+    pub suggestions: Vec<HtmlSuggestion>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ResponseHtml {
     pub html: String,
 }
 
-//TODO rename to better name, like ResponseTimeSuggestion
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct HeadlineSuggestion {
     pub suggestions: Vec<TimeEnterySuggestion>,
