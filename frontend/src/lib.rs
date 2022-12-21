@@ -42,10 +42,10 @@ pub struct Model {
     pub login_data: shared::auth::UserLogin,
 }
 
-const MUSIC: &str = "Music";
-const FINANCE: &str = "Finance";
-const TIMEMANAGMENT: &str = "TimeManagment";
-const CALNEDER: &str = "Calender";
+const MUSIC: &str = "music";
+const FINANCE: &str = "finance";
+const TIMEMANAGMENT: &str = "timeManagment";
+const CALNEDER: &str = "calender";
 const TIMEMANAGMENTCREATE: &str = "TimeManagmentCreate";
 const FINANCEMANAGMENTCREATE: &str = "FinanceManagmentCreate";
 
@@ -113,17 +113,17 @@ impl Page {
 
 struct_urls!();
 impl<'a> Urls<'a> {
-    fn music(self) -> page::ledger_summary::Urls<'a> {
-        page::ledger_summary::Urls::new(self.base_url().add_path_part(MUSIC))
+    fn music(self) -> Url {
+        self.base_url().add_path_part(MUSIC)
     }
-    fn finance(self) -> page::ledger_summary::Urls<'a> {
-        page::ledger_summary::Urls::new(self.base_url().add_path_part(FINANCE))
+    fn finance(self) -> Url {
+        self.base_url().add_path_part(FINANCE)
     }
-    fn calender(self) -> page::ledger_summary::Urls<'a> {
-        page::ledger_summary::Urls::new(self.base_url().add_path_part(CALNEDER))
+    fn calender(self) -> Url {
+        self.base_url().add_path_part(CALNEDER)
     }
-    fn ledger_summary(self) -> page::ledger_summary::Urls<'a> {
-        page::ledger_summary::Urls::new(self.base_url().add_path_part(TIMEMANAGMENT))
+    fn ledger_summary(self) -> Url {
+        self.base_url().add_path_part(TIMEMANAGMENT)
     }
     fn time_managment_create(self) -> Url {
         self.base_url().add_path_part(TIMEMANAGMENTCREATE)
@@ -288,22 +288,22 @@ fn header(base_url: &Url) -> Node<Msg> {
             &general.navbar_item,
         ],
         a![
-            attrs! { At::Href => Urls::new(base_url).calender().default() },
+            attrs! { At::Href => Urls::new(base_url).calender() },
             "Calender",
             &general.navbar_item,
         ],
         a![
-            attrs! { At::Href => Urls::new(base_url).music().default() },
+            attrs! { At::Href => Urls::new(base_url).music() },
             "Music",
             &general.navbar_item,
         ],
         a![
-            attrs! { At::Href => Urls::new(base_url).finance().default() },
+            attrs! { At::Href => Urls::new(base_url).finance() },
             "Finance",
             &general.navbar_item,
         ],
         a![
-            attrs! { At::Href => Urls::new(base_url).ledger_summary().default() },
+            attrs! { At::Href => Urls::new(base_url).ledger_summary() },
             "Time Tracking",
             &general.navbar_item,
         ],

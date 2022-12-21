@@ -20,18 +20,30 @@ pub async fn get_login(
     .await
 }
 
-/// this function returns raw html for finance and music summary.
+/// this function returns raw html for finance, time and music summary.
 pub async fn get_html(
     token: String,
-    target: String,
-    depth: String,
-    timeframe: String,
-    timepoint: String,
+    selected: shared::models::HtmlSuggestion,
 ) -> fetch::Result<shared::models::ResponseHtml> {
-    Request::new(get_api_url(String::from(format!(
-        "api/auth/get_{}/depth_{}/timeframe_{}/timepoint_{}.json",
-        target, depth, timeframe, timepoint
-    ))))
+    fetch(
+        Request::new(get_api_url(String::from("api/auth/get_html.json")))
+            .method(Method::Post)
+            .header(Header::bearer(token))
+            .json(&selected)?,
+    )
+    .await?
+    .check_status()?
+    .json()
+    .await
+}
+
+/// returns the suggestions for a html summary.
+pub async fn get_html_suggestion(
+    token: String,
+) -> fetch::Result<shared::models::ResponseHtmlSuggestion> {
+    Request::new(get_api_url(String::from(
+        "api/auth/get_html_suggestions.json",
+    )))
     .header(Header::bearer(token))
     .fetch()
     .await?

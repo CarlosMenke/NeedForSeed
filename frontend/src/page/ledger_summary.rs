@@ -1,101 +1,68 @@
 use crate::api;
+use fuzzy_matcher::skim::SkimMatcherV2;
+use fuzzy_matcher::FuzzyMatcher;
+use itertools::Itertools;
 use seed::{prelude::*, *};
 
-// TODO change it from depth to depth for thime (this and last)
-const DEPTH2: &str = "2";
-const DEPTH3: &str = "3";
-const DEPTH4: &str = "4";
-const DEPTHALL: &str = "all";
-const DAY: &str = "day";
-const WEEK: &str = "week";
-const MONTH: &str = "month";
-const YEAR: &str = "year";
-const ALL: &str = "all";
-const NOW: &str = "0";
-const ONE: &str = "1";
-const TWO: &str = "2";
-const THREE: &str = "3";
-const FOUR: &str = "4";
-const FIVE: &str = "5";
-const SIX: &str = "6";
-const SEVEN: &str = "7";
+use crate::design::General;
 
 // ------ ------
 //     Init
 // ------ ------
 
 pub fn init(
-    mut url: Url,
+    _url: Url,
     orders: &mut impl Orders<Msg>,
     ctx: Option<shared::auth::UserLoginResponse>,
     api_target: String,
 ) -> Model {
-    let base_url = url.to_base_url();
-    let depth = match url.next_path_part() {
-        Some(DEPTH2) => Depth::Depth2,
-        Some(DEPTH3) => Depth::Depth3,
-        Some(DEPTH4) => Depth::Depth4,
-        Some(DEPTHALL) => Depth::DepthAll,
-        None => {
-            Urls::new(&base_url).default().go_and_replace();
-            Depth::DepthAll
+    //TODO make custom
+    log!(api_target);
+    let selected = if "finance" == &api_target {
+        shared::models::HtmlSuggestion {
+            target: api_target.clone(),
+            //TODO change to today
+            date: "2022_12_01".to_string(),
+            timespan: "month".to_string(),
+            depth: "all".to_string(),
         }
-        _ => Depth::DepthAll,
+    } else {
+        shared::models::HtmlSuggestion {
+            target: api_target.clone(),
+            //TODO change to today
+            date: "2022_12_18".to_string(),
+            timespan: "day".to_string(),
+            depth: "all".to_string(),
+        }
     };
-    let timeframe = match url.next_path_part() {
-        Some(DAY) => Timeframe::Day,
-        Some(WEEK) => Timeframe::Week,
-        Some(MONTH) => Timeframe::Month,
-        Some(YEAR) => Timeframe::Year,
-        Some(ALL) => Timeframe::All,
-        None => {
-            Urls::new(&base_url).default().go_and_replace();
-            Timeframe::Day
-        }
-        _ => Timeframe::Day,
-    };
-    let timepoint = match url.next_path_part() {
-        Some(NOW) => Timepoint::Now,
-        Some(ONE) => Timepoint::One,
-        Some(TWO) => Timepoint::Two,
-        Some(THREE) => Timepoint::Three,
-        Some(FOUR) => Timepoint::Four,
-        Some(FIVE) => Timepoint::Five,
-        Some(SIX) => Timepoint::Six,
-        Some(SEVEN) => Timepoint::Seven,
-        None => {
-            Urls::new(&base_url).default().go_and_replace();
-            Timepoint::Now
-        }
-        _ => Timepoint::Now,
+    log!(selected);
+    //TODO make more general
+    let selection_input = shared::models::HtmlSuggestion {
+        target: api_target.clone(),
+        //TODO change to today
+        date: "".to_string(),
+        timespan: "".to_string(),
+        depth: "".to_string(),
     };
     orders.skip().perform_cmd({
         let token = ctx.clone().unwrap().token;
-        let api_target_clone = api_target.clone();
-        let depth_str = depth.clone().str();
-        let timeframte_str = timeframe.clone().str();
-        let timepoint_str = timepoint.clone().str();
-        async {
-            Msg::FetchedSummary(
-                api::requests::get_html(
-                    token,
-                    api_target_clone,
-                    depth_str,
-                    timeframte_str,
-                    timepoint_str,
-                )
-                .await,
-            )
-        }
+        let selected = selected.clone();
+        async { Msg::FetchedSummary(api::requests::get_html(token, selected).await) }
+    });
+    orders.skip().perform_cmd({
+        let token = ctx.clone().unwrap().token;
+        async { Msg::FetchedSuggestion(api::requests::get_html_suggestion(token).await) }
     });
     Model {
-        base_url,
-        ctx,
-        depth,
-        timeframe,
-        timepoint,
+        _ctx: ctx,
+        _api_target: api_target,
+
+        selected,
+        selection_input,
+        suggestions: None,
+
         summary: None,
-        api_target,
+        suggestion_filter: "".to_string(),
     }
 }
 
@@ -104,228 +71,61 @@ pub fn init(
 // ------ ------
 
 pub struct Model {
-    base_url: Url,
-    depth: Depth,
-    timeframe: Timeframe,
-    timepoint: Timepoint,
-    ctx: Option<shared::auth::UserLoginResponse>,
+    _ctx: Option<shared::auth::UserLoginResponse>,
+    _api_target: String,
+
+    selected: shared::models::HtmlSuggestion,
     summary: Option<shared::models::ResponseHtml>,
-    api_target: String,
+    suggestions: Option<shared::models::ResponseHtmlSuggestion>,
+
+    selection_input: shared::models::HtmlSuggestion,
+    suggestion_filter: String,
 }
 
-// ------ Frequency ------
-
-#[derive(Clone)]
-enum Depth {
-    Depth2,
-    Depth3,
-    Depth4,
-    DepthAll,
-}
-impl Depth {
-    fn str(self) -> String {
-        match self {
-            Depth::Depth2 => DEPTH2.to_string(),
-            Depth::Depth3 => DEPTH3.to_string(),
-            Depth::Depth4 => DEPTH4.to_string(),
-            Depth::DepthAll => DEPTHALL.to_string(),
-        }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq)]
-enum Timeframe {
-    Day,
-    Week,
-    Month,
-    Year,
-    All,
-}
-impl Timeframe {
-    fn str(self) -> String {
-        match self {
-            Timeframe::Day => DAY.to_string(),
-            Timeframe::Week => WEEK.to_string(),
-            Timeframe::Month => MONTH.to_string(),
-            Timeframe::Year => YEAR.to_string(),
-            Timeframe::All => ALL.to_string(),
-        }
-    }
-}
-
-#[derive(Debug, Clone)]
-enum Timepoint {
-    Now,
-    One,
-    Two,
-    Three,
-    Four,
-    Five,
-    Six,
-    Seven,
-}
-impl Timepoint {
-    fn str(self) -> String {
-        match self {
-            Timepoint::Now => NOW.to_string(),
-            Timepoint::One => ONE.to_string(),
-            Timepoint::Two => TWO.to_string(),
-            Timepoint::Three => THREE.to_string(),
-            Timepoint::Four => FOUR.to_string(),
-            Timepoint::Five => FIVE.to_string(),
-            Timepoint::Six => SIX.to_string(),
-            Timepoint::Seven => SEVEN.to_string(),
-        }
-    }
-}
+const FINANCE: &str = "Finance";
 
 pub enum Msg {
-    GetSummary,
+    //GetSummary,
     FetchedSummary(fetch::Result<shared::models::ResponseHtml>),
-}
-// ------ ------
-//     Urls
-// ------ ------
+    FetchedSuggestion(fetch::Result<shared::models::ResponseHtmlSuggestion>),
 
-struct_urls!();
-impl<'a> Urls<'a> {
-    pub fn _root(self) -> Url {
-        self.base_url()
-    }
-    pub fn default(self) -> Url {
-        self.depthall(Timeframe::Day, Timepoint::Now)
-    }
-    fn depth2(self, time: Timeframe, point: Timepoint) -> Url {
-        self.base_url()
-            .add_path_part(DEPTH2)
-            .add_path_part(time.str())
-            .add_path_part(point.str())
-    }
-    fn depth3(self, time: Timeframe, point: Timepoint) -> Url {
-        self.base_url()
-            .add_path_part(DEPTH3)
-            .add_path_part(time.str())
-            .add_path_part(point.str())
-    }
-    fn depth4(self, time: Timeframe, point: Timepoint) -> Url {
-        self.base_url()
-            .add_path_part(DEPTH4)
-            .add_path_part(time.str())
-            .add_path_part(point.str())
-    }
-    fn depthall(self, time: Timeframe, point: Timepoint) -> Url {
-        self.base_url()
-            .add_path_part(DEPTHALL)
-            .add_path_part(time.str())
-            .add_path_part(point.str())
-    }
-    fn day(self, depth: Depth, _point: Timepoint) -> Url {
-        self.base_url()
-            .add_path_part(depth.str())
-            .add_path_part(DAY)
-            .add_path_part("0".to_string())
-    }
-    fn week(self, depth: Depth, _point: Timepoint) -> Url {
-        self.base_url()
-            .add_path_part(depth.str())
-            .add_path_part(WEEK)
-            .add_path_part("0".to_string())
-    }
-    fn month(self, depth: Depth, _point: Timepoint) -> Url {
-        self.base_url()
-            .add_path_part(depth.str())
-            .add_path_part(MONTH)
-            .add_path_part("0".to_string())
-    }
-    fn year(self, depth: Depth, _point: Timepoint) -> Url {
-        self.base_url()
-            .add_path_part(depth.str())
-            .add_path_part(YEAR)
-            .add_path_part("0".to_string())
-    }
-    fn all(self, depth: Depth, _point: Timepoint) -> Url {
-        self.base_url()
-            .add_path_part(depth.str())
-            .add_path_part(ALL)
-            .add_path_part("1".to_string())
-    }
-    fn now(self, depth: Depth, timeframe: Timeframe) -> Url {
-        self.base_url()
-            .add_path_part(depth.str())
-            .add_path_part(timeframe.str())
-            .add_path_part(NOW)
-    }
-    fn one(self, depth: Depth, timeframe: Timeframe) -> Url {
-        self.base_url()
-            .add_path_part(depth.str())
-            .add_path_part(timeframe.str())
-            .add_path_part(ONE)
-    }
-    fn two(self, depth: Depth, timeframe: Timeframe) -> Url {
-        self.base_url()
-            .add_path_part(depth.str())
-            .add_path_part(timeframe.str())
-            .add_path_part(TWO)
-    }
-    fn three(self, depth: Depth, timeframe: Timeframe) -> Url {
-        self.base_url()
-            .add_path_part(depth.str())
-            .add_path_part(timeframe.str())
-            .add_path_part(THREE)
-    }
-    fn four(self, depth: Depth, timeframe: Timeframe) -> Url {
-        self.base_url()
-            .add_path_part(depth.str())
-            .add_path_part(timeframe.str())
-            .add_path_part(FOUR)
-    }
-    fn five(self, depth: Depth, timeframe: Timeframe) -> Url {
-        self.base_url()
-            .add_path_part(depth.str())
-            .add_path_part(timeframe.str())
-            .add_path_part(FIVE)
-    }
-    fn six(self, depth: Depth, timeframe: Timeframe) -> Url {
-        self.base_url()
-            .add_path_part(depth.str())
-            .add_path_part(timeframe.str())
-            .add_path_part(SIX)
-    }
-    fn seven(self, depth: Depth, timeframe: Timeframe) -> Url {
-        self.base_url()
-            .add_path_part(depth.str())
-            .add_path_part(timeframe.str())
-            .add_path_part(SEVEN)
-    }
+    SaveTimespan(String),
+    SaveDate(String),
+    SaveDepth(String),
+    SaveSelection,
 }
+
+// ------ ------
+//     Update
+// ------ ------
 
 pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     match msg {
-        Msg::GetSummary => {
-            orders.skip().perform_cmd({
-                let token = model.ctx.clone().unwrap().token;
-                let api_target_clone = model.api_target.clone();
-                let depth_str = model.depth.clone().str();
-                let timeframe_str = model.timeframe.clone().str();
-                let timepoint_str = model.timepoint.clone().str();
-                async {
-                    Msg::FetchedSummary(
-                        api::requests::get_html(
-                            token,
-                            api_target_clone,
-                            depth_str,
-                            timeframe_str,
-                            timepoint_str,
-                        )
-                        .await,
-                    )
-                }
-            });
+        Msg::SaveTimespan(content) => {
+            model.selection_input.timespan = content;
+            update_suggestion_filter(model);
+            autofill(orders, model);
+        }
+        Msg::SaveDate(content) => {
+            model.selection_input.date = content;
+            update_suggestion_filter(model);
+            autofill(orders, model);
+        }
+        Msg::SaveDepth(content) => {
+            model.selection_input.depth = content;
+            update_suggestion_filter(model);
+            autofill(orders, model);
+        }
+        Msg::SaveSelection => {
+            model.selected = model.selection_input.clone();
+        }
+        Msg::FetchedSuggestion(Ok(response_data)) => {
+            model.suggestions = Some(response_data);
         }
         Msg::FetchedSummary(Ok(response_data)) => {
             model.summary = Some(response_data);
         }
-        Msg::FetchedSummary(Err(fetch_error)) => {
+        Msg::FetchedSummary(Err(fetch_error)) | Msg::FetchedSuggestion(Err(fetch_error)) => {
             log!("Fetch error:", fetch_error);
             orders.skip();
         }
@@ -340,176 +140,185 @@ pub fn view(model: &Model) -> Node<Msg> {
         Some(m) => m.html,
         None => "".to_string(),
     };
-    let (depth, link) = match &model.depth {
-        Depth::Depth2 => (
-            DEPTH2,
-            a![
-                "Switch to 3",
-                attrs! {
-                    At::Href => Urls::new(&model.base_url).depth3(model.timeframe.clone(), model.timepoint.clone())
-                }
-            ],
-        ),
-        Depth::Depth3 => (
-            DEPTH3,
-            a![
-                "Switch to 4",
-                attrs! {
-                    At::Href => Urls::new(&model.base_url).depth4(model.timeframe.clone(), model.timepoint.clone())
-                }
-            ],
-        ),
-        Depth::Depth4 => (
-            DEPTH4,
-            a![
-                "Switch to all",
-                attrs! {
-                    At::Href => Urls::new(&model.base_url).depthall(model.timeframe.clone(), model.timepoint.clone())
-                }
-            ],
-        ),
-        Depth::DepthAll => (
-            DEPTHALL,
-            a![
-                "Switch to 2",
-                attrs! {
-                    At::Href => Urls::new(&model.base_url).depth2(model.timeframe.clone(), model.timepoint.clone())
-                }
-            ],
-        ),
+    let suggestions = match model.suggestions.clone() {
+        Some(m) => m.suggestions,
+        None => Vec::new(),
     };
-    let (timeframe, link_timeframe) = match &model.timeframe {
-        Timeframe::Day => (
-            DAY,
-            a![
-                "Switch to Week",
-                attrs! {
-                    At::Href => Urls::new(&model.base_url).week(model.depth.clone(), model.timepoint.clone())
-                }
-            ],
-        ),
-        Timeframe::Week => (
-            WEEK,
-            a![
-                "Switch to month",
-                attrs! {
-                    At::Href => Urls::new(&model.base_url).month(model.depth.clone(), model.timepoint.clone())
-                }
-            ],
-        ),
-        Timeframe::Month => (
-            MONTH,
-            a![
-                "Switch to year",
-                attrs! {
-                    At::Href => Urls::new(&model.base_url).year(model.depth.clone(), model.timepoint.clone())
-                }
-            ],
-        ),
-        Timeframe::Year => (
-            YEAR,
-            a![
-                "Switch to all",
-                attrs! {
-                    At::Href => Urls::new(&model.base_url).all(model.depth.clone(), model.timepoint.clone())
-                }
-            ],
-        ),
-        Timeframe::All => (
-            ALL,
-            a![
-                "Switch to Day",
-                attrs! {
-                    At::Href => Urls::new(&model.base_url).day(model.depth.clone(), model.timepoint.clone())
-                }
-            ],
-        ),
+    let general = General::default();
+    let empty = if &model.suggestion_filter == "" {
+        true
+    } else {
+        false
     };
-    let (timepoint, link_timepoint) = match &model.timepoint {
-        Timepoint::Now => (
-            NOW,
-            a![
-                "Switch to One",
-                attrs! {
-                    At::Href => Urls::new(&model.base_url).one(model.depth.clone(), model.timeframe.clone())
-                }
-            ],
-        ),
-        Timepoint::One => (
-            ONE,
-            a![
-                "Switch to Two",
-                attrs! {
-                    At::Href => Urls::new(&model.base_url).two(model.depth.clone(), model.timeframe.clone())
-                }
-            ],
-        ),
-        Timepoint::Two => (
-            TWO,
-            a![
-                "Switch to Three",
-                attrs! {
-                    At::Href => Urls::new(&model.base_url).three(model.depth.clone(), model.timeframe.clone())
-                }
-            ],
-        ),
-        Timepoint::Three => (
-            THREE,
-            a![
-                "Switch to Four",
-                attrs! {
-                    At::Href => Urls::new(&model.base_url).four(model.depth.clone(), model.timeframe.clone())
-                }
-            ],
-        ),
-        Timepoint::Four => (
-            FOUR,
-            a![
-                "Switch to Five",
-                attrs! {
-                    At::Href => Urls::new(&model.base_url).five(model.depth.clone(), model.timeframe.clone())
-                }
-            ],
-        ),
-        Timepoint::Five => (
-            FIVE,
-            a![
-                "Switch to Six",
-                attrs! {
-                    At::Href => Urls::new(&model.base_url).six(model.depth.clone(), model.timeframe.clone())
-                }
-            ],
-        ),
-        Timepoint::Six => (
-            SIX,
-            a![
-                "Switch to Seven",
-                attrs! {
-                    At::Href => Urls::new(&model.base_url).seven(model.depth.clone(), model.timeframe.clone())
-                }
-            ],
-        ),
-        Timepoint::Seven => (
-            SEVEN,
-            a![
-                "Switch to Now",
-                attrs! {
-                    At::Href => Urls::new(&model.base_url).now(model.depth.clone(), model.timeframe.clone())
-                }
-            ],
-        ),
-    };
-
     div![
-        style! {
-            //St::Height => px(10000);
-        },
-        div![format!("Depth:  {}    ", depth), link,],
-        div![format!("Timeframe:  {}    ", timeframe), link_timeframe,],
-        div![format!("Timepoint:  {}    ", timepoint), link_timepoint,],
+        input![
+            C!["input-content-timespan"],
+            input_ev(Ev::Input, Msg::SaveTimespan),
+            attrs! {
+                At::Placeholder => "Timespan",
+                At::AutoFocus => true.as_at_value();
+                At::Value => &model.selection_input.timespan,
+                At::List => "suggestions-timespan",
+            },
+            &general.input,
+        ],
+        datalist![
+            id!["suggestions-timespan"],
+            suggestions
+                .iter()
+                .filter(|_s| empty)
+                .filter(|s| s.target == model.selected.target)
+                .unique_by(|s| &s.timespan)
+                .map(|s| { option![s.timespan.clone()] }),
+            custom_suggestion(&suggestions, model)
+                .unique_by(|s| &s.timespan)
+                .map(|s| { option![s.timespan.clone()] })
+        ],
+        input![
+            C!["input-content-date"],
+            input_ev(Ev::Input, Msg::SaveDate),
+            attrs! {
+                At::Placeholder => "Date",
+                At::AutoFocus => true.as_at_value();
+                At::Value => &model.selection_input.date,
+                At::List => "suggestions-date",
+            },
+            &general.input,
+        ],
+        datalist![
+            id!["suggestions-date"],
+            suggestions
+                .iter()
+                .filter(|_s| empty)
+                .filter(|s| s.target == model.selected.target)
+                .unique_by(|s| &s.date)
+                .map(|s| { option![s.date.clone()] }),
+            custom_suggestion(&suggestions, model)
+                .unique_by(|s| &s.date)
+                .map(|s| { option![s.date.clone()] })
+        ],
+        input![
+            C!["input-content-depth"],
+            input_ev(Ev::Input, Msg::SaveDepth),
+            attrs! {
+                At::Placeholder => "Depth",
+                At::AutoFocus => true.as_at_value();
+                At::Value => &model.selection_input.depth,
+                At::List => "suggestions-depth",
+            },
+            &general.input,
+        ],
+        datalist![
+            id!["suggestions-depth"],
+            suggestions
+                .iter()
+                .filter(|_s| empty)
+                .filter(|s| s.target == model.selected.target)
+                .unique_by(|s| &s.depth)
+                .map(|s| { option![s.depth.clone()] }),
+            custom_suggestion(&suggestions, model)
+                .unique_by(|s| &s.depth)
+                .map(|s| { option![s.depth.clone()] })
+        ],
+        button![
+            ev(Ev::Click, |_| Msg::SaveSelection),
+            "Select",
+            &general.button,
+        ],
         div![
             raw![&summary_html],
             style! { St::Margin => "40px 40px 40px 40px"},
         ],
     ]
+}
+
+fn update_suggestion_filter(model: &mut Model) {
+    model.suggestion_filter = if &model.selection_input.timespan == ""
+        && &model.selection_input.date == ""
+        && &model.selection_input.depth != ""
+    {
+        "depth".to_string()
+    } else if &model.selection_input.date == ""
+        && &model.selection_input.timespan != ""
+        && &model.selection_input.depth == ""
+    {
+        "timespan".to_string()
+    } else if &model.selection_input.date != ""
+        && &model.selection_input.timespan == ""
+        && &model.selection_input.depth == ""
+    {
+        "date".to_string()
+    } else {
+        model.suggestion_filter.clone()
+    };
+}
+
+fn autofill(orders: &mut impl Orders<Msg>, model: &Model) {
+    let suggestions = match model.suggestions.clone() {
+        Some(m) => m.suggestions,
+        None => Vec::new(),
+    };
+
+    let suggestion_custom = custom_suggestion(&suggestions, model)
+        .unique_by(|s| &s.depth)
+        .map(|s| &s.depth)
+        .collect_vec();
+    if &suggestion_custom.len() == &(1 as usize) && &model.selection_input.depth == "" {
+        let autofill = suggestion_custom[0].to_string().clone();
+        orders
+            .skip()
+            .perform_cmd(async { Msg::SaveDepth(autofill) });
+    }
+    let suggestion_custom = custom_suggestion(&suggestions, model)
+        .unique_by(|s| &s.date)
+        .map(|s| &s.date)
+        .collect_vec();
+    if &suggestion_custom.len() == &(1 as usize) && &model.selection_input.date == "" {
+        let autofill = suggestion_custom[0].to_string().clone();
+        orders.skip().perform_cmd(async { Msg::SaveDate(autofill) });
+    }
+    let suggestion_custom = custom_suggestion(&suggestions, model)
+        .unique_by(|s| &s.timespan)
+        .map(|s| &s.timespan)
+        .collect_vec();
+    if &suggestion_custom.len() == &(1 as usize) && &model.selection_input.timespan == "" {
+        let autofill = suggestion_custom[0].to_string().clone();
+        orders
+            .skip()
+            .perform_cmd(async { Msg::SaveTimespan(autofill) });
+    }
+}
+pub fn custom_suggestion<'a>(
+    suggestions: &'a Vec<shared::models::HtmlSuggestion>,
+    model: &'a Model,
+) -> impl Iterator<Item = &'a shared::models::HtmlSuggestion> {
+    let matcher = SkimMatcherV2::default();
+    let threshhold: i64 = model
+        .selection_input
+        .timespan
+        .replace(" ", "")
+        .chars()
+        .count() as i64
+        * 5;
+    //autofill
+    return suggestions.iter().filter(move |s| {
+        (&model.suggestion_filter == "timespan"
+            && matcher
+                .fuzzy_match(
+                    &s.timespan,
+                    &model.selection_input.timespan.replace(" ", ""),
+                )
+                .unwrap_or(0)
+                > threshhold)
+            || (&model.suggestion_filter == "date"
+                && matcher
+                    .fuzzy_match(&s.date, &model.selection_input.date.replace(" ", ""))
+                    .unwrap_or(0)
+                    > threshhold)
+            || (&model.suggestion_filter == "depth"
+                && matcher
+                    .fuzzy_match(&s.depth, &&model.selection_input.depth.replace(" ", ""))
+                    .unwrap_or(0)
+                    > threshhold)
+    });
 }
