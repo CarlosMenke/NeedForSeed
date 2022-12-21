@@ -5,7 +5,6 @@ extern crate serde;
 use actix_cors::Cors;
 use actix_web::{web, App, HttpServer};
 use actix_web_httpauth::middleware::HttpAuthentication;
-use openssl::ssl::{SslAcceptor, SslFiletype, SslMethod};
 
 use diesel::{r2d2, r2d2::ConnectionManager, PgConnection};
 use models::db::Pool;
@@ -32,14 +31,6 @@ async fn main() -> std::io::Result<()> {
     let settings = Application::default();
 
     //TODO change to RUSTLS, because it is faster and more secure
-    let mut builder = SslAcceptor::mozilla_intermediate(SslMethod::tls()).unwrap();
-    builder
-        .set_private_key_file("./certificates/key.pem", SslFiletype::PEM)
-        .unwrap();
-    builder
-        .set_certificate_chain_file("certificates/cert.pem")
-        .unwrap();
-
     let connection_manager = ConnectionManager::<PgConnection>::new(settings.database_url);
     let pool: Pool = r2d2::Pool::builder()
         .build(connection_manager)
