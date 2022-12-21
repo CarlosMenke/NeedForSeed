@@ -114,8 +114,9 @@ pub enum Msg {
     CancelRunningEnteryOffsetEdit,
     InverseRunningEnteryOffset,
 }
+
 // ------ ------
-//     Urls
+//     Update
 // ------ ------
 
 pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
