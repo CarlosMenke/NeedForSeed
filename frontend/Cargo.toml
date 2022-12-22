@@ -19,6 +19,7 @@ enclose = "1.1.8"
 itertools = "*"
 shared = { path="../shared" }
 regex = "1.6"
+chrono = "*"
 
 [profile.release]
 lto = true

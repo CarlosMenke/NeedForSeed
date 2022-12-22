@@ -1,4 +1,5 @@
 use crate::api;
+use chrono::*;
 use fuzzy_matcher::skim::SkimMatcherV2;
 use fuzzy_matcher::FuzzyMatcher;
 use itertools::Itertools;
@@ -16,34 +17,28 @@ pub fn init(
     ctx: Option<shared::auth::UserLoginResponse>,
     api_target: String,
 ) -> Model {
-    //TODO make custom
     log!(api_target);
+    let dt = chrono::Local::now();
+    //TODO user FINANCE const
     let selected = if "finance" == &api_target {
         shared::models::HtmlSuggestion {
             target: api_target.clone(),
-            //TODO change to today
-            date: "2022_12_01".to_string(),
+            date: format!("{}_{}_01", dt.year(), dt.month()),
             timespan: "month".to_string(),
             depth: "all".to_string(),
         }
     } else {
         shared::models::HtmlSuggestion {
             target: api_target.clone(),
-            //TODO change to today
-            date: "2022_12_18".to_string(),
+            date: format!("{}_{}_{}", dt.year(), dt.month(), dt.day()),
             timespan: "day".to_string(),
             depth: "all".to_string(),
         }
     };
     log!(selected);
     //TODO make more general
-    let selection_input = shared::models::HtmlSuggestion {
-        target: api_target.clone(),
-        //TODO change to today
-        date: "".to_string(),
-        timespan: "".to_string(),
-        depth: "".to_string(),
-    };
+    let mut selection_input = shared::models::HtmlSuggestion::default();
+    selection_input.target = api_target.clone();
     orders.skip().perform_cmd({
         let token = ctx.clone().unwrap().token;
         let selected = selected.clone();
@@ -54,7 +49,7 @@ pub fn init(
         async { Msg::FetchedSuggestion(api::requests::get_html_suggestion(token).await) }
     });
     Model {
-        _ctx: ctx,
+        ctx,
         _api_target: api_target,
 
         selected,
@@ -71,7 +66,7 @@ pub fn init(
 // ------ ------
 
 pub struct Model {
-    _ctx: Option<shared::auth::UserLoginResponse>,
+    ctx: Option<shared::auth::UserLoginResponse>,
     _api_target: String,
 
     selected: shared::models::HtmlSuggestion,
@@ -85,7 +80,6 @@ pub struct Model {
 const FINANCE: &str = "Finance";
 
 pub enum Msg {
-    //GetSummary,
     FetchedSummary(fetch::Result<shared::models::ResponseHtml>),
     FetchedSuggestion(fetch::Result<shared::models::ResponseHtmlSuggestion>),
 
@@ -118,12 +112,21 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         }
         Msg::SaveSelection => {
             model.selected = model.selection_input.clone();
+            let api_target = model.selection_input.target.clone();
+            orders.skip().perform_cmd({
+                let token = model.ctx.clone().unwrap().token;
+                let selected = model.selected.clone();
+                async { Msg::FetchedSummary(api::requests::get_html(token, selected).await) }
+            });
+            model.selection_input = shared::models::HtmlSuggestion::default();
+            model.selection_input.target = api_target;
         }
         Msg::FetchedSuggestion(Ok(response_data)) => {
             model.suggestions = Some(response_data);
         }
         Msg::FetchedSummary(Ok(response_data)) => {
             model.summary = Some(response_data);
+            model.suggestion_filter = "".to_string();
         }
         Msg::FetchedSummary(Err(fetch_error)) | Msg::FetchedSuggestion(Err(fetch_error)) => {
             log!("Fetch error:", fetch_error);
