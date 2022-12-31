@@ -15,7 +15,7 @@ pub struct User {
     pub password: String,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
 pub struct HtmlSuggestion {
     pub target: String,
     pub date: String,

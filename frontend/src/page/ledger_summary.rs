@@ -1,7 +1,5 @@
 use crate::api;
 use chrono::*;
-use fuzzy_matcher::skim::SkimMatcherV2;
-use fuzzy_matcher::FuzzyMatcher;
 use itertools::Itertools;
 use seed::{prelude::*, *};
 
@@ -112,18 +110,24 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             model.selection_input.timespan = content;
             update_suggestion_filter(model);
             autofill(orders, model);
+            orders.skip().perform_cmd(async { Msg::SaveSelection });
         }
         Msg::SaveDate(content) => {
             model.selection_input.date = content;
             update_suggestion_filter(model);
             autofill(orders, model);
+            orders.skip().perform_cmd(async { Msg::SaveSelection });
         }
         Msg::SaveDepth(content) => {
             model.selection_input.depth = content;
             update_suggestion_filter(model);
             autofill(orders, model);
+            orders.skip().perform_cmd(async { Msg::SaveSelection });
         }
         Msg::SaveSelection => {
+            if model.selected == model.selection_input {
+                return;
+            };
             model.selected = model.selection_input.clone();
             orders.skip().perform_cmd({
                 let token = model.ctx.clone().unwrap().token;
@@ -158,7 +162,7 @@ pub fn view(model: &Model) -> Node<Msg> {
         None => Vec::new(),
     };
     let general = General::default();
-    let empty = if &model.suggestion_filter == "" {
+    let empty_timespan = if &model.selection_input.timespan == "" {
         true
     } else {
         false
@@ -192,13 +196,9 @@ pub fn view(model: &Model) -> Node<Msg> {
                 id!["suggestions-timespan"],
                 suggestions
                     .iter()
-                    .filter(|_s| empty)
-                    .filter(|s| s.target == model.selected.target)
+                    .filter(|s| empty_timespan && s.target == model.selected.target)
                     .unique_by(|s| &s.timespan)
                     .map(|s| { option![s.timespan.clone()] }),
-                custom_suggestion(&suggestions, model)
-                    .unique_by(|s| &s.timespan)
-                    .map(|s| { option![s.timespan.clone()] })
             ],
             input![
                 C!["input-content-date"],
@@ -219,7 +219,18 @@ pub fn view(model: &Model) -> Node<Msg> {
             ],
             datalist![
                 id!["suggestions-date"],
-                custom_suggestion(&suggestions, model)
+                suggestions
+                    .iter()
+                    .filter(|_s| empty_timespan)
+                    .filter(|s| s.target == model.selected.target)
+                    .unique_by(|s| &s.date)
+                    .map(|s| { option![s.date.clone()] }),
+                suggestions
+                    .iter()
+                    .filter(move |s| {
+                        model.selection_input.target == s.target
+                            && model.selection_input.timespan == s.timespan
+                    })
                     .unique_by(|s| &s.date)
                     .map(|s| { option![s.date.clone()] })
             ],
@@ -244,11 +255,20 @@ pub fn view(model: &Model) -> Node<Msg> {
                 id!["suggestions-depth"],
                 suggestions
                     .iter()
-                    .filter(|_s| empty)
-                    .filter(|s| s.target == model.selected.target)
+                    .filter(|_s| empty_timespan && s.target == model.selected.target)
                     .unique_by(|s| &s.depth)
                     .map(|s| { option![s.depth.clone()] }),
-                custom_suggestion(&suggestions, model)
+                suggestions
+                    .iter()
+                    .filter(move |s| {
+                        model.selection_input.target == s.target
+                            && model.selection_input.timespan == s.timespan
+                            && if model.selection_input.date != "" {
+                                model.selection_input.date == s.date
+                            } else {
+                                true
+                            }
+                    })
                     .unique_by(|s| &s.depth)
                     .map(|s| { option![s.depth.clone()] })
             ],
@@ -321,6 +341,7 @@ fn autofill(orders: &mut impl Orders<Msg>, model: &Model) {
             .perform_cmd(async { Msg::SaveTimespan(autofill) });
     }
 }
+
 pub fn custom_suggestion<'a>(
     suggestions: &'a Vec<shared::models::HtmlSuggestion>,
     model: &'a Model,
