@@ -272,11 +272,6 @@ pub fn view(model: &Model) -> Node<Msg> {
                     .unique_by(|s| &s.depth)
                     .map(|s| { option![s.depth.clone()] })
             ],
-            button![
-                ev(Ev::Click, |_| Msg::SaveSelection),
-                "Select",
-                &general.button,
-            ],
         ],
         div![
             raw![&summary_html],
