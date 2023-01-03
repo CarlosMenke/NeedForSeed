@@ -17,21 +17,15 @@ pub fn init(
 ) -> Model {
     log!(api_target);
     let dt = chrono::Local::now();
-    //TODO user FINANCE const
-    let selected = if "finance" == &api_target {
-        shared::models::HtmlSuggestion {
-            target: api_target.clone(),
-            date: format!("{}_{}_01", dt.year(), dt.month()),
-            timespan: "month".to_string(),
-            depth: "all".to_string(),
-        }
-    } else {
-        shared::models::HtmlSuggestion {
-            target: api_target.clone(),
-            date: format!("{}_{}_{}", dt.year(), dt.month(), dt.day()),
-            timespan: "day".to_string(),
-            depth: "all".to_string(),
-        }
+    let selected = shared::models::HtmlSuggestion {
+        target: api_target.clone(),
+        date: format!("{:02}_{:02}_01", dt.year(), dt.month()),
+        timespan: if FINANCE == &api_target {
+            "month".to_string()
+        } else {
+            "day".to_string()
+        },
+        depth: "all".to_string(),
     };
     log!(selected);
     //TODO make more general
@@ -75,7 +69,7 @@ pub struct Model {
     suggestion_filter: String,
 }
 
-const FINANCE: &str = "Finance";
+const FINANCE: &str = "finance";
 
 pub enum Msg {
     FetchedSummary(fetch::Result<shared::models::ResponseHtml>),
