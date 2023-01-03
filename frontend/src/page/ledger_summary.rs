@@ -215,8 +215,7 @@ pub fn view(model: &Model) -> Node<Msg> {
                 id!["suggestions-date"],
                 suggestions
                     .iter()
-                    .filter(|_s| empty_timespan)
-                    .filter(|s| s.target == model.selected.target)
+                    .filter(|s| empty_timespan && s.target == model.selected.target)
                     .unique_by(|s| &s.date)
                     .map(|s| { option![s.date.clone()] }),
                 suggestions
@@ -227,6 +226,7 @@ pub fn view(model: &Model) -> Node<Msg> {
                     })
                     .unique_by(|s| &s.date)
                     .map(|s| { option![s.date.clone()] })
+                    .rev()
             ],
             input![
                 C!["input-content-depth"],
@@ -249,7 +249,7 @@ pub fn view(model: &Model) -> Node<Msg> {
                 id!["suggestions-depth"],
                 suggestions
                     .iter()
-                    .filter(|_s| empty_timespan && s.target == model.selected.target)
+                    .filter(|s| empty_timespan && s.target == model.selected.target)
                     .unique_by(|s| &s.depth)
                     .map(|s| { option![s.depth.clone()] }),
                 suggestions
