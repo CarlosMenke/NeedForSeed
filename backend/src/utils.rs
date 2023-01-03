@@ -211,7 +211,7 @@ pub fn ledger_start_time_entery(
         % (24 * 60);
     let chrono_date = chrono::Local::now();
     let date = format!(
-        "{:?}/{:?}/{:02}",
+        "{:?}/{:02}/{:02}",
         chrono_date.year(),
         chrono_date.month(),
         chrono_date.day()
@@ -329,7 +329,7 @@ pub fn ledger_create_time_entery(
             + offset_end as i64)
             % (24 * 60);
     let date_now = format!(
-        "{:?}/{:?}/{:02}",
+        "{:?}/{:02}/{:02}",
         chrono_date.year(),
         chrono_date.month(),
         chrono_date.day()
@@ -382,7 +382,7 @@ pub fn ledger_create_finance_entery(
     let path = PATH_FINANCE_FILES[pos];
     let chrono_date = chrono::Local::now();
     let date_now = format!(
-        "{:?}/{:?}/{:02}",
+        "{:?}/{:02}/{:02}",
         chrono_date.year(),
         chrono_date.month(),
         chrono_date.day()
@@ -417,6 +417,7 @@ pub fn ledger_create_finance_entery(
 
 /// converts the ledger file for Finance tracking and extracts the Heandline and ammount, target
 /// and origin account
+//TODO sort by date
 pub fn ledger_finance_suggestion(
     user: &str,
 ) -> Result<Vec<shared::models::NewFinanceEntery>, ServiceError> {
