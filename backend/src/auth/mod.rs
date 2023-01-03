@@ -37,7 +37,7 @@ pub async fn create_token(username: String, permissions: Vec<String>) -> Result<
 }
 
 //TODO implement enum or so with all role models, to restirct them
-const JWT_EXPIRATION_HOURS: i64 = 24 * 7;
+const JWT_EXPIRATION_HOURS: i64 = 24 * 31;
 const SECRET: &str = "SECRET";
 
 #[derive(Debug, Serialize, Deserialize)]
