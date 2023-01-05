@@ -124,14 +124,22 @@ mod unit_tests {
         .expect("Failed to unwrap Token");
 
         let auth = HttpAuthentication::bearer(validator);
-        let app = test::init_service(App::new().wrap(auth).route(
-            "/get_{target}/depth_{depth}/timeframe_{timeframe}/timepoint_{timepoint}.json",
-            web::get().to(api::get_html),
-        ))
+        let app = test::init_service(
+            App::new()
+                .wrap(auth)
+                .route("/", web::post().to(api::get_html)),
+        )
         .await;
-        let req = test::TestRequest::get()
-            .uri("/get_music/depth_1/timeframe_all/timepoint_0.json")
+        let html_suggestion = shared::models::HtmlSuggestion {
+            target: String::from("timeManagment"),
+            timespan: String::from("all"),
+            depth: String::from("all"),
+            date: String::from("2020_01_01"),
+        };
+        let req = test::TestRequest::post()
+            .uri("/")
             .insert_header((AUTHORIZATION, format!("Bearer {}", token_str)))
+            .set_json(&html_suggestion)
             .to_request();
         let resp = test::call_service(&app, req).await;
         println!("Valid Request {:?}", resp);
