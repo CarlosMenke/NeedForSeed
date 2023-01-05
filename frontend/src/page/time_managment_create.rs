@@ -33,7 +33,8 @@ pub fn init(
     orders: &mut impl Orders<Msg>,
     ctx: Option<shared::auth::UserLoginResponse>,
 ) -> Model {
-    orders.stream(streams::interval(1000 * 60, || {
+    orders.stream(streams::interval(500 * 60, || {
+        //update every 30s
         Msg::UpdateRunningEnteryDuration
     }));
     orders.skip().perform_cmd({
@@ -262,10 +263,15 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                     entery.offset = Some(offset.to_owned() * inverse);
                 }
             }
+            let stop_minute: u32 =
+                (u32::from(chrono::Local::now().hour() * 60 + chrono::Local::now().minute()))
+                    % (24 * 60);
+            let duration_offset: u32 =
+                (stop_minute - model.running_entery_timestamp.unwrap() + 24 * 60) % (24 * 60);
             log!("Stop {:#?}", data);
             orders.skip().perform_cmd({
                 let token = model.ctx.clone().unwrap().token;
-                let new_entery = model
+                let mut new_entery = model
                     .running_entery
                     .as_ref()
                     .unwrap()
@@ -273,6 +279,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                     .get(&remove_line)
                     .unwrap()
                     .clone();
+                new_entery.duration += duration_offset;
                 let stop_entery = shared::models::StopLedgerTimeEntery {
                     remove_line,
                     new_entery,
@@ -315,22 +322,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 }
             });
         }
-        Msg::UpdateRunningEnteryDuration => {
-            let stop_minute: u32 =
-                (u32::from(chrono::Local::now().hour() * 60 + chrono::Local::now().minute()))
-                    % (24 * 60);
-            let duration_offset: u32 =
-                (stop_minute - model.running_entery_timestamp.unwrap() + 24 * 60) % (24 * 60);
-            if let Some(enteries) = data {
-                for (_, entery) in enteries.running_entery.iter_mut() {
-                    log!(
-                        "duration adjustment to {:?}",
-                        entery.duration + duration_offset
-                    );
-                    entery.duration = entery.duration + duration_offset;
-                }
-            }
-        }
+        Msg::UpdateRunningEnteryDuration => {}
         Msg::FetchedStartTimeEntery(Ok(_response_data)) => {
             model.suggestion_filter = "".to_string();
             model.start_entery = shared::models::StartTimeEntery::default();
@@ -386,9 +378,13 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         Msg::FetchedRunningEntery(Ok(response_data)) => {
             log!("Running Enteries: ", response_data);
             model.running_entery = Some(response_data);
-            let now_minute: u32 = chrono::Local::now().hour() * 60 + chrono::Local::now().minute();
-            log!("now min {:?}", now_minute);
-            model.running_entery_timestamp = Some(now_minute);
+            let timestamp_minute: u32 =
+                chrono::Local::now().hour() * 60 + chrono::Local::now().minute();
+            log!(
+                "Save timestamp (in minutes) of fetch: {:?}",
+                timestamp_minute
+            );
+            model.running_entery_timestamp = Some(timestamp_minute);
         }
         Msg::FetchedHistoryEntery(Ok(response_data)) => {
             model.history_entery = Some(response_data);
@@ -560,6 +556,7 @@ pub fn view(model: &Model) -> Node<Msg> {
                     entery,
                     &model.editing_offset,
                     &model.refs.editing_running_entery_input,
+                    &model.running_entery_timestamp,
                 ))
             },),
         ],
@@ -587,8 +584,13 @@ fn view_runing_enteries(
     entery: &shared::models::NewTimeEntery,
     editing_running_entery: &Option<EditingNewTimeEntery>,
     editing_running_entery_input: &ElRef<HtmlInputElement>,
+    running_entery_timestamp: &Option<u32>,
 ) -> Node<Msg> {
     let general = General::default();
+    let stop_minute: u32 =
+        (u32::from(chrono::Local::now().hour() * 60 + chrono::Local::now().minute())) % (24 * 60);
+    let duration_offset: u32 =
+        (stop_minute - running_entery_timestamp.unwrap() + 24 * 60) % (24 * 60);
     //TODO use entery for button name
     div![
         h3!["Running Time Entery"],
@@ -602,7 +604,10 @@ fn view_runing_enteries(
         },
         label![entery.headline.clone(), &general.label],
         label![entery.account_target.clone(), &general.label],
-        label![format!("Duration: {}", entery.duration), &general.label],
+        label![
+            format!("Duration: {}", entery.duration + duration_offset),
+            &general.label
+        ],
         match editing_running_entery {
             Some(editing_running_entery) if editing_running_entery.id == id => {
                 div![
