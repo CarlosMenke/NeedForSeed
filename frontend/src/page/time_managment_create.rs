@@ -1,4 +1,5 @@
 use crate::api;
+use chrono::*;
 use enclose::enc;
 use fuzzy_matcher::skim::SkimMatcherV2;
 use fuzzy_matcher::FuzzyMatcher;
@@ -32,7 +33,7 @@ pub fn init(
     orders: &mut impl Orders<Msg>,
     ctx: Option<shared::auth::UserLoginResponse>,
 ) -> Model {
-    orders.stream(streams::interval(2000 * 60, || {
+    orders.stream(streams::interval(1000 * 60, || {
         Msg::UpdateRunningEnteryDuration
     }));
     orders.skip().perform_cmd({
@@ -53,7 +54,9 @@ pub fn init(
         suggestions: None,
         start_entery: shared::models::StartTimeEntery::default(),
         suggestion_filter: "".to_string(),
+        //TODO group running_entery and running_entery timestamp together
         running_entery: None,
+        running_entery_timestamp: None,
         history_entery: None,
         editing_offset: None,
         inverse_offset: -1,
@@ -72,6 +75,7 @@ pub struct Model {
     start_entery: shared::models::StartTimeEntery,
     suggestion_filter: String,
     running_entery: Option<shared::models::ResponseRunningLedgerTimeEntery>,
+    running_entery_timestamp: Option<u32>,
     history_entery: Option<shared::models::ResponseTimeEnteryHistory>,
     editing_offset: Option<EditingNewTimeEntery>,
     inverse_offset: i32,
@@ -312,9 +316,18 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             });
         }
         Msg::UpdateRunningEnteryDuration => {
+            let stop_minute: u32 =
+                (u32::from(chrono::Local::now().hour() * 60 + chrono::Local::now().minute()))
+                    % (24 * 60);
+            let duration_offset: u32 =
+                (stop_minute - model.running_entery_timestamp.unwrap() + 24 * 60) % (24 * 60);
             if let Some(enteries) = data {
                 for (_, entery) in enteries.running_entery.iter_mut() {
-                    entery.duration += 1;
+                    log!(
+                        "duration adjustment to {:?}",
+                        entery.duration + duration_offset
+                    );
+                    entery.duration = entery.duration + duration_offset;
                 }
             }
         }
@@ -373,6 +386,9 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         Msg::FetchedRunningEntery(Ok(response_data)) => {
             log!("Running Enteries: ", response_data);
             model.running_entery = Some(response_data);
+            let now_minute: u32 = chrono::Local::now().hour() * 60 + chrono::Local::now().minute();
+            log!("now min {:?}", now_minute);
+            model.running_entery_timestamp = Some(now_minute);
         }
         Msg::FetchedHistoryEntery(Ok(response_data)) => {
             model.history_entery = Some(response_data);
