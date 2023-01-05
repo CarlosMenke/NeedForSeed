@@ -63,7 +63,7 @@ impl Default for General {
             },
             label: style! {
                 St::Display => "block",
-                St::MarginTop => px(30);
+                St::MarginTop => px(20);
                 St::FontSize => px(16),
                 St::FontWeight => 500,
             },

@@ -380,10 +380,10 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             model.running_entery = Some(response_data);
             let timestamp_minute: u32 =
                 chrono::Local::now().hour() * 60 + chrono::Local::now().minute();
-            log!(
-                "Save timestamp (in minutes) of fetch: {:?}",
+            log!(format!(
+                "Save timestamp (in minutes) of fetch: {}",
                 timestamp_minute
-            );
+            ));
             model.running_entery_timestamp = Some(timestamp_minute);
         }
         Msg::FetchedHistoryEntery(Ok(response_data)) => {
@@ -551,7 +551,7 @@ pub fn view(model: &Model) -> Node<Msg> {
             St::FlexWrap => "wrap",
             },
             running_entery.iter().filter_map(|(remove_line, entery)| {
-                Some(view_runing_enteries(
+                Some(view_running_enteries(
                     remove_line.to_string(),
                     entery,
                     &model.editing_offset,
@@ -579,7 +579,7 @@ pub fn view(model: &Model) -> Node<Msg> {
 }
 
 //TODO add change name / headline of running entery
-fn view_runing_enteries(
+fn view_running_enteries(
     id: RunningEnteryId,
     entery: &shared::models::NewTimeEntery,
     editing_running_entery: &Option<EditingNewTimeEntery>,
@@ -591,6 +591,8 @@ fn view_runing_enteries(
         (u32::from(chrono::Local::now().hour() * 60 + chrono::Local::now().minute())) % (24 * 60);
     let duration_offset: u32 =
         (stop_minute - running_entery_timestamp.unwrap() + 24 * 60) % (24 * 60);
+    let stop_minute: u32 =
+        u32::from(chrono::Local::now().hour() * 60 + chrono::Local::now().minute());
     //TODO use entery for button name
     div![
         h3!["Running Time Entery"],
@@ -605,8 +607,19 @@ fn view_runing_enteries(
         label![entery.headline.clone(), &general.label],
         label![entery.account_target.clone(), &general.label],
         label![
-            format!("Duration: {}", entery.duration + duration_offset),
+            format!("Duration: {}", entery.duration + duration_offset,),
             &general.label
+        ],
+        p![
+            format!(
+                "{:02}:{:02} - {:02}:{:02}",
+                (stop_minute - entery.duration - duration_offset) / 60,
+                (stop_minute - entery.duration - duration_offset) % 60,
+                stop_minute / 60,
+                stop_minute % 60,
+            ),
+            &general.label,
+            style! {St::MarginTop => px(0)},
         ],
         match editing_running_entery {
             Some(editing_running_entery) if editing_running_entery.id == id => {
