@@ -19,7 +19,12 @@ pub fn init(
     let dt = chrono::Local::now();
     let selected = shared::models::HtmlSuggestion {
         target: api_target.clone(),
-        date: format!("{:02}_{:02}_01", dt.year(), dt.month()),
+        date: format!(
+            "{:02}_{:02}_{:02}",
+            dt.year(),
+            dt.month(),
+            if FINANCE == &api_target { 1 } else { dt.day() }
+        ),
         timespan: if FINANCE == &api_target {
             "month".to_string()
         } else {
