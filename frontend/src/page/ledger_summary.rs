@@ -15,7 +15,7 @@ pub fn init(
     ctx: Option<shared::auth::UserLoginResponse>,
     api_target: String,
 ) -> Model {
-    log!(api_target);
+    log!(format!("Selected api_target {}", api_target));
     let dt = chrono::Local::now();
     let selected = shared::models::HtmlSuggestion {
         target: api_target.clone(),
@@ -32,7 +32,7 @@ pub fn init(
         },
         depth: "all".to_string(),
     };
-    log!(selected);
+    log!(format!("Fetch {:?}", selected));
     //TODO make more general
     let mut selection_input = selected.clone();
     selection_input.target = api_target.clone();
@@ -131,6 +131,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             orders.skip().perform_cmd({
                 let token = model.ctx.clone().unwrap().token;
                 let selected = model.selected.clone();
+                log!(format!("Fetch {:?}", selected));
                 async { Msg::FetchedSummary(api::requests::get_html(token, selected).await) }
             });
         }
