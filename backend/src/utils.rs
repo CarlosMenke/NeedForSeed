@@ -142,7 +142,7 @@ pub fn ledger_time_history(
     let replace_date = Regex::new(r"^\d{4}/\d{2}/\d{2}[ ]*[\t]*[ ]*").unwrap();
     let get_timespan = Regex::new(r"^; ").unwrap();
     let get_date = Regex::new(r"^\d{4}/\d{2}/\d{2}").unwrap();
-    let get_duration = Regex::new(r"[-]*\d{1,3}[m, h]+").unwrap();
+    let get_duration = Regex::new(r"[-]*\d{1,4}[m, h]+").unwrap();
     let remove_time = Regex::new(r"[\s]*[\t]*\d{1, 3}[\.]?\d{0,2}[m,h]").unwrap();
     let remove_first_tab = Regex::new(r"[\s]*\t").unwrap();
     let mut tracking: bool = false;
