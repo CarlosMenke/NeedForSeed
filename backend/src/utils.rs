@@ -323,11 +323,14 @@ pub fn ledger_create_time_entery(
     start_entery: shared::models::NewTimeEntery,
 ) -> Result<String, ServiceError> {
     let offset_end = start_entery.offset.unwrap_or(0);
+    debug!("OFFSET END: {}", offset_end);
     let chrono_date = chrono::Local::now();
     let stop_minute: i64 =
         (i64::from(chrono::Local::now().hour() * 60 + chrono::Local::now().minute())
-            + offset_end as i64)
+            + offset_end as i64
+            + 24 * 60)
             % (24 * 60);
+    debug!("STOP MIN END: {}", stop_minute);
     let date_now = format!(
         "{:?}/{:02}/{:02}",
         chrono_date.year(),
