@@ -613,8 +613,8 @@ fn view_running_enteries(
         p![
             format!(
                 "{:02}:{:02} - {:02}:{:02}",
-                (stop_minute - entery.duration - duration_offset) / 60,
-                (stop_minute - entery.duration - duration_offset) % 60,
+                ((24 * 60 + stop_minute - entery.duration - duration_offset) % (24 * 60)) / 60,
+                ((24 * 60 + stop_minute - entery.duration - duration_offset) % (24 * 60)) % 60,
                 stop_minute / 60,
                 stop_minute % 60,
             ),
