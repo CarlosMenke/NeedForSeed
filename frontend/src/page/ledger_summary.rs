@@ -109,19 +109,19 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             model.selection_input.timespan = content;
             update_suggestion_filter(model);
             autofill(orders, model);
-            orders.skip().perform_cmd(async { Msg::SaveSelection });
+            orders.skip().send_msg(Msg::SaveSelection);
         }
         Msg::SaveDate(content) => {
             model.selection_input.date = content;
             update_suggestion_filter(model);
             autofill(orders, model);
-            orders.skip().perform_cmd(async { Msg::SaveSelection });
+            orders.skip().send_msg(Msg::SaveSelection);
         }
         Msg::SaveDepth(content) => {
             model.selection_input.depth = content;
             update_suggestion_filter(model);
             autofill(orders, model);
-            orders.skip().perform_cmd(async { Msg::SaveSelection });
+            orders.skip().send_msg(Msg::SaveSelection);
         }
         Msg::SaveSelection => {
             if model.selected == model.selection_input {
