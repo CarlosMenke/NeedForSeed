@@ -74,7 +74,7 @@ pub struct Model {
     suggestion_filter: String,
     running_entery: Option<shared::models::ResponseRunningLedgerTimeEntery>,
     running_entery_timestamp: Option<u32>,
-    history_entery: Option<shared::models::ResponseTimeEnteryHistory>,
+    history_entery: Option<shared::models::ResponseEnteryHistory>,
     editing_offset: Option<EditingNewTimeEntery>,
     inverse_offset: i32,
     refs: Refs,
@@ -91,7 +91,7 @@ pub enum Msg {
     GetHistoryEntery,
     FetchedSuggestion(fetch::Result<shared::models::HeadlineSuggestion>),
     FetchedRunningEntery(fetch::Result<shared::models::ResponseRunningLedgerTimeEntery>),
-    FetchedHistoryEntery(fetch::Result<shared::models::ResponseTimeEnteryHistory>),
+    FetchedHistoryEntery(fetch::Result<shared::models::ResponseEnteryHistory>),
     FetchedStartTimeEntery(fetch::Result<shared::models::ResponseStatus>),
     FetchedKillTimeEntery(fetch::Result<shared::models::ResponseStatus>),
     FetchedStopTimeEntery(fetch::Result<shared::models::ResponseStatus>),
@@ -676,7 +676,7 @@ fn view_running_enteries(
 }
 
 fn view_history_enteries(
-    history: &shared::models::TimeEnteryHistory,
+    history: &shared::models::EnteryHistory,
     id: RunningEnteryId,
 ) -> Node<Msg> {
     let general = General::default();

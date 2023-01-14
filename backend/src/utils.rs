@@ -127,7 +127,7 @@ pub fn ledger_time_suggestion(
 pub fn ledger_history(
     user: &str,
     target: shared::models::HistoryTargetFile,
-) -> Result<Vec<shared::models::TimeEnteryHistory>, ServiceError> {
+) -> Result<Vec<shared::models::EnteryHistory>, ServiceError> {
     let path = match target {
         shared::models::HistoryTargetFile::TimeManagment => PATH_TIME_SPEND,
         shared::models::HistoryTargetFile::Finance => PATH_FINANCE_FILES[0],
@@ -170,7 +170,7 @@ pub fn ledger_history(
             remove_entery += &format!("{}\n", line);
             pos += 1;
             match get_duration.find(&line) {
-                Some(e) => duration = e.as_str().replace("m", "").parse::<u32>().unwrap_or(0),
+                Some(e) => duration = e.as_str().replace("m", "").parse::<i32>().unwrap_or(0),
                 None => (),
             };
         } else if pos == 1 && tracking {
@@ -184,10 +184,10 @@ pub fn ledger_history(
                 .replace_all(&remove_time.replace(line, "").to_string(), "")
                 .to_string();
             match get_duration.find(&line) {
-                Some(e) => duration = e.as_str().replace("m", "").parse::<u32>().unwrap_or(0),
+                Some(e) => duration = e.as_str().replace("m", "").parse::<i32>().unwrap_or(0),
                 None => (),
             };
-            history.push(shared::models::TimeEnteryHistory {
+            history.push(shared::models::EnteryHistory {
                 remove_entery: remove_entery.clone(),
                 date: date.clone(),
                 timespan: timespan.clone(),

@@ -187,14 +187,14 @@ pub async fn set_time_entery_kill(
 pub async fn get_time_history(
     credentials: BearerAuth,
     payload: web::Json<RequestEnteryHistory>,
-) -> Result<web::Json<ResponseTimeEnteryHistory>, ServiceError> {
+) -> Result<web::Json<ResponseEnteryHistory>, ServiceError> {
     let user = decode_jwt(credentials.token()).unwrap().username;
     debug!(
         "User '{}' Get Ledger History for '{:#?}'",
         &user, payload.target
     );
     //TODO add filter for history elements. (date)
-    Ok(web::Json(shared::models::ResponseTimeEnteryHistory {
+    Ok(web::Json(shared::models::ResponseEnteryHistory {
         history: utils::ledger_history(&user, payload.target.to_owned())?,
     }))
 }

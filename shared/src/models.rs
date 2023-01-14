@@ -55,19 +55,19 @@ pub struct TimeEnterySuggestion {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
-pub struct TimeEnteryHistory {
+pub struct EnteryHistory {
     pub remove_entery: String, //the entery as string as it stands in the file.
     pub headline: String,
     pub account_target: String,
     pub date: String,
     pub timespan: String,
-    pub duration: u32,
+    pub duration: i32,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 //TODO rename: Remove Time, because it is used also for finance history.
-pub struct ResponseTimeEnteryHistory {
-    pub history: Vec<TimeEnteryHistory>,
+pub struct ResponseEnteryHistory {
+    pub history: Vec<EnteryHistory>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
