@@ -124,11 +124,16 @@ pub fn ledger_time_suggestion(
 }
 
 /// get the n last time enteries
-pub fn ledger_time_history(
+pub fn ledger_history(
     user: &str,
+    target: shared::models::HistoryTargetFile,
 ) -> Result<Vec<shared::models::TimeEnteryHistory>, ServiceError> {
+    let path = match target {
+        shared::models::HistoryTargetFile::TimeManagment => PATH_TIME_SPEND,
+        shared::models::HistoryTargetFile::Finance => PATH_FINANCE_FILES[0],
+    };
     let mut history = Vec::new();
-    let ledger = fs::read_to_string(format!("{}/{}/{}", FILE_DIR, &user, PATH_TIME_SPEND))?;
+    let ledger = fs::read_to_string(format!("{}/{}/{}", FILE_DIR, &user, path))?;
     let mut pos: i32 = 0; //log line number of entery
     let mut headline: String = "".to_string(); //temp store of headline
     let mut date: String = "".to_string(); //temp store of date
@@ -633,7 +638,8 @@ mod tests {
 
     #[actix_web::test]
     async fn test_ledger_history_time_entery() {
-        let suggestion = ledger_time_history(&TEST_USER);
+        let suggestion =
+            ledger_history(&TEST_USER, shared::models::HistoryTargetFile::TimeManagment);
         println!("{:#?}", suggestion.as_ref().unwrap());
         assert!(suggestion.is_ok());
     }

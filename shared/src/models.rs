@@ -65,8 +65,20 @@ pub struct TimeEnteryHistory {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
+//TODO rename: Remove Time, because it is used also for finance history.
 pub struct ResponseTimeEnteryHistory {
     pub history: Vec<TimeEnteryHistory>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub enum HistoryTargetFile {
+    TimeManagment,
+    Finance,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct RequestEnteryHistory {
+    pub target: HistoryTargetFile,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]

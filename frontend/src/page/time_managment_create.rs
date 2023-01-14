@@ -45,10 +45,7 @@ pub fn init(
         let token = ctx.clone().unwrap().token;
         async { Msg::FetchedRunningEntery(api::requests::get_time_running_entery(token).await) }
     });
-    orders.skip().perform_cmd({
-        let token = ctx.clone().unwrap().token;
-        async { Msg::FetchedHistoryEntery(api::requests::get_time_history_entery(token).await) }
-    });
+    orders.skip().perform_cmd(async { Msg::GetHistoryEntery });
     Model {
         _base_url: url.to_base_url(),
         ctx,
@@ -91,6 +88,7 @@ struct Refs {
 // ------ Frequency ------
 
 pub enum Msg {
+    GetHistoryEntery,
     FetchedSuggestion(fetch::Result<shared::models::HeadlineSuggestion>),
     FetchedRunningEntery(fetch::Result<shared::models::ResponseRunningLedgerTimeEntery>),
     FetchedHistoryEntery(fetch::Result<shared::models::ResponseTimeEnteryHistory>),
@@ -323,6 +321,19 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             });
         }
         Msg::UpdateRunningEnteryDuration => {}
+        Msg::GetHistoryEntery => {
+            orders.skip().perform_cmd({
+                let token = model.ctx.clone().unwrap().token;
+                let target = shared::models::RequestEnteryHistory {
+                    target: shared::models::HistoryTargetFile::TimeManagment,
+                };
+                async {
+                    Msg::FetchedHistoryEntery(
+                        api::requests::get_history_entery(token, target).await,
+                    )
+                }
+            });
+        }
         Msg::FetchedStartTimeEntery(Ok(_response_data)) => {
             model.suggestion_filter = "".to_string();
             model.start_entery = shared::models::StartTimeEntery::default();
@@ -332,12 +343,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                     Msg::FetchedRunningEntery(api::requests::get_time_running_entery(token).await)
                 }
             });
-            orders.skip().perform_cmd({
-                let token = model.ctx.clone().unwrap().token;
-                async {
-                    Msg::FetchedHistoryEntery(api::requests::get_time_history_entery(token).await)
-                }
-            });
+            orders.skip().perform_cmd(async { Msg::GetHistoryEntery });
         }
         Msg::FetchedKillTimeEntery(Ok(_response_data)) => {
             model.start_entery = shared::models::StartTimeEntery::default();
@@ -356,21 +362,11 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                     Msg::FetchedRunningEntery(api::requests::get_time_running_entery(token).await)
                 }
             });
-            orders.skip().perform_cmd({
-                let token = model.ctx.clone().unwrap().token;
-                async {
-                    Msg::FetchedHistoryEntery(api::requests::get_time_history_entery(token).await)
-                }
-            });
+            orders.skip().perform_cmd(async { Msg::GetHistoryEntery });
         }
         Msg::FetchedDeleteTimeEntery(Ok(_response_data)) => {
             model.start_entery = shared::models::StartTimeEntery::default();
-            orders.skip().perform_cmd({
-                let token = model.ctx.clone().unwrap().token;
-                async {
-                    Msg::FetchedHistoryEntery(api::requests::get_time_history_entery(token).await)
-                }
-            });
+            orders.skip().perform_cmd(async { Msg::GetHistoryEntery });
         }
         Msg::FetchedSuggestion(Ok(response_data)) => {
             model.suggestions = Some(response_data);
