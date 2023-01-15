@@ -285,7 +285,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 new_entery.duration += duration_offset;
                 let stop_entery = shared::models::StopLedgerTimeEntery {
                     remove_line,
-                    target: shared::models::HistoryTargetFile::TimeManagment,
+                    target: shared::models::TargetFile::TimeManagment,
                     new_entery,
                 };
                 log!(stop_entery);
@@ -301,7 +301,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 let token = model.ctx.clone().unwrap().token;
                 let kill_entery = shared::models::StopLedgerTimeEntery {
                     remove_line,
-                    target: shared::models::HistoryTargetFile::TimeManagment,
+                    target: shared::models::TargetFile::TimeManagment,
                     new_entery: shared::models::NewTimeEntery::default(),
                 };
                 log!(kill_entery);
@@ -315,7 +315,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 let token = model.ctx.clone().unwrap().token;
                 let delete_entery = shared::models::StopLedgerTimeEntery {
                     remove_line,
-                    target: shared::models::HistoryTargetFile::TimeManagment,
+                    target: shared::models::TargetFile::TimeManagment,
                     new_entery: shared::models::NewTimeEntery::default(),
                 };
                 log!(delete_entery);
@@ -331,7 +331,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             orders.skip().perform_cmd({
                 let token = model.ctx.clone().unwrap().token;
                 let target = shared::models::RequestEnteryHistory {
-                    target: shared::models::HistoryTargetFile::TimeManagment,
+                    target: shared::models::TargetFile::TimeManagment,
                 };
                 async {
                     Msg::FetchedHistoryEntery(

@@ -134,7 +134,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             orders.skip().perform_cmd({
                 let token = model.ctx.clone().unwrap().token;
                 let target = shared::models::RequestEnteryHistory {
-                    target: shared::models::HistoryTargetFile::Finance,
+                    target: shared::models::TargetFile::Finance,
                 };
                 async {
                     Msg::FetchedHistoryEntery(
@@ -148,7 +148,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 let token = model.ctx.clone().unwrap().token;
                 let delete_entery = shared::models::StopLedgerTimeEntery {
                     remove_line,
-                    target: shared::models::HistoryTargetFile::Finance,
+                    target: shared::models::TargetFile::Finance,
                     new_entery: shared::models::NewTimeEntery::default(),
                 };
                 log!(delete_entery);

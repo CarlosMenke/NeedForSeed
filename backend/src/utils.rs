@@ -126,11 +126,11 @@ pub fn ledger_time_suggestion(
 /// get the n last time enteries
 pub fn ledger_history(
     user: &str,
-    target: shared::models::HistoryTargetFile,
+    target: shared::models::TargetFile,
 ) -> Result<Vec<shared::models::EnteryHistory>, ServiceError> {
     let path = match target {
-        shared::models::HistoryTargetFile::TimeManagment => PATH_TIME_SPEND,
-        shared::models::HistoryTargetFile::Finance => PATH_FINANCE_FILES[0],
+        shared::models::TargetFile::TimeManagment => PATH_TIME_SPEND,
+        shared::models::TargetFile::Finance => PATH_FINANCE_FILES[0],
     };
     let mut history = Vec::new();
     let ledger = fs::read_to_string(format!("{}/{}/{}", FILE_DIR, &user, path))?;
@@ -246,11 +246,11 @@ pub fn ledger_start_time_entery(
 pub fn ledger_kill_entery(
     user: &str,
     remove_line: String,
-    target: shared::models::HistoryTargetFile,
+    target: shared::models::TargetFile,
 ) -> Result<String, ServiceError> {
     let path = match target {
-        shared::models::HistoryTargetFile::TimeManagment => PATH_TIME_SPEND,
-        shared::models::HistoryTargetFile::Finance => PATH_FINANCE_FILES[0],
+        shared::models::TargetFile::TimeManagment => PATH_TIME_SPEND,
+        shared::models::TargetFile::Finance => PATH_FINANCE_FILES[0],
     };
     let ledger = fs::read_to_string(format!("{}/{}/{}", FILE_DIR, &user, path))?;
     fs::File::create(format!("{}/{}/{}", FILE_DIR, &user, path))
@@ -648,8 +648,7 @@ mod tests {
 
     #[actix_web::test]
     async fn test_ledger_history_time_entery() {
-        let suggestion =
-            ledger_history(&TEST_USER, shared::models::HistoryTargetFile::TimeManagment);
+        let suggestion = ledger_history(&TEST_USER, shared::models::TargetFile::TimeManagment);
         println!("{:#?}", suggestion.as_ref().unwrap());
         assert!(suggestion.is_ok());
     }

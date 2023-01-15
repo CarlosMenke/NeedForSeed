@@ -71,14 +71,14 @@ pub struct ResponseEnteryHistory {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub enum HistoryTargetFile {
+pub enum TargetFile {
     TimeManagment,
     Finance,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct RequestEnteryHistory {
-    pub target: HistoryTargetFile,
+    pub target: TargetFile,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
@@ -127,7 +127,7 @@ pub struct ResponseRunningLedgerTimeEntery {
 //TODO rename more generic
 #[derive(Serialize, Deserialize, Debug)]
 pub struct StopLedgerTimeEntery {
-    pub target: HistoryTargetFile,
+    pub target: TargetFile,
     pub new_entery: NewTimeEntery,
     pub remove_line: String,
 }
