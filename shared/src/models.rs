@@ -61,7 +61,7 @@ pub struct EnteryHistory {
     pub account_target: String,
     pub date: String,
     pub timespan: String,
-    pub duration: f32,
+    pub ammount: f32,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]

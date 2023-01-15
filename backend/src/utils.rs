@@ -139,7 +139,7 @@ pub fn ledger_history(
     let mut date: String = "".to_string(); //temp store of date
     let mut timespan: String = "".to_string(); //temp store of timespan
     let mut remove_entery: String = "".to_string(); //temp store of timespan
-    let mut duration: f32;
+    let mut ammount: f32;
 
     //TODO make variable naming more generic for finance history.
     //checks if the line is the beginning if a new entery
@@ -148,7 +148,7 @@ pub fn ledger_history(
     let replace_date = Regex::new(r"^\d{4}/\d{2}/\d{2}[ ]*[\t]*[ ]*").unwrap();
     let get_timespan = Regex::new(r"^; ").unwrap();
     let get_date = Regex::new(r"^\d{4}/\d{2}/\d{2}").unwrap();
-    let get_duration = Regex::new(r"(-?\d+(\.\d+)?)[mh€]").unwrap();
+    let get_ammount = Regex::new(r"(-?\d+(\.\d+)?)[mh€]").unwrap();
     let remove_time = Regex::new(r"[\s]*[\t]*[-]*\d{1, 4}[\.]?\d{0,2}[m,h,€]").unwrap();
     let remove_first_tab = Regex::new(r"[\s]*\t").unwrap();
     let mut tracking: bool = false;
@@ -170,7 +170,7 @@ pub fn ledger_history(
         } else if pos == 0 && tracking {
             remove_entery += &format!("{}\n", line);
             pos += 1;
-            duration = match get_duration.captures(&line) {
+            ammount = match get_ammount.captures(&line) {
                 Some(capture) => capture[1].parse::<f32>().unwrap_or(0.0),
                 None => 0.0,
             };
@@ -184,7 +184,7 @@ pub fn ledger_history(
             let account_target = remove_first_tab
                 .replace_all(&remove_time.replace(line, "").to_string(), "")
                 .to_string();
-            duration = match get_duration.captures(&line) {
+            ammount = match get_ammount.captures(&line) {
                 Some(capture) => capture[1].parse::<f32>().unwrap_or(0.0),
                 None => 0.0,
             };
@@ -195,7 +195,7 @@ pub fn ledger_history(
                 timespan: timespan.clone(),
                 headline: headline.clone(),
                 account_target,
-                duration,
+                ammount,
             });
             remove_entery = "".to_string();
         } else {
@@ -242,7 +242,7 @@ pub fn ledger_start_time_entery(
     return Ok(entery.to_string());
 }
 
-///Remove started time File
+///Remove started ledger File
 pub fn ledger_kill_entery(
     user: &str,
     remove_line: String,

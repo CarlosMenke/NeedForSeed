@@ -700,7 +700,7 @@ fn view_history_enteries(history: &shared::models::EnteryHistory, id: DeleteEnte
                 "{} [ {} ] {}m",
                 history.timespan,
                 history.date.clone().replace("/", " "),
-                history.duration,
+                history.ammount,
             ),
             &general.label
         ],

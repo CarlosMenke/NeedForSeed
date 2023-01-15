@@ -47,11 +47,11 @@ pub struct Model {
 // ------ Frequency ------
 
 pub enum Msg {
-    DeleteTimeEntery(DeleteEnteryId),
+    DeleteEntery(DeleteEnteryId),
     FetchedNewFinanceEntery(fetch::Result<shared::models::ResponseStatus>),
     FetchedSuggestion(fetch::Result<shared::models::FinanceEnterySuggestion>),
     FetchedHistoryEntery(fetch::Result<shared::models::ResponseEnteryHistory>),
-    FetchedDeleteTimeEntery(fetch::Result<shared::models::ResponseStatus>),
+    FetchedDeleteEntery(fetch::Result<shared::models::ResponseStatus>),
 
     GetSuggestion(String),
     GetHistoryEntery,
@@ -143,7 +143,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 }
             });
         }
-        Msg::DeleteTimeEntery(remove_line) => {
+        Msg::DeleteEntery(remove_line) => {
             orders.skip().perform_cmd({
                 let token = model.ctx.clone().unwrap().token;
                 let delete_entery = shared::models::StopLedgerTimeEntery {
@@ -153,9 +153,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 };
                 log!(delete_entery);
                 async {
-                    Msg::FetchedDeleteTimeEntery(
-                        api::requests::kill_entery(token, delete_entery).await,
-                    )
+                    Msg::FetchedDeleteEntery(api::requests::kill_entery(token, delete_entery).await)
                 }
             });
         }
@@ -170,13 +168,13 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             log!(Some(&response_data));
             model.history_entery = Some(response_data);
         }
-        Msg::FetchedDeleteTimeEntery(Ok(_response_data)) => {
+        Msg::FetchedDeleteEntery(Ok(_response_data)) => {
             orders.skip().perform_cmd(async { Msg::GetHistoryEntery });
         }
         Msg::FetchedSuggestion(Err(fetch_error))
         | Msg::FetchedHistoryEntery(Err(fetch_error))
         | Msg::FetchedNewFinanceEntery(Err(fetch_error))
-        | Msg::FetchedDeleteTimeEntery(Err(fetch_error)) => {
+        | Msg::FetchedDeleteEntery(Err(fetch_error)) => {
             log!("Fetch error:", fetch_error);
             orders.skip();
         }
@@ -352,13 +350,13 @@ fn view_history_enteries(history: &shared::models::EnteryHistory, id: DeleteEnte
                 "{} [ {} ] {}€",
                 history.timespan,
                 history.date.clone().replace("/", " "),
-                history.duration,
+                history.ammount,
             ),
             &general.label
         ],
         button![
             "Delete",
-            ev(Ev::Click, enc!((id) move |_| Msg::DeleteTimeEntery(id))),
+            ev(Ev::Click, enc!((id) move |_| Msg::DeleteEntery(id))),
             &general.button,
             style! {St::MarginTop => px(25)},
         ],
