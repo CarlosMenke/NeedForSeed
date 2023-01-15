@@ -39,10 +39,12 @@ pub fn init(
     }));
     orders.skip().perform_cmd({
         let token = ctx.clone().unwrap().token;
+        //TODO think about other get methods like for history
         async { Msg::FetchedSuggestion(api::requests::get_time_suggestion(token).await) }
     });
     orders.skip().perform_cmd({
         let token = ctx.clone().unwrap().token;
+        //TODO think about other get methods like for history
         async { Msg::FetchedRunningEntery(api::requests::get_time_running_entery(token).await) }
     });
     orders.skip().perform_cmd(async { Msg::GetHistoryEntery });
@@ -70,11 +72,13 @@ pub struct Model {
     _base_url: Url,
     ctx: Option<shared::auth::UserLoginResponse>,
     suggestions: Option<shared::models::HeadlineSuggestion>,
-    start_entery: shared::models::StartTimeEntery,
     suggestion_filter: String,
+
+    start_entery: shared::models::StartTimeEntery,
+    history_entery: Option<shared::models::ResponseEnteryHistory>,
+
     running_entery: Option<shared::models::ResponseRunningLedgerTimeEntery>,
     running_entery_timestamp: Option<u32>,
-    history_entery: Option<shared::models::ResponseEnteryHistory>,
     editing_offset: Option<EditingNewTimeEntery>,
     inverse_offset: i32,
     refs: Refs,
@@ -88,7 +92,6 @@ struct Refs {
 // ------ Frequency ------
 
 pub enum Msg {
-    GetHistoryEntery,
     FetchedSuggestion(fetch::Result<shared::models::HeadlineSuggestion>),
     FetchedRunningEntery(fetch::Result<shared::models::ResponseRunningLedgerTimeEntery>),
     FetchedHistoryEntery(fetch::Result<shared::models::ResponseEnteryHistory>),
@@ -97,6 +100,7 @@ pub enum Msg {
     FetchedStopTimeEntery(fetch::Result<shared::models::ResponseStatus>),
     FetchedDeleteTimeEntery(fetch::Result<shared::models::ResponseStatus>),
 
+    GetHistoryEntery,
     StartTimeEntery,
     StopTimeEntery(RunningEnteryId),
     KillTimeEntery(RunningEnteryId),
@@ -217,6 +221,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 editing_running_entery.inverse *= -1;
             }
         }
+
         Msg::StartTimeEntery => {
             if &model.start_entery.account_target == "" {
                 return;
@@ -280,6 +285,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 new_entery.duration += duration_offset;
                 let stop_entery = shared::models::StopLedgerTimeEntery {
                     remove_line,
+                    target: shared::models::HistoryTargetFile::TimeManagment,
                     new_entery,
                 };
                 log!(stop_entery);
@@ -295,13 +301,12 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 let token = model.ctx.clone().unwrap().token;
                 let kill_entery = shared::models::StopLedgerTimeEntery {
                     remove_line,
+                    target: shared::models::HistoryTargetFile::TimeManagment,
                     new_entery: shared::models::NewTimeEntery::default(),
                 };
                 log!(kill_entery);
                 async {
-                    Msg::FetchedKillTimeEntery(
-                        api::requests::kill_time_entery(token, kill_entery).await,
-                    )
+                    Msg::FetchedKillTimeEntery(api::requests::kill_entery(token, kill_entery).await)
                 }
             });
         }
@@ -310,12 +315,13 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 let token = model.ctx.clone().unwrap().token;
                 let delete_entery = shared::models::StopLedgerTimeEntery {
                     remove_line,
+                    target: shared::models::HistoryTargetFile::TimeManagment,
                     new_entery: shared::models::NewTimeEntery::default(),
                 };
                 log!(delete_entery);
                 async {
                     Msg::FetchedDeleteTimeEntery(
-                        api::requests::kill_time_entery(token, delete_entery).await,
+                        api::requests::kill_entery(token, delete_entery).await,
                     )
                 }
             });
@@ -334,6 +340,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 }
             });
         }
+
         Msg::FetchedStartTimeEntery(Ok(_response_data)) => {
             model.suggestion_filter = "".to_string();
             model.start_entery = shared::models::StartTimeEntery::default();
@@ -675,10 +682,7 @@ fn view_running_enteries(
     ]
 }
 
-fn view_history_enteries(
-    history: &shared::models::EnteryHistory,
-    id: RunningEnteryId,
-) -> Node<Msg> {
+fn view_history_enteries(history: &shared::models::EnteryHistory, id: DeleteEnteryId) -> Node<Msg> {
     let general = General::default();
     div![
         &general.form,

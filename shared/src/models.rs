@@ -61,7 +61,7 @@ pub struct EnteryHistory {
     pub account_target: String,
     pub date: String,
     pub timespan: String,
-    pub duration: i32,
+    pub duration: f32,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
@@ -124,8 +124,10 @@ pub struct ResponseRunningLedgerTimeEntery {
     pub running_entery: BTreeMap<String, NewTimeEntery>,
 }
 
+//TODO rename more generic
 #[derive(Serialize, Deserialize, Debug)]
 pub struct StopLedgerTimeEntery {
+    pub target: HistoryTargetFile,
     pub new_entery: NewTimeEntery,
     pub remove_line: String,
 }

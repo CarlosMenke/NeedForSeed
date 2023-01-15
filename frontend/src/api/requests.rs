@@ -152,17 +152,15 @@ pub async fn stop_time_entery(
     .await
 }
 
-pub async fn kill_time_entery(
+pub async fn kill_entery(
     token: String,
     entery: shared::models::StopLedgerTimeEntery,
 ) -> fetch::Result<shared::models::ResponseStatus> {
     fetch(
-        Request::new(get_api_url(String::from(
-            "api/auth/set_time_entery_kill.json",
-        )))
-        .method(Method::Post)
-        .header(Header::bearer(token))
-        .json(&entery)?,
+        Request::new(get_api_url(String::from("api/auth/set_entery_kill.json")))
+            .method(Method::Post)
+            .header(Header::bearer(token))
+            .json(&entery)?,
     )
     .await?
     .check_status()?

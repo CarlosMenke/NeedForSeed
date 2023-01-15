@@ -80,10 +80,7 @@ async fn main() -> std::io::Result<()> {
                                 "set_time_entery_stop.json",
                                 web::post().to(api::set_time_entery_stop),
                             )
-                            .route(
-                                "set_time_entery_kill.json",
-                                web::post().to(api::set_time_entery_kill),
-                            )
+                            .route("set_entery_kill.json", web::post().to(api::set_entery_kill))
                             .route(
                                 "get_entery_history.json",
                                 web::post().to(api::get_time_history),

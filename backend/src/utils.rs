@@ -139,16 +139,17 @@ pub fn ledger_history(
     let mut date: String = "".to_string(); //temp store of date
     let mut timespan: String = "".to_string(); //temp store of timespan
     let mut remove_entery: String = "".to_string(); //temp store of timespan
-    let mut duration = 0;
+    let mut duration: f32;
 
+    //TODO make variable naming more generic for finance history.
     //checks if the line is the beginning if a new entery
     let check_beginning = Regex::new(r"^\d{4}/\d{2}/\d{2}").unwrap();
     let check_timespan = Regex::new(r"^; \d{2}:\d{2} - \d{2}:\d{2}").unwrap();
     let replace_date = Regex::new(r"^\d{4}/\d{2}/\d{2}[ ]*[\t]*[ ]*").unwrap();
     let get_timespan = Regex::new(r"^; ").unwrap();
     let get_date = Regex::new(r"^\d{4}/\d{2}/\d{2}").unwrap();
-    let get_duration = Regex::new(r"[-]*\d{1,4}[m, h]+").unwrap();
-    let remove_time = Regex::new(r"[\s]*[\t]*\d{1, 3}[\.]?\d{0,2}[m,h]").unwrap();
+    let get_duration = Regex::new(r"(-?\d+(\.\d+)?)[mh€]").unwrap();
+    let remove_time = Regex::new(r"[\s]*[\t]*[-]*\d{1, 4}[\.]?\d{0,2}[m,h,€]").unwrap();
     let remove_first_tab = Regex::new(r"[\s]*\t").unwrap();
     let mut tracking: bool = false;
     for line in ledger.lines() {
@@ -169,9 +170,9 @@ pub fn ledger_history(
         } else if pos == 0 && tracking {
             remove_entery += &format!("{}\n", line);
             pos += 1;
-            match get_duration.find(&line) {
-                Some(e) => duration = e.as_str().replace("m", "").parse::<i32>().unwrap_or(0),
-                None => (),
+            duration = match get_duration.captures(&line) {
+                Some(capture) => capture[1].parse::<f32>().unwrap_or(0.0),
+                None => 0.0,
             };
         } else if pos == 1 && tracking {
             pos = 0;
@@ -183,10 +184,11 @@ pub fn ledger_history(
             let account_target = remove_first_tab
                 .replace_all(&remove_time.replace(line, "").to_string(), "")
                 .to_string();
-            match get_duration.find(&line) {
-                Some(e) => duration = e.as_str().replace("m", "").parse::<i32>().unwrap_or(0),
-                None => (),
+            duration = match get_duration.captures(&line) {
+                Some(capture) => capture[1].parse::<f32>().unwrap_or(0.0),
+                None => 0.0,
             };
+
             history.push(shared::models::EnteryHistory {
                 remove_entery: remove_entery.clone(),
                 date: date.clone(),
@@ -241,9 +243,17 @@ pub fn ledger_start_time_entery(
 }
 
 ///Remove started time File
-pub fn ledger_kill_time_entery(user: &str, remove_line: String) -> Result<String, ServiceError> {
-    let ledger = fs::read_to_string(format!("{}/{}/{}", FILE_DIR, &user, PATH_TIME_SPEND))?;
-    fs::File::create(format!("{}/{}/{}", FILE_DIR, &user, PATH_TIME_SPEND))
+pub fn ledger_kill_entery(
+    user: &str,
+    remove_line: String,
+    target: shared::models::HistoryTargetFile,
+) -> Result<String, ServiceError> {
+    let path = match target {
+        shared::models::HistoryTargetFile::TimeManagment => PATH_TIME_SPEND,
+        shared::models::HistoryTargetFile::Finance => PATH_FINANCE_FILES[0],
+    };
+    let ledger = fs::read_to_string(format!("{}/{}/{}", FILE_DIR, &user, path))?;
+    fs::File::create(format!("{}/{}/{}", FILE_DIR, &user, path))
         .unwrap()
         .write(
             ledger
@@ -578,7 +588,7 @@ mod tests {
     }
 
     #[actix_web::test]
-    async fn test_ledger_kill_time_entery() {
+    async fn test_ledger_kill_entery() {
         let start_entery = shared::models::StartTimeEntery {
             headline: "Carlos is programming".to_owned(),
             account_origin: "FreeTime".to_owned(),

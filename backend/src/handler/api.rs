@@ -167,18 +167,22 @@ pub async fn set_time_entery_stop(
     return Ok(web::Json(ResponseStatus { status: 0 }));
 }
 
-/// kill Time entery
+/// kill / delete entery
 #[has_permissions("SET_LEDGER_INFO")]
-pub async fn set_time_entery_kill(
+pub async fn set_entery_kill(
     payload: web::Json<StopLedgerTimeEntery>,
     credentials: BearerAuth,
 ) -> Result<web::Json<ResponseStatus>, ServiceError> {
     let user = decode_jwt(credentials.token()).unwrap().username;
     debug!(
         "User '{}' Kill / Delete Time Entery {:#?}",
-        &user, payload.new_entery
+        &user, payload.remove_line
     );
-    utils::ledger_kill_time_entery(&user, payload.remove_line.to_owned())?;
+    utils::ledger_kill_entery(
+        &user,
+        payload.remove_line.to_owned(),
+        payload.target.to_owned(),
+    )?;
     return Ok(web::Json(ResponseStatus { status: 0 }));
 }
 

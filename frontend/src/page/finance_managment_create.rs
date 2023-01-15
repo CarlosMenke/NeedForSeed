@@ -1,8 +1,13 @@
 use crate::api;
+use enclose::enc;
 use fuzzy_matcher::skim::SkimMatcherV2;
 use fuzzy_matcher::FuzzyMatcher;
 use itertools::Itertools;
 use seed::{prelude::*, *};
+
+use crate::design::General;
+
+type DeleteEnteryId = String;
 
 // ------ ------
 //     Init
@@ -13,17 +18,15 @@ pub fn init(
     orders: &mut impl Orders<Msg>,
     ctx: Option<shared::auth::UserLoginResponse>,
 ) -> Model {
-    orders.skip().perform_cmd({
-        let token = ctx.clone().unwrap().token;
-        async { Msg::GetSuggestion(token) }
-    });
+    orders.skip().perform_cmd(async { Msg::GetHistoryEntery });
     Model {
         _base_url: url.to_base_url(),
         ctx,
         suggestions: None,
-        new_entery: shared::models::NewFinanceEntery::default(),
         suggestion_filter: "".to_string(),
+        new_entery: shared::models::NewFinanceEntery::default(),
         ammount: "".to_string(),
+        history_entery: None,
     }
 }
 
@@ -35,17 +38,23 @@ pub struct Model {
     _base_url: Url,
     ctx: Option<shared::auth::UserLoginResponse>,
     suggestions: Option<shared::models::FinanceEnterySuggestion>,
-    new_entery: shared::models::NewFinanceEntery,
     suggestion_filter: String,
+    new_entery: shared::models::NewFinanceEntery,
     ammount: String,
+    history_entery: Option<shared::models::ResponseEnteryHistory>,
 }
 
 // ------ Frequency ------
 
 pub enum Msg {
-    GetSuggestion(String),
+    DeleteTimeEntery(DeleteEnteryId),
     FetchedNewFinanceEntery(fetch::Result<shared::models::ResponseStatus>),
     FetchedSuggestion(fetch::Result<shared::models::FinanceEnterySuggestion>),
+    FetchedHistoryEntery(fetch::Result<shared::models::ResponseEnteryHistory>),
+    FetchedDeleteTimeEntery(fetch::Result<shared::models::ResponseStatus>),
+
+    GetSuggestion(String),
+    GetHistoryEntery,
 
     SaveNewEnteryHeadline(String),
     SaveNewEnteryTarget(String),
@@ -120,14 +129,54 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 }
             });
         }
+
+        Msg::GetHistoryEntery => {
+            orders.skip().perform_cmd({
+                let token = model.ctx.clone().unwrap().token;
+                let target = shared::models::RequestEnteryHistory {
+                    target: shared::models::HistoryTargetFile::Finance,
+                };
+                async {
+                    Msg::FetchedHistoryEntery(
+                        api::requests::get_history_entery(token, target).await,
+                    )
+                }
+            });
+        }
+        Msg::DeleteTimeEntery(remove_line) => {
+            orders.skip().perform_cmd({
+                let token = model.ctx.clone().unwrap().token;
+                let delete_entery = shared::models::StopLedgerTimeEntery {
+                    remove_line,
+                    target: shared::models::HistoryTargetFile::Finance,
+                    new_entery: shared::models::NewTimeEntery::default(),
+                };
+                log!(delete_entery);
+                async {
+                    Msg::FetchedDeleteTimeEntery(
+                        api::requests::kill_entery(token, delete_entery).await,
+                    )
+                }
+            });
+        }
+
         Msg::FetchedNewFinanceEntery(Ok(_response_data)) => {
             model.new_entery = shared::models::NewFinanceEntery::default();
         }
         Msg::FetchedSuggestion(Ok(response_data)) => {
             model.suggestions = Some(response_data);
         }
+        Msg::FetchedHistoryEntery(Ok(response_data)) => {
+            log!(Some(&response_data));
+            model.history_entery = Some(response_data);
+        }
+        Msg::FetchedDeleteTimeEntery(Ok(_response_data)) => {
+            orders.skip().perform_cmd(async { Msg::GetHistoryEntery });
+        }
         Msg::FetchedSuggestion(Err(fetch_error))
-        | Msg::FetchedNewFinanceEntery(Err(fetch_error)) => {
+        | Msg::FetchedHistoryEntery(Err(fetch_error))
+        | Msg::FetchedNewFinanceEntery(Err(fetch_error))
+        | Msg::FetchedDeleteTimeEntery(Err(fetch_error)) => {
             log!("Fetch error:", fetch_error);
             orders.skip();
         }
@@ -143,7 +192,10 @@ pub fn view(model: &Model) -> Node<Msg> {
         Some(m) => m.suggestions,
         None => Vec::new(),
     };
-
+    let history_entery = match model.history_entery.clone() {
+        Some(m) => m.history,
+        None => Vec::new(),
+    };
     let empty = if &model.suggestion_filter == "" {
         true
     } else {
@@ -264,6 +316,59 @@ pub fn view(model: &Model) -> Node<Msg> {
             ],
             button![ev(Ev::Click, |_| Msg::NewFinanceEntery), "Hinzufuegen"],
         ],
+        div![
+            style! {
+            St::Width => "100%",
+            St::Display => "flex",
+            St::FlexDirection => "row",
+            St::JustifyContent => "space-evenly",
+            St::FlexWrap => "wrap",
+            },
+            history_entery.iter().rev().take(20).map(|entery| {
+                Some(view_history_enteries(
+                    entery,
+                    entery.remove_entery.to_string(),
+                ))
+            },),
+        ],
+    ]
+}
+
+fn view_history_enteries(history: &shared::models::EnteryHistory, id: DeleteEnteryId) -> Node<Msg> {
+    let general = General::default();
+    div![
+        &general.form,
+        style! {
+            St::Display => "flex",
+            St::FlexDirection => "column",
+            St::JustifyContent => "flex-start",
+            St::Padding => "25px 25px 25px 25px",
+            St::Margin => "25px auto 25px auto",
+        },
+        h3![history.headline.clone()],
+        label![history.account_target.clone(), &general.label],
+        label![
+            format!(
+                "{} [ {} ] {}€",
+                history.timespan,
+                history.date.clone().replace("/", " "),
+                history.duration,
+            ),
+            &general.label
+        ],
+        button![
+            "Delete",
+            ev(Ev::Click, enc!((id) move |_| Msg::DeleteTimeEntery(id))),
+            &general.button,
+            style! {St::MarginTop => px(25)},
+        ],
+        div![style! {
+        St::Width => "100%",
+        St::Display => "flex",
+        St::FlexDirection => "row",
+        St::JustifyContent => "space-evenly",
+        St::FlexWrap => "wrap",
+        },]
     ]
 }
 
