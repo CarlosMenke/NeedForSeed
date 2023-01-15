@@ -101,7 +101,7 @@ pub async fn get_time_running_entery(
 pub async fn get_history_entery(
     token: String,
     target: shared::models::RequestEnteryHistory,
-) -> fetch::Result<shared::models::ResponseTimeEnteryHistory> {
+) -> fetch::Result<shared::models::ResponseEnteryHistory> {
     fetch(
         Request::new(get_api_url(String::from(
             "api/auth/get_entery_history.json",
