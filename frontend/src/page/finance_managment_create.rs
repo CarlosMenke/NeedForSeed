@@ -18,6 +18,7 @@ pub fn init(
     orders: &mut impl Orders<Msg>,
     ctx: Option<shared::auth::UserLoginResponse>,
 ) -> Model {
+    orders.skip().perform_cmd(async { Msg::GetSuggestion });
     orders.skip().perform_cmd(async { Msg::GetHistoryEntery });
     Model {
         _base_url: url.to_base_url(),
@@ -53,8 +54,9 @@ pub enum Msg {
     FetchedHistoryEntery(fetch::Result<shared::models::ResponseEnteryHistory>),
     FetchedDeleteEntery(fetch::Result<shared::models::ResponseStatus>),
 
-    GetSuggestion(String),
+    GetSuggestion,
     GetHistoryEntery,
+    RefreshAutocomplete,
 
     SaveNewEnteryHeadline(String),
     SaveNewEnteryTarget(String),
@@ -101,12 +103,6 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             model.new_entery.target_file = content;
         }
 
-        Msg::GetSuggestion(token) => {
-            orders.skip().perform_cmd({
-                let token = token;
-                async { Msg::FetchedSuggestion(api::requests::get_finance_suggestion(token).await) }
-            });
-        }
         Msg::NewFinanceEntery => {
             if &model.new_entery.account_target == "" {
                 return;
@@ -130,6 +126,12 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             });
         }
 
+        Msg::GetSuggestion => {
+            orders.skip().perform_cmd({
+                let token = model.ctx.clone().unwrap().token;
+                async { Msg::FetchedSuggestion(api::requests::get_finance_suggestion(token).await) }
+            });
+        }
         Msg::GetHistoryEntery => {
             orders.skip().perform_cmd({
                 let token = model.ctx.clone().unwrap().token;
@@ -156,6 +158,10 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                     Msg::FetchedDeleteEntery(api::requests::kill_entery(token, delete_entery).await)
                 }
             });
+        }
+        Msg::RefreshAutocomplete => {
+            model.new_entery = shared::models::NewFinanceEntery::default();
+            update_suggestion_filter(model);
         }
 
         Msg::FetchedNewFinanceEntery(Ok(_response_data)) => {
