@@ -42,11 +42,7 @@ pub fn init(
         //TODO think about other get methods like for history
         async { Msg::FetchedSuggestion(api::requests::get_time_suggestion(token).await) }
     });
-    orders.skip().perform_cmd({
-        let token = ctx.clone().unwrap().token;
-        //TODO think about other get methods like for history
-        async { Msg::FetchedRunningEntery(api::requests::get_time_running_entery(token).await) }
-    });
+    orders.skip().perform_cmd(async { Msg::GetRunningEntery });
     orders.skip().perform_cmd(async { Msg::GetHistoryEntery });
     Model {
         _base_url: url.to_base_url(),
@@ -101,6 +97,7 @@ pub enum Msg {
     FetchedDeleteTimeEntery(fetch::Result<shared::models::ResponseStatus>),
 
     GetHistoryEntery,
+    GetRunningEntery,
     StartTimeEntery,
     StopTimeEntery(RunningEnteryId),
     KillTimeEntery(RunningEnteryId),
@@ -340,36 +337,28 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 }
             });
         }
-
-        Msg::FetchedStartTimeEntery(Ok(_response_data)) => {
-            model.suggestion_filter = "".to_string();
-            model.start_entery = shared::models::StartTimeEntery::default();
+        Msg::GetRunningEntery => {
             orders.skip().perform_cmd({
                 let token = model.ctx.clone().unwrap().token;
                 async {
                     Msg::FetchedRunningEntery(api::requests::get_time_running_entery(token).await)
                 }
             });
+            orders.skip().perform_cmd(async { Msg::GetHistoryEntery });
+        }
+        Msg::FetchedStartTimeEntery(Ok(_response_data)) => {
+            model.suggestion_filter = "".to_string();
+            model.start_entery = shared::models::StartTimeEntery::default();
+            orders.skip().perform_cmd(async { Msg::GetRunningEntery });
             orders.skip().perform_cmd(async { Msg::GetHistoryEntery });
         }
         Msg::FetchedKillTimeEntery(Ok(_response_data)) => {
             model.start_entery = shared::models::StartTimeEntery::default();
-            orders.skip().perform_cmd({
-                let token = model.ctx.clone().unwrap().token;
-                async {
-                    Msg::FetchedRunningEntery(api::requests::get_time_running_entery(token).await)
-                }
-            });
+            orders.skip().perform_cmd(async { Msg::GetRunningEntery });
         }
         Msg::FetchedStopTimeEntery(Ok(_response_data)) => {
             model.start_entery = shared::models::StartTimeEntery::default();
-            orders.skip().perform_cmd({
-                let token = model.ctx.clone().unwrap().token;
-                async {
-                    Msg::FetchedRunningEntery(api::requests::get_time_running_entery(token).await)
-                }
-            });
-            orders.skip().perform_cmd(async { Msg::GetHistoryEntery });
+            orders.skip().perform_cmd(async { Msg::GetRunningEntery });
         }
         Msg::FetchedDeleteTimeEntery(Ok(_response_data)) => {
             model.start_entery = shared::models::StartTimeEntery::default();
