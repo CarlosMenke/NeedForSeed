@@ -3,6 +3,7 @@ use enclose::enc;
 use fuzzy_matcher::skim::SkimMatcherV2;
 use fuzzy_matcher::FuzzyMatcher;
 use itertools::Itertools;
+use regex::Regex;
 use seed::{prelude::*, *};
 
 use crate::design::General;
@@ -107,6 +108,8 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             if &model.new_entery.account_target == "" {
                 return;
             }
+            let remove_space_end = Regex::new(r" ^").unwrap();
+            let remove_space = Regex::new(r": ").unwrap();
             orders.skip().perform_cmd({
                 model.new_entery.ammount = match model.ammount.parse::<f32>() {
                     Ok(n) => n,
@@ -118,6 +121,20 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                     Some(e) => Some(e.replace("-", "/")),
                     None => None,
                 };
+                new_entery.account_target = remove_space_end
+                    .replace(
+                        &remove_space
+                            .replace_all(&new_entery.account_target, ":")
+                            .to_string(),
+                        "",
+                    )
+                    .to_string();
+                new_entery.account_origin = remove_space_end
+                    .replace(&new_entery.account_origin, "")
+                    .to_string();
+                new_entery.headline = remove_space_end
+                    .replace(&new_entery.headline, "")
+                    .to_string();
                 async {
                     Msg::FetchedNewFinanceEntery(
                         api::requests::start_finance_entery(token, new_entery).await,
@@ -167,6 +184,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         }
 
         Msg::FetchedNewFinanceEntery(Ok(_response_data)) => {
+            model.suggestion_filter = "".to_string();
             model.new_entery = shared::models::NewFinanceEntery::default();
         }
         Msg::FetchedSuggestion(Ok(response_data)) => {
