@@ -205,10 +205,22 @@ pub fn view(model: &Model) -> Node<Msg> {
     } else {
         false
     };
-    //TODO add unique_by where usefull
+    let general = General::default();
     div![
         "Create new Finance Tracking Entery",
+        style! {St::Display => "flex", St::FlexDirection => "column", St::JustifyContent => "start", St::Height => px(950)},
         div![
+            &general.form,
+            style! {
+                St::Padding => "50px 35px",
+                St::Margin => "50px auto",
+            },
+            button![
+                ev(Ev::Click, |_| Msg::RefreshAutocomplete),
+                "Create Finance Entery",
+                &general.button,
+                &general.button_headline,
+            ],
             input![
                 C!["input-content_headline"],
                 input_ev(Ev::Input, Msg::SaveNewEnteryHeadline),
@@ -218,6 +230,7 @@ pub fn view(model: &Model) -> Node<Msg> {
                     At::Value => &model.new_entery.headline,
                     At::List => "suggestions_headline",
                 },
+                &general.input,
             ],
             datalist![
                 id!["suggestions_headline"],
@@ -239,7 +252,8 @@ pub fn view(model: &Model) -> Node<Msg> {
                     At::AutoFocus => true.as_at_value();
                     At::Value => &model.new_entery.account_target,
                     At::List => "suggestions_target",
-                }
+                },
+                &general.input,
             ],
             datalist![
                 id!["suggestions_target"],
@@ -261,7 +275,8 @@ pub fn view(model: &Model) -> Node<Msg> {
                     At::AutoFocus => true.as_at_value();
                     At::Value => &model.new_entery.account_origin,
                     At::List => "suggestions_origin",
-                }
+                },
+                &general.input
             ],
             datalist![
                 id!["suggestions_origin"],
@@ -284,7 +299,8 @@ pub fn view(model: &Model) -> Node<Msg> {
                     At::AutoFocus => true.as_at_value();
                     At::Value => &model.ammount,
                     At::List => "suggestions_ammount",
-                }
+                },
+                &general.input,
             ],
             datalist![
                 id!["suggestions_ammount"],
@@ -300,7 +316,8 @@ pub fn view(model: &Model) -> Node<Msg> {
                     At::AutoFocus => true.as_at_value();
                     At::Value => &model.new_entery.target_file,
                     At::List => "suggestions_target_file",
-                }
+                },
+                &general.input,
             ],
             datalist![
                 id!["suggestions_target_file"],
@@ -316,9 +333,14 @@ pub fn view(model: &Model) -> Node<Msg> {
                     At::AutoFocus => true.as_at_value();
                     At::Type => "date",
                     At::Value => &model.new_entery.date.clone().unwrap_or("".to_string()),
-                }
+                },
+                &general.input,
             ],
-            button![ev(Ev::Click, |_| Msg::NewFinanceEntery), "Hinzufuegen"],
+            button![
+                ev(Ev::Click, |_| Msg::NewFinanceEntery),
+                "Hinzufuegen",
+                &general.button
+            ],
         ],
         div![
             style! {
