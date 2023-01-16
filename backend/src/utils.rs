@@ -139,7 +139,7 @@ pub fn ledger_history(
     let mut date: String = "".to_string(); //temp store of date
     let mut timespan: String = "".to_string(); //temp store of timespan
     let mut remove_entery: String = "".to_string(); //temp store of timespan
-    let mut ammount: f32;
+    let mut ammount: f32 = 0.0;
 
     //TODO make variable naming more generic for finance history.
     //checks if the line is the beginning if a new entery
@@ -184,10 +184,12 @@ pub fn ledger_history(
             let account_target = remove_first_tab
                 .replace_all(&remove_time.replace(line, "").to_string(), "")
                 .to_string();
-            ammount = match get_ammount.captures(&line) {
-                Some(capture) => capture[1].parse::<f32>().unwrap_or(0.0),
-                None => 0.0,
-            };
+            if ammount == 0.0 {
+                ammount = match get_ammount.captures(&line) {
+                    Some(capture) => capture[1].parse::<f32>().unwrap_or(0.0),
+                    None => ammount,
+                };
+            }
 
             history.push(shared::models::EnteryHistory {
                 remove_entery: remove_entery.clone(),
