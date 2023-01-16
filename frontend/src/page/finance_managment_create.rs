@@ -124,6 +124,8 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                     )
                 }
             });
+            orders.skip().perform_cmd(async { Msg::GetSuggestion });
+            orders.skip().perform_cmd(async { Msg::GetHistoryEntery });
         }
 
         Msg::GetSuggestion => {
@@ -207,7 +209,6 @@ pub fn view(model: &Model) -> Node<Msg> {
     };
     let general = General::default();
     div![
-        "Create new Finance Tracking Entery",
         style! {St::Display => "flex", St::FlexDirection => "column", St::JustifyContent => "start", St::Height => px(950)},
         div![
             &general.form,
@@ -375,7 +376,7 @@ fn view_history_enteries(history: &shared::models::EnteryHistory, id: DeleteEnte
         label![history.account_target.clone(), &general.label],
         label![
             format!(
-                "{} [ {} ] {}€",
+                "{} [ {} ] {:.2}€",
                 history.timespan,
                 history.date.clone().replace("/", " "),
                 history.ammount,
