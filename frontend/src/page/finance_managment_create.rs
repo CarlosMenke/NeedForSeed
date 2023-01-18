@@ -141,8 +141,6 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                     )
                 }
             });
-            orders.skip().perform_cmd(async { Msg::GetSuggestion });
-            orders.skip().perform_cmd(async { Msg::GetHistoryEntery });
         }
 
         Msg::GetSuggestion => {
@@ -186,8 +184,11 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
 
         Msg::FetchedNewFinanceEntery(Ok(_response_data)) => {
             model.suggestion_filter = "".to_string();
+            model.ammount = "".to_string();
             model.new_entery = shared::models::NewFinanceEntery::default();
             update_suggestion_filter(model);
+            orders.skip().perform_cmd(async { Msg::GetSuggestion });
+            orders.skip().perform_cmd(async { Msg::GetHistoryEntery });
         }
         Msg::FetchedSuggestion(Ok(response_data)) => {
             model.suggestions = Some(response_data);
