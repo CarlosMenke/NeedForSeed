@@ -179,6 +179,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             });
         }
         Msg::RefreshAutocomplete => {
+            model.suggestion_filter = "".to_string();
             model.new_entery = shared::models::NewFinanceEntery::default();
             update_suggestion_filter(model);
         }
@@ -186,6 +187,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         Msg::FetchedNewFinanceEntery(Ok(_response_data)) => {
             model.suggestion_filter = "".to_string();
             model.new_entery = shared::models::NewFinanceEntery::default();
+            update_suggestion_filter(model);
         }
         Msg::FetchedSuggestion(Ok(response_data)) => {
             model.suggestions = Some(response_data);
