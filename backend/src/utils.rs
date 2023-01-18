@@ -518,6 +518,7 @@ pub fn ledger_finance_suggestion(
 #[cfg(test)]
 mod tests {
     use shared::models::NewTimeEntery;
+    use shared::models::TargetFile;
 
     use super::*;
 
@@ -601,7 +602,7 @@ mod tests {
         };
         let remove_line = ledger_start_time_entery(&TEST_USER, start_entery).unwrap();
         //TODO find error
-        assert!(ledger_kill_time_entery(&TEST_USER, remove_line).is_ok());
+        assert!(ledger_kill_entery(&TEST_USER, remove_line, TargetFile::TimeManagment).is_ok());
     }
 
     #[actix_web::test]
@@ -620,7 +621,7 @@ mod tests {
             remove_line = ledger_create_finance_entery(&TEST_USER, new_entery.clone()).unwrap();
         }
         //TODO find error
-        assert!(ledger_kill_time_entery(&TEST_USER, remove_line.clone()).is_ok());
+        assert!(ledger_kill_entery(&TEST_USER, remove_line.clone(), TargetFile::Finance).is_ok());
         //remove added line
         let ledger = fs::read_to_string(format!(
             "{}/{}/{}",

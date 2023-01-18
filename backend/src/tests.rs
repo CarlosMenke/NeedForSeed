@@ -305,6 +305,7 @@ mod unit_tests {
             .set_json(&StopLedgerTimeEntery {
                 remove_line: remove_line.clone(),
                 new_entery: new_entery.clone(),
+                target: TargetFile::TimeManagment,
             })
             .to_request();
         let resp = test::call_service(&app, req).await;
