@@ -33,7 +33,7 @@ pub fn init(
     orders: &mut impl Orders<Msg>,
     ctx: Option<shared::auth::UserLoginResponse>,
 ) -> Model {
-    orders.stream(streams::interval(500 * 60, || {
+    orders.stream(streams::interval(1000 * 30, || {
         //update every 30s
         Msg::UpdateRunningEnteryDuration
     }));
@@ -427,7 +427,6 @@ pub fn view(model: &Model) -> Node<Msg> {
             ],
             C!["form"],
             &general.form,
-            //&general.form_fix,
             style! {
                 St::Padding => "50px 35px",
                 St::Margin => "50px auto",
