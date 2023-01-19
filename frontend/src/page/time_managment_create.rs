@@ -39,7 +39,6 @@ pub fn init(
     }));
     orders.skip().perform_cmd({
         let token = ctx.clone().unwrap().token;
-        //TODO think about other get methods like for history
         async { Msg::FetchedSuggestion(api::requests::get_time_suggestion(token).await) }
     });
     orders.skip().perform_cmd(async { Msg::GetRunningEntery });
@@ -50,7 +49,6 @@ pub fn init(
         suggestions: None,
         start_entery: shared::models::StartTimeEntery::default(),
         suggestion_filter: "".to_string(),
-        //TODO group running_entery and running_entery timestamp together
         running_entery: None,
         running_entery_timestamp: None,
         history_entery: None,
