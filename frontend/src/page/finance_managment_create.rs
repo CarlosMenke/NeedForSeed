@@ -194,7 +194,6 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             model.suggestions = Some(response_data);
         }
         Msg::FetchedHistoryEntery(Ok(response_data)) => {
-            log!(Some(&response_data));
             model.history_entery = Some(response_data);
         }
         Msg::FetchedDeleteEntery(Ok(_response_data)) => {
