@@ -25,7 +25,7 @@ pub fn init(
         _base_url: url.to_base_url(),
         ctx,
         suggestions: None,
-        suggestion_filter: "".to_string(),
+        suggestion_filter: None,
         new_entery: shared::models::NewFinanceEntery::default(),
         ammount: "".to_string(),
         history_entery: None,
@@ -40,10 +40,18 @@ pub struct Model {
     _base_url: Url,
     ctx: Option<shared::auth::UserLoginResponse>,
     suggestions: Option<shared::models::FinanceEnterySuggestion>,
-    suggestion_filter: String,
+    // make suggestion filter to enum.
+    suggestion_filter: Option<SuggestionFilter>,
     new_entery: shared::models::NewFinanceEntery,
     ammount: String,
     history_entery: Option<shared::models::ResponseEnteryHistory>,
+}
+
+#[derive(Clone, Debug)]
+pub enum SuggestionFilter {
+    Headline,
+    AccountOrigin,
+    AccountTarget,
 }
 
 // ------ Frequency ------
@@ -102,6 +110,11 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         }
         Msg::SaveNewEnteryTargetFile(content) => {
             model.new_entery.target_file = content;
+        }
+        Msg::RefreshAutocomplete => {
+            model.suggestion_filter = None;
+            model.new_entery = shared::models::NewFinanceEntery::default();
+            update_suggestion_filter(model);
         }
 
         Msg::NewFinanceEntery => {
@@ -176,14 +189,9 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 }
             });
         }
-        Msg::RefreshAutocomplete => {
-            model.suggestion_filter = "".to_string();
-            model.new_entery = shared::models::NewFinanceEntery::default();
-            update_suggestion_filter(model);
-        }
 
         Msg::FetchedNewFinanceEntery(Ok(_response_data)) => {
-            model.suggestion_filter = "".to_string();
+            model.suggestion_filter = None;
             model.ammount = "".to_string();
             model.new_entery = shared::models::NewFinanceEntery::default();
             update_suggestion_filter(model);
@@ -222,10 +230,9 @@ pub fn view(model: &Model) -> Node<Msg> {
         Some(m) => m.history,
         None => Vec::new(),
     };
-    let empty = if &model.suggestion_filter == "" {
-        true
-    } else {
-        false
+    let empty = match &model.suggestion_filter {
+        None => true,
+        _ => false,
     };
     let general = General::default();
     div![
@@ -420,21 +427,25 @@ fn view_history_enteries(history: &shared::models::EnteryHistory, id: DeleteEnte
 }
 
 fn update_suggestion_filter(model: &mut Model) {
+    // If headline, account_target and account_origin are empty, reset suggestion filter.
+    if model.new_entery == shared::models::NewFinanceEntery::default() {
+        model.suggestion_filter = None;
+    };
     model.suggestion_filter = if &model.new_entery.account_origin == ""
         && &model.new_entery.account_target == ""
         && &model.new_entery.headline != ""
     {
-        "headline".to_string()
+        Some(SuggestionFilter::Headline)
     } else if &model.new_entery.account_target == ""
         && &model.new_entery.account_origin != ""
         && &model.new_entery.headline == ""
     {
-        "account_origin".to_string()
+        Some(SuggestionFilter::AccountOrigin)
     } else if &model.new_entery.account_target != ""
         && &model.new_entery.account_origin == ""
         && &model.new_entery.headline == ""
     {
-        "account_target".to_string()
+        Some(SuggestionFilter::AccountTarget)
     } else {
         model.suggestion_filter.clone()
     };
@@ -513,28 +524,32 @@ pub fn custom_suggestion<'a>(
     return suggestions
         .iter()
         .rev()
-        .filter(move |s| {
-            (&model.suggestion_filter == "account_target"
-                && matcher
+        .filter(move |s| match &model.suggestion_filter {
+            Some(SuggestionFilter::Headline) => {
+                matcher
+                    .fuzzy_match(&s.headline, &&model.new_entery.headline.replace(" ", ""))
+                    .unwrap_or(0)
+                    > threshhold
+            }
+            Some(SuggestionFilter::AccountOrigin) => {
+                matcher
+                    .fuzzy_match(
+                        &s.account_origin,
+                        &model.new_entery.account_origin.replace(" ", ""),
+                    )
+                    .unwrap_or(0)
+                    > threshhold
+            }
+            Some(SuggestionFilter::AccountTarget) => {
+                matcher
                     .fuzzy_match(
                         &s.account_target,
                         &model.new_entery.account_target.replace(" ", ""),
                     )
                     .unwrap_or(0)
-                    > threshhold)
-                || (&model.suggestion_filter == "account_origin"
-                    && matcher
-                        .fuzzy_match(
-                            &s.account_origin,
-                            &model.new_entery.account_origin.replace(" ", ""),
-                        )
-                        .unwrap_or(0)
-                        > threshhold)
-                || (&model.suggestion_filter == "headline"
-                    && matcher
-                        .fuzzy_match(&s.headline, &&model.new_entery.headline.replace(" ", ""))
-                        .unwrap_or(0)
-                        > threshhold)
+                    > threshhold
+            }
+            None => false,
         })
         .rev();
 }
