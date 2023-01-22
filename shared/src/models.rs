@@ -133,7 +133,7 @@ pub struct StopLedgerTimeEntery {
 }
 
 ///Section with Finance Enterys
-#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct NewFinanceEntery {
     pub headline: String,
     pub account_origin: String,
@@ -141,6 +141,13 @@ pub struct NewFinanceEntery {
     pub ammount: f32,
     pub date: Option<String>,
     pub target_file: String,
+}
+impl PartialEq for NewFinanceEntery {
+    fn eq(&self, other: &Self) -> bool {
+        self.headline == other.headline
+            && self.account_origin == other.account_origin
+            && self.account_target == other.account_target
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
