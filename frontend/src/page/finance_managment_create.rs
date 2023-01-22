@@ -40,7 +40,6 @@ pub struct Model {
     _base_url: Url,
     ctx: Option<shared::auth::UserLoginResponse>,
     suggestions: Option<shared::models::FinanceEnterySuggestion>,
-    // make suggestion filter to enum.
     suggestion_filter: Option<SuggestionFilter>,
     new_entery: shared::models::NewFinanceEntery,
     ammount: String,
@@ -106,7 +105,6 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             } else {
                 Some(content)
             };
-            log!(model.new_entery.date);
         }
         Msg::SaveNewEnteryTargetFile(content) => {
             model.new_entery.target_file = content;
@@ -183,7 +181,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                     target: shared::models::TargetFile::Finance,
                     new_entery: shared::models::NewTimeEntery::default(),
                 };
-                log!(delete_entery);
+                log!("Delete Entery: {:#?}", delete_entery);
                 async {
                     Msg::FetchedDeleteEntery(api::requests::kill_entery(token, delete_entery).await)
                 }
@@ -427,7 +425,6 @@ fn view_history_enteries(history: &shared::models::EnteryHistory, id: DeleteEnte
 }
 
 fn update_suggestion_filter(model: &mut Model) {
-    // If headline, account_target and account_origin are empty, reset suggestion filter.
     if model.new_entery == shared::models::NewFinanceEntery::default() {
         model.suggestion_filter = None;
     };

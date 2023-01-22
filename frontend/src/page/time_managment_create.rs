@@ -272,7 +272,6 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                     % (24 * 60);
             let duration_offset: u32 =
                 (stop_minute - model.running_entery_timestamp.unwrap() + 24 * 60) % (24 * 60);
-            log!("Stop {:#?}", data);
             orders.skip().perform_cmd({
                 let token = model.ctx.clone().unwrap().token;
                 let mut new_entery = model
@@ -289,7 +288,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                     target: shared::models::TargetFile::TimeManagment,
                     new_entery,
                 };
-                log!(stop_entery);
+                log!("Stop Entery: {:#?}", stop_entery);
                 async {
                     Msg::FetchedStopTimeEntery(
                         api::requests::stop_time_entery(token, stop_entery).await,
@@ -305,7 +304,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                     target: shared::models::TargetFile::TimeManagment,
                     new_entery: shared::models::NewTimeEntery::default(),
                 };
-                log!(kill_entery);
+                log!("Kill Entery: {:#?}", kill_entery);
                 async {
                     Msg::FetchedKillTimeEntery(api::requests::kill_entery(token, kill_entery).await)
                 }
@@ -319,7 +318,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                     target: shared::models::TargetFile::TimeManagment,
                     new_entery: shared::models::NewTimeEntery::default(),
                 };
-                log!(delete_entery);
+                log!("Delete Entery: {:#?}", delete_entery);
                 async {
                     Msg::FetchedDeleteTimeEntery(
                         api::requests::kill_entery(token, delete_entery).await,
