@@ -48,7 +48,7 @@ pub fn init(
         ctx,
         suggestions: None,
         start_entery: shared::models::StartTimeEntery::default(),
-        suggestion_filter: "".to_string(),
+        suggestion_filter: None,
         running_entery: None,
         running_entery_timestamp: None,
         history_entery: None,
@@ -66,7 +66,7 @@ pub struct Model {
     _base_url: Url,
     ctx: Option<shared::auth::UserLoginResponse>,
     suggestions: Option<shared::models::HeadlineSuggestion>,
-    suggestion_filter: String,
+    suggestion_filter: Option<SuggestionFilter>,
 
     start_entery: shared::models::StartTimeEntery,
     history_entery: Option<shared::models::ResponseEnteryHistory>,
@@ -76,6 +76,12 @@ pub struct Model {
     editing_offset: Option<EditingNewTimeEntery>,
     inverse_offset: i32,
     refs: Refs,
+}
+
+#[derive(Clone, Debug)]
+pub enum SuggestionFilter {
+    Headline,
+    AccountTarget,
 }
 
 #[derive(Default)]
@@ -336,6 +342,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             });
         }
         Msg::GetRunningEntery => {
+            log!("Get running enteries");
             orders.skip().perform_cmd({
                 let token = model.ctx.clone().unwrap().token;
                 async {
@@ -345,7 +352,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             orders.skip().perform_cmd(async { Msg::GetHistoryEntery });
         }
         Msg::FetchedStartTimeEntery(Ok(_response_data)) => {
-            model.suggestion_filter = "".to_string();
+            model.suggestion_filter = None;
             model.start_entery = shared::models::StartTimeEntery::default();
             orders.skip().perform_cmd(async { Msg::GetRunningEntery });
             orders.skip().perform_cmd(async { Msg::GetHistoryEntery });
@@ -408,10 +415,9 @@ pub fn view(model: &Model) -> Node<Msg> {
         Some(m) => m.history,
         None => Vec::new(),
     };
-    let empty = if &model.suggestion_filter == "" {
-        true
-    } else {
-        false
+    let empty = match &model.suggestion_filter {
+        None => true,
+        _ => false,
     };
     let general = General::default();
     div![
@@ -702,11 +708,11 @@ fn view_history_enteries(history: &shared::models::EnteryHistory, id: DeleteEnte
 fn update_suggestion_filter(model: &mut Model) {
     model.suggestion_filter =
         if &model.start_entery.account_target == "" && &model.start_entery.headline != "" {
-            "headline".to_string()
+            Some(SuggestionFilter::Headline)
         } else if &model.start_entery.account_target != "" && &model.start_entery.headline == "" {
-            "account_target".to_string()
+            Some(SuggestionFilter::AccountTarget)
         } else if &model.start_entery.account_target == "" && &model.start_entery.headline == "" {
-            "".to_string()
+            None
         } else {
             model.suggestion_filter.clone()
         };
@@ -725,21 +731,27 @@ pub fn custom_suggestion<'a>(
         .count() as i64
         * 5;
     //autofill
-    return suggestions.iter().rev().filter(move |s| {
-        (&model.suggestion_filter == "account_target"
-            && matcher
-                .fuzzy_match(
-                    &s.account_target,
-                    &model.start_entery.account_target.replace(" ", ""),
-                )
-                .unwrap_or(0)
-                > threshhold)
-            || (&model.suggestion_filter == "headline"
-                && matcher
+    return suggestions
+        .iter()
+        .rev()
+        .filter(move |s| match &model.suggestion_filter {
+            Some(SuggestionFilter::Headline) => {
+                matcher
                     .fuzzy_match(&s.headline, &&model.start_entery.headline.replace(" ", ""))
                     .unwrap_or(0)
-                    > threshhold)
-    });
+                    > threshhold
+            }
+            Some(SuggestionFilter::AccountTarget) => {
+                matcher
+                    .fuzzy_match(
+                        &s.account_target,
+                        &model.start_entery.account_target.replace(" ", ""),
+                    )
+                    .unwrap_or(0)
+                    > threshhold
+            }
+            None => false,
+        });
 }
 
 fn autofill(orders: &mut impl Orders<Msg>, model: &Model) {
