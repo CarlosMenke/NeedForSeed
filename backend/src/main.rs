@@ -3,7 +3,7 @@ extern crate dotenvy;
 extern crate serde;
 
 use actix_cors::Cors;
-use actix_web::{web, App, HttpServer};
+use actix_web::{http, web, App, HttpServer};
 use actix_web_httpauth::middleware::HttpAuthentication;
 
 use diesel::{r2d2, r2d2::ConnectionManager, PgConnection};
@@ -38,14 +38,18 @@ async fn main() -> std::io::Result<()> {
 
     //add https support
     HttpServer::new(move || {
-        let cors = Cors::permissive()
-            //TODO setup tight policy
-            //.allow_any_origin()
+        let cors = Cors::default()
+            //Cors::permissive()
+            .allow_any_origin()
             //.allowed_origin("http://127.0.0.1:8080")
-            //.allowed_methods(vec!["GET", "POST"])
-            //.allowed_headers(vec![header::AUTHORIZATION, header::ACCEPT])
-            //.allowed_header(header::CONTENT_TYPE)
-            //.supports_credentials()
+            .allowed_methods(vec!["GET", "POST"])
+            .allowed_headers(vec![
+                http::header::AUTHORIZATION,
+                http::header::ACCEPT,
+                http::header::CONTENT_TYPE,
+            ])
+            .allowed_header(http::header::CONTENT_TYPE)
+            .supports_credentials()
             //.disable_preflight()
             .max_age(3600);
         let auth = HttpAuthentication::bearer(auth::validator);
