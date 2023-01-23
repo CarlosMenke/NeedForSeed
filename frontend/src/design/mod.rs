@@ -7,6 +7,7 @@ pub struct General {
 
     pub input: Style,
     pub label: Style,
+    pub input_filter: Style, //For history filter and summary filter
 
     pub form: Style,
     pub form_fix: Style,
@@ -66,6 +67,11 @@ impl Default for General {
                 St::MarginTop => px(20);
                 St::FontSize => px(16),
                 St::FontWeight => 500,
+            },
+            input_filter: style! {
+                St::BorderRadius => px(25),
+                St::BackgroundColor => "#04a9b5",
+                St::Color => "04a9b5",
             },
 
             form: style! {

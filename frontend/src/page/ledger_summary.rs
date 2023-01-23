@@ -196,11 +196,7 @@ fn view_selection(model: &Model) -> Node<Msg> {
                 At::List => "suggestions-timespan",
             },
             &general.input,
-            style! {
-                St::BorderRadius => px(25),
-                St::BackgroundColor => "#04a9b5",
-                St::Color => "04a9b5",
-            },
+            &general.input_filter,
         ],
         datalist![
             id!["suggestions-timespan"],
@@ -221,11 +217,7 @@ fn view_selection(model: &Model) -> Node<Msg> {
                 At::List => "suggestions-date",
             },
             &general.input,
-            style! {
-                    St::BorderRadius => px(25),
-                    St::BackgroundColor => "#04a9b5",
-                    St::Color => "04a9b5",
-            },
+            &general.input_filter,
         ],
         datalist![
             id!["suggestions-date"],
@@ -255,11 +247,7 @@ fn view_selection(model: &Model) -> Node<Msg> {
                 At::List => "suggestions-depth",
             },
             &general.input,
-            style! {
-                    St::BorderRadius => px(25),
-                    St::BackgroundColor => "#04a9b5",
-                    St::Color => "04a9b5",
-            },
+            &general.input_filter,
         ],
         datalist![
             id!["suggestions-depth"],
