@@ -148,6 +148,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         }
     }
 }
+
 // ------ ------
 //     View
 // ------ ------
@@ -157,125 +158,129 @@ pub fn view(model: &Model) -> Node<Msg> {
         Some(m) => m.html,
         None => "".to_string(),
     };
+    div![
+        view_selection(model),
+        div![
+            raw![&summary_html],
+            style! { St::Margin => "40px 40px 40px 40px"},
+        ],
+    ]
+}
+
+fn view_selection(model: &Model) -> Node<Msg> {
     let suggestions = match model.suggestions.clone() {
         Some(m) => m.suggestions,
         None => Vec::new(),
     };
-    let general = General::default();
     let empty_timespan = if &model.selection_input.timespan == "" {
         true
     } else {
         false
     };
+    let general = General::default();
     div![
-        div![
-            C!["selection"],
-            style! {
-                St::Padding => "25px 15px",
-                St::Margin => "0px auto",
-                St::Width => px(250),
+        C!["selection"],
+        style! {
+            St::Padding => "25px 15px",
+            St::Margin => "0px auto",
+            St::Width => px(250),
+        },
+        input![
+            C!["input-content-timespan"],
+            input_ev(Ev::Input, Msg::SaveTimespan),
+            ev(Ev::Click, |_| Msg::ClearTimespan),
+            attrs! {
+                At::Placeholder => "Timespan",
+                At::AutoFocus => true.as_at_value();
+                At::Value => &model.selection_input.timespan,
+                At::List => "suggestions-timespan",
             },
-            input![
-                C!["input-content-timespan"],
-                input_ev(Ev::Input, Msg::SaveTimespan),
-                ev(Ev::Click, |_| Msg::ClearTimespan),
-                attrs! {
-                    At::Placeholder => "Timespan",
-                    At::AutoFocus => true.as_at_value();
-                    At::Value => &model.selection_input.timespan,
-                    At::List => "suggestions-timespan",
-                },
-                &general.input,
-                style! {
+            &general.input,
+            style! {
+                St::BorderRadius => px(25),
+                St::BackgroundColor => "#04a9b5",
+                St::Color => "04a9b5",
+            },
+        ],
+        datalist![
+            id!["suggestions-timespan"],
+            suggestions
+                .iter()
+                .filter(|s| empty_timespan && s.target == model.selected.target)
+                .unique_by(|s| &s.timespan)
+                .map(|s| { option![s.timespan.clone()] }),
+        ],
+        input![
+            C!["input-content-date"],
+            input_ev(Ev::Input, Msg::SaveDate),
+            ev(Ev::Click, |_| Msg::ClearDate),
+            attrs! {
+                At::Placeholder => "Date",
+                At::AutoFocus => true.as_at_value();
+                At::Value => &model.selection_input.date,
+                At::List => "suggestions-date",
+            },
+            &general.input,
+            style! {
                     St::BorderRadius => px(25),
                     St::BackgroundColor => "#04a9b5",
                     St::Color => "04a9b5",
-                },
-            ],
-            datalist![
-                id!["suggestions-timespan"],
-                suggestions
-                    .iter()
-                    .filter(|s| empty_timespan && s.target == model.selected.target)
-                    .unique_by(|s| &s.timespan)
-                    .map(|s| { option![s.timespan.clone()] }),
-            ],
-            input![
-                C!["input-content-date"],
-                input_ev(Ev::Input, Msg::SaveDate),
-                ev(Ev::Click, |_| Msg::ClearDate),
-                attrs! {
-                    At::Placeholder => "Date",
-                    At::AutoFocus => true.as_at_value();
-                    At::Value => &model.selection_input.date,
-                    At::List => "suggestions-date",
-                },
-                &general.input,
-                style! {
-                        St::BorderRadius => px(25),
-                        St::BackgroundColor => "#04a9b5",
-                        St::Color => "04a9b5",
-                },
-            ],
-            datalist![
-                id!["suggestions-date"],
-                suggestions
-                    .iter()
-                    .filter(|s| empty_timespan && s.target == model.selected.target)
-                    .unique_by(|s| &s.date)
-                    .map(|s| { option![s.date.clone()] }),
-                suggestions
-                    .iter()
-                    .filter(move |s| {
-                        model.selection_input.target == s.target
-                            && model.selection_input.timespan == s.timespan
-                    })
-                    .unique_by(|s| &s.date)
-                    .map(|s| { option![s.date.clone()] })
-                    .rev()
-            ],
-            input![
-                C!["input-content-depth"],
-                input_ev(Ev::Input, Msg::SaveDepth),
-                ev(Ev::Click, |_| Msg::ClearDepth),
-                attrs! {
-                    At::Placeholder => "Depth",
-                    At::AutoFocus => true.as_at_value();
-                    At::Value => &model.selection_input.depth,
-                    At::List => "suggestions-depth",
-                },
-                &general.input,
-                style! {
-                        St::BorderRadius => px(25),
-                        St::BackgroundColor => "#04a9b5",
-                        St::Color => "04a9b5",
-                },
-            ],
-            datalist![
-                id!["suggestions-depth"],
-                suggestions
-                    .iter()
-                    .filter(|s| empty_timespan && s.target == model.selected.target)
-                    .unique_by(|s| &s.depth)
-                    .map(|s| { option![s.depth.clone()] }),
-                suggestions
-                    .iter()
-                    .filter(move |s| {
-                        model.selection_input.target == s.target
-                            && model.selection_input.timespan == s.timespan
-                            && if model.selection_input.date != "" {
-                                model.selection_input.date == s.date
-                            } else {
-                                true
-                            }
-                    })
-                    .unique_by(|s| &s.depth)
-                    .map(|s| { option![s.depth.clone()] })
-            ],
+            },
         ],
-        div![
-            raw![&summary_html],
-            style! { St::Margin => "40px 40px 40px 40px"},
+        datalist![
+            id!["suggestions-date"],
+            suggestions
+                .iter()
+                .filter(|s| empty_timespan && s.target == model.selected.target)
+                .unique_by(|s| &s.date)
+                .map(|s| { option![s.date.clone()] }),
+            suggestions
+                .iter()
+                .filter(move |s| {
+                    model.selection_input.target == s.target
+                        && model.selection_input.timespan == s.timespan
+                })
+                .unique_by(|s| &s.date)
+                .map(|s| { option![s.date.clone()] })
+                .rev()
+        ],
+        input![
+            C!["input-content-depth"],
+            input_ev(Ev::Input, Msg::SaveDepth),
+            ev(Ev::Click, |_| Msg::ClearDepth),
+            attrs! {
+                At::Placeholder => "Depth",
+                At::AutoFocus => true.as_at_value();
+                At::Value => &model.selection_input.depth,
+                At::List => "suggestions-depth",
+            },
+            &general.input,
+            style! {
+                    St::BorderRadius => px(25),
+                    St::BackgroundColor => "#04a9b5",
+                    St::Color => "04a9b5",
+            },
+        ],
+        datalist![
+            id!["suggestions-depth"],
+            suggestions
+                .iter()
+                .filter(|s| empty_timespan && s.target == model.selected.target)
+                .unique_by(|s| &s.depth)
+                .map(|s| { option![s.depth.clone()] }),
+            suggestions
+                .iter()
+                .filter(move |s| {
+                    model.selection_input.target == s.target
+                        && model.selection_input.timespan == s.timespan
+                        && if model.selection_input.date != "" {
+                            model.selection_input.date == s.date
+                        } else {
+                            true
+                        }
+                })
+                .unique_by(|s| &s.depth)
+                .map(|s| { option![s.depth.clone()] })
         ],
     ]
 }
