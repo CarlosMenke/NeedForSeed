@@ -5,6 +5,9 @@ use fuzzy_matcher::FuzzyMatcher;
 use itertools::Itertools;
 use regex::Regex;
 use seed::{prelude::*, *};
+use std::fmt;
+use strum::IntoEnumIterator;
+use strum_macros::EnumIter;
 
 use crate::design::General;
 
@@ -27,8 +30,9 @@ pub fn init(
         suggestions: None,
         suggestion_filter: None,
         new_entery: shared::models::NewFinanceEntery::default(),
-        ammount: "".to_string(),
+        input_str: InputString::default(),
         history_entery: None,
+        history_selection_input: HistorySelection::default(),
     }
 }
 
@@ -42,8 +46,17 @@ pub struct Model {
     suggestions: Option<shared::models::FinanceEnterySuggestion>,
     suggestion_filter: Option<SuggestionFilter>,
     new_entery: shared::models::NewFinanceEntery,
-    ammount: String,
+    input_str: InputString,
     history_entery: Option<shared::models::ResponseEnteryHistory>,
+    history_selection_input: HistorySelection,
+}
+
+//Stores User intput witch is unrepresentable by the right category in the structs, until it can be
+//translated.
+#[derive(Debug, Default)]
+pub struct InputString {
+    ammount: String,
+    search_category: String,
 }
 
 #[derive(Clone, Debug)]
@@ -53,7 +66,44 @@ pub enum SuggestionFilter {
     AccountTarget,
 }
 
-// ------ Frequency ------
+#[derive(Clone)]
+pub struct HistorySelection {
+    number: u32,
+    search: String,
+    search_category: SearchCategory,
+}
+impl Default for HistorySelection {
+    fn default() -> HistorySelection {
+        HistorySelection {
+            number: 10,
+            search: String::new(),
+            search_category: SearchCategory::Headline,
+        }
+    }
+}
+
+#[derive(Debug, Clone, EnumIter)]
+pub enum SearchCategory {
+    Headline,
+    AccountTarget,
+}
+impl fmt::Display for SearchCategory {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            SearchCategory::Headline => write!(f, "Headline"),
+            SearchCategory::AccountTarget => write!(f, "AccountTarget"),
+        }
+    }
+}
+impl SearchCategory {
+    fn from_str(s: &str) -> Option<SearchCategory> {
+        match s {
+            "Headline" => Some(SearchCategory::Headline),
+            "AccountTarget" => Some(SearchCategory::AccountTarget),
+            _ => None,
+        }
+    }
+}
 
 pub enum Msg {
     DeleteEntery(DeleteEnteryId),
@@ -72,6 +122,9 @@ pub enum Msg {
     SaveNewEnteryAmmount(String),
     SaveNewEnteryDate(String),
     SaveNewEnteryTargetFile(String),
+    SaveHistoryNumber(String),
+    SaveHistorySearch(String),
+    SaveHistorySearchCategory(String),
 
     NewFinanceEntery,
 }
@@ -97,7 +150,8 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             autofill(orders, model);
         }
         Msg::SaveNewEnteryAmmount(content) => {
-            model.ammount = content;
+            model.input_str.ammount = content;
+            model.new_entery.ammount = model.input_str.ammount.parse::<f32>().unwrap_or(0.0);
         }
         Msg::SaveNewEnteryDate(content) => {
             model.new_entery.date = if content == "".to_string() {
@@ -108,6 +162,25 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         }
         Msg::SaveNewEnteryTargetFile(content) => {
             model.new_entery.target_file = content;
+        }
+        Msg::SaveHistoryNumber(content) => {
+            model.history_selection_input.number = match content.parse::<u32>() {
+                Ok(n) => n,
+                Err(_) => 10,
+            };
+        }
+        Msg::SaveHistorySearch(content) => {
+            model.history_selection_input.search = content;
+        }
+        Msg::SaveHistorySearchCategory(content) => {
+            model.input_str.search_category = content;
+            model.history_selection_input.search_category =
+                SearchCategory::from_str(&model.input_str.search_category)
+                    .unwrap_or(model.history_selection_input.search_category.clone());
+            log!(
+                "Saved History SearchCategory: ",
+                model.history_selection_input.search_category
+            );
         }
         Msg::RefreshAutocomplete => {
             model.suggestion_filter = None;
@@ -122,10 +195,6 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             let remove_space_end = Regex::new(r" ^").unwrap();
             let remove_space = Regex::new(r": ").unwrap();
             orders.skip().perform_cmd({
-                model.new_entery.ammount = match model.ammount.parse::<f32>() {
-                    Ok(n) => n,
-                    Err(_) => 0.0,
-                };
                 let token = model.ctx.clone().unwrap().token;
                 let mut new_entery = model.new_entery.clone();
                 new_entery.date = match new_entery.date {
@@ -190,7 +259,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
 
         Msg::FetchedNewFinanceEntery(Ok(_response_data)) => {
             model.suggestion_filter = None;
-            model.ammount = "".to_string();
+            model.input_str.ammount = "".to_string();
             model.new_entery = shared::models::NewFinanceEntery::default();
             update_suggestion_filter(model);
             orders.skip().perform_cmd(async { Msg::GetSuggestion });
@@ -232,6 +301,7 @@ pub fn view(model: &Model) -> Node<Msg> {
         None => true,
         _ => false,
     };
+    let selected = model.history_selection_input.clone();
     let general = General::default();
     div![
         style! {St::Display => "flex", St::FlexDirection => "column", St::JustifyContent => "start", St::Height => px(950)},
@@ -323,7 +393,7 @@ pub fn view(model: &Model) -> Node<Msg> {
                 attrs! {
                     At::Placeholder => "Ammount",
                     At::AutoFocus => true.as_at_value();
-                    At::Value => &model.ammount,
+                    At::Value => &model.input_str.ammount,
                     At::List => "suggestions_ammount",
                 },
                 &general.input,
@@ -368,6 +438,7 @@ pub fn view(model: &Model) -> Node<Msg> {
                 &general.button
             ],
         ],
+        view_history_selection(model),
         div![
             style! {
             St::Width => "100%",
@@ -376,12 +447,74 @@ pub fn view(model: &Model) -> Node<Msg> {
             St::JustifyContent => "space-evenly",
             St::FlexWrap => "wrap",
             },
-            history_entery.iter().rev().take(20).map(|entery| {
-                Some(view_history_enteries(
-                    entery,
-                    entery.remove_entery.to_string(),
-                ))
-            },),
+            history_entery
+                .iter()
+                .rev()
+                .filter(|s| {
+                    match selected.search_category {
+                        SearchCategory::Headline => s.headline.contains(&selected.search),
+                        SearchCategory::AccountTarget => {
+                            s.account_target.contains(&selected.search)
+                        }
+                    }
+                })
+                .take(selected.number as usize)
+                .map(|entery| {
+                    Some(view_history_enteries(
+                        entery,
+                        entery.remove_entery.to_string(),
+                    ))
+                },),
+        ],
+    ]
+}
+
+fn view_history_selection(model: &Model) -> Node<Msg> {
+    let general = General::default();
+    div![
+        C!["selection"],
+        style! {
+            St::Padding => "25px 15px",
+            St::Margin => "0px auto",
+            St::Width => px(250),
+        },
+        input![
+            input_ev(Ev::Input, Msg::SaveHistoryNumber),
+            attrs! {
+                At::Placeholder => "Number",
+                At::AutoFocus => true.as_at_value();
+                At::Value => &model.history_selection_input.number,
+            },
+            &general.input,
+            &general.input_filter,
+        ],
+        input![
+            input_ev(Ev::Input, Msg::SaveHistorySearch),
+            attrs! {
+                At::Placeholder => "Search",
+                At::AutoFocus => true.as_at_value();
+                At::Value => &model.history_selection_input.search,
+            },
+            &general.input,
+            &general.input_filter,
+        ],
+        input![
+            input_ev(Ev::Input, Msg::SaveHistorySearchCategory),
+            attrs! {
+                At::Placeholder => "SearchCategory",
+                At::AutoFocus => true.as_at_value();
+                At::Value => &model.input_str.search_category,
+                At::List => "history-search-category",
+            },
+            &general.input,
+            &general.input_filter,
+        ],
+        datalist![
+            id!["history-search-category"],
+            SearchCategory::iter()
+                .collect::<Vec<SearchCategory>>()
+                .iter()
+                .map(|s| option![format!("{:?}", s)])
         ],
     ]
 }
@@ -487,7 +620,7 @@ fn autofill(orders: &mut impl Orders<Msg>, model: &Model) {
     let suggestion_custom = custom_suggestion(&suggestions, model)
         .map(|s| &s.ammount)
         .collect_vec();
-    if &suggestion_custom.len() == &(1 as usize) && &model.ammount == "" {
+    if &suggestion_custom.len() == &(1 as usize) && &model.input_str.ammount == "" {
         let autofill = suggestion_custom[0].to_string().clone();
         orders
             .skip()

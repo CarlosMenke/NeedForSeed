@@ -20,6 +20,8 @@ itertools = "*"
 shared = { path="../shared" }
 regex = "1.6"
 chrono = "*"
+strum = "*"
+strum_macros = "*"
 
 [profile.release]
 lto = true
