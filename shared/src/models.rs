@@ -22,16 +22,6 @@ pub struct HtmlSuggestion {
     pub timespan: String,
     pub depth: String,
 }
-impl Default for HtmlSuggestion {
-    fn default() -> HtmlSuggestion {
-        HtmlSuggestion {
-            target: String::new(),
-            date: String::new(),
-            timespan: String::new(),
-            depth: String::new(),
-        }
-    }
-}
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ResponseHtmlSuggestion {
