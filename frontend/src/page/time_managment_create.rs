@@ -205,16 +205,15 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         Msg::InverseOffsetStart => {
             model.inverse_offset *= -1;
         }
-        Msg::RefreshAutocomplete => {
-            model.start_entery = shared::models::StartTimeEntery::default();
-            update_suggestion_filter(model);
-        }
         Msg::SaveNewEnteryDuration(content) => {
-            model.start_entery.duration = match content.parse::<u32>() {
-                Ok(0) => None,
-                Ok(n) => Some(n),
-                Err(_) => None,
-            };
+            model.input_str.duration = content;
+            model.start_entery.duration = Some(
+                model
+                    .input_str
+                    .duration
+                    .parse::<u32>()
+                    .unwrap_or(model.start_entery.duration.clone().unwrap_or(0)),
+            );
         }
         Msg::SaveNewEnteryDate(content) => {
             model.start_entery.date = if content == "".to_string() {
@@ -592,7 +591,7 @@ pub fn view(model: &Model) -> Node<Msg> {
                     attrs! {
                         At::Placeholder => "Duration",
                         At::AutoFocus => true.as_at_value();
-                        At::Value => &model.start_entery.duration.clone().unwrap_or(0),
+                        At::Value => &model.input_str.duration.clone(),
                     },
                     &general.input,
                     style! {St::Width => "40%"},
