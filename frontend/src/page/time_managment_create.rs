@@ -16,6 +16,7 @@ use crate::design::General;
 
 const ENTER_KEY: u32 = 13;
 const ESC_KEY: u32 = 27;
+const ALL_HISTORY_NUMBER: u32 = 10000;
 
 type RunningEnteryId = String;
 type DeleteEnteryId = String;
@@ -107,6 +108,7 @@ struct Refs {
 #[derive(Clone)]
 pub struct HistorySelection {
     number: u32,
+    request_number: RequestNumber, //Decides if number is used or if all history is requested
     search: String,
     search_category: SearchCategory,
 }
@@ -114,10 +116,17 @@ impl Default for HistorySelection {
     fn default() -> HistorySelection {
         HistorySelection {
             number: 10,
+            request_number: RequestNumber::Number,
             search: String::new(),
             search_category: SearchCategory::Headline,
         }
     }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum RequestNumber {
+    Number, //Number stored in HistorySelection.number
+    All,
 }
 
 #[derive(Debug, Clone, EnumIter)]
@@ -231,20 +240,23 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 Ok(n) => n,
                 Err(_) => 10,
             };
-            orders.skip().perform_cmd(async { Msg::GetHistoryEntery });
+            if model.history_selection_input.search == "".to_string() {
+                orders.skip().perform_cmd(async { Msg::GetHistoryEntery });
+            }
         }
         Msg::SaveHistorySearch(content) => {
             model.history_selection_input.search = content;
+            if model.history_selection_input.request_number == RequestNumber::Number {
+                model.history_selection_input.request_number = RequestNumber::All;
+                orders.skip().perform_cmd(async { Msg::GetHistoryEntery });
+            }
+            model.history_selection_input.request_number = RequestNumber::All;
         }
         Msg::SaveHistorySearchCategory(content) => {
             model.input_str.search_category = content;
             model.history_selection_input.search_category =
                 SearchCategory::from_str(&model.input_str.search_category)
                     .unwrap_or(model.history_selection_input.search_category.clone());
-            log!(
-                "Saved History SearchCategory: ",
-                model.history_selection_input.search_category
-            );
         }
 
         Msg::StartOffsetEdit(running_entery_id) => {
@@ -410,7 +422,12 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 let token = model.ctx.clone().unwrap().token;
                 let target = shared::models::RequestEnteryHistory {
                     target: shared::models::TargetFile::TimeManagment,
-                    number: model.history_selection_input.number.clone(),
+                    number: if model.history_selection_input.request_number == RequestNumber::Number
+                    {
+                        model.history_selection_input.number.clone()
+                    } else {
+                        ALL_HISTORY_NUMBER
+                    },
                 };
                 async {
                     Msg::FetchedHistoryEntery(
