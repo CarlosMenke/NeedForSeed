@@ -231,6 +231,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 Ok(n) => n,
                 Err(_) => 10,
             };
+            orders.skip().perform_cmd(async { Msg::GetHistoryEntery });
         }
         Msg::SaveHistorySearch(content) => {
             model.history_selection_input.search = content;
@@ -409,6 +410,7 @@ pub fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 let token = model.ctx.clone().unwrap().token;
                 let target = shared::models::RequestEnteryHistory {
                     target: shared::models::TargetFile::TimeManagment,
+                    number: model.history_selection_input.number.clone(),
                 };
                 async {
                     Msg::FetchedHistoryEntery(

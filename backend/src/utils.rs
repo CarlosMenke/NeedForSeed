@@ -127,6 +127,7 @@ pub fn ledger_time_suggestion(
 pub fn ledger_history(
     user: &str,
     target: shared::models::TargetFile,
+    number: u32,
 ) -> Result<Vec<shared::models::EnteryHistory>, ServiceError> {
     let path = match target {
         shared::models::TargetFile::TimeManagment => PATH_TIME_SPEND,
@@ -152,7 +153,10 @@ pub fn ledger_history(
     let remove_time = Regex::new(r"[\s]*[\t]*[-]*\d{1, 4}[\.]?\d{0,2}[m,h,€]").unwrap();
     let remove_first_tab = Regex::new(r"[\s]*\t").unwrap();
     let mut tracking: bool = false;
-    for line in ledger.lines() {
+    for line in ledger.lines().rev() {
+        if history.len() == number as usize {
+            break;
+        }
         //TODO only date date, if it is one line befor headline.
         if check_timespan.is_match(line) {
             remove_entery = format!("\n{}\n", line);

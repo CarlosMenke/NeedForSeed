@@ -69,6 +69,7 @@ pub enum TargetFile {
 #[derive(Serialize, Deserialize, Clone)]
 pub struct RequestEnteryHistory {
     pub target: TargetFile,
+    pub number: u32,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]

@@ -194,12 +194,16 @@ pub async fn get_time_history(
 ) -> Result<web::Json<ResponseEnteryHistory>, ServiceError> {
     let user = decode_jwt(credentials.token()).unwrap().username;
     debug!(
-        "User '{}' Get Ledger History for '{:#?}'",
-        &user, payload.target
+        "User '{}' Get '{:#?}' Enteries of Ledger History for '{:#?}'",
+        &user, payload.number, payload.target
     );
     //TODO add filter for history elements. (date)
     Ok(web::Json(shared::models::ResponseEnteryHistory {
-        history: utils::ledger_history(&user, payload.target.to_owned())?,
+        history: utils::ledger_history(
+            &user,
+            payload.target.to_owned(),
+            payload.number.to_owned(),
+        )?,
     }))
 }
 
