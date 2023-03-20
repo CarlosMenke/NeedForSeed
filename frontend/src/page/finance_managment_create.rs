@@ -502,7 +502,6 @@ fn view_history_selection(model: &Model) -> Node<Msg> {
             input_ev(Ev::Input, Msg::SaveHistoryNumber),
             attrs! {
                 At::Placeholder => "Number",
-                At::AutoFocus => true.as_at_value();
                 At::Value => &model.history_selection_input.number,
             },
             &general.input,
@@ -512,7 +511,6 @@ fn view_history_selection(model: &Model) -> Node<Msg> {
             input_ev(Ev::Input, Msg::SaveHistorySearch),
             attrs! {
                 At::Placeholder => "Search",
-                At::AutoFocus => true.as_at_value();
                 At::Value => &model.history_selection_input.search,
             },
             &general.input,
@@ -522,7 +520,6 @@ fn view_history_selection(model: &Model) -> Node<Msg> {
             input_ev(Ev::Input, Msg::SaveHistorySearchCategory),
             attrs! {
                 At::Placeholder => "SearchCategory",
-                At::AutoFocus => true.as_at_value();
                 At::Value => &model.input_str.search_category,
                 At::List => "history-search-category",
             },
