@@ -102,10 +102,11 @@ async fn main() -> std::io::Result<()> {
             )
     })
     .workers(2)
-    .bind_openssl(
-        format!("{}:{}", settings.server_ip, settings.server_port),
-        builder,
-    )
+    //.bind_openssl(
+    //    format!("{}:{}", settings.server_ip, settings.server_port),
+    //    builder,
+    //)
+    .bind(format!("{}:{}", settings.server_ip, settings.server_port))
     .expect("Can not bind to IP:PORT")
     .run()
     .await
