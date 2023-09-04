@@ -6,7 +6,7 @@ use diesel::prelude::*;
 use log::{debug, info};
 use uuid::Uuid;
 
-pub fn insert_user(conn: &mut PgConnection, name: &str, pwd: &str) -> Result<User, ServiceError> {
+pub fn insert_user(conn: &mut SqliteConnection, name: &str, pwd: &str) -> Result<User, ServiceError> {
     info!("Creating new User Name: {:?} pwd: {:?} ", &name, &pwd);
 
     let new_user = NewUser {
@@ -15,14 +15,21 @@ pub fn insert_user(conn: &mut PgConnection, name: &str, pwd: &str) -> Result<Use
         password: &utils::hash_password(&pwd)?,
     };
 
-    Ok(diesel::insert_into(users)
-        .values(&new_user)
-        .get_result(conn)
-        .expect("Error inserting new user"))
+    diesel::insert_into(users)
+       .values(&new_user)
+       .execute(conn)
+       .expect("Error inserting person");
+
+        let user = users
+        .filter(username.eq(name))
+        .first::<User>(conn)
+        .expect("Error loading person that was just inserted");
+
+        Ok(user)
 }
 
 #[allow(dead_code)]
-pub fn get_user(conn: &mut PgConnection, _username: &str) -> Result<User, String> {
+pub fn get_user(conn: &mut SqliteConnection, _username: &str) -> Result<User, String> {
     debug!("Selecting User with username: {:?}", _username);
 
     let mut results = users
@@ -37,7 +44,7 @@ pub fn get_user(conn: &mut PgConnection, _username: &str) -> Result<User, String
 }
 
 #[allow(dead_code)]
-pub fn delete_user(conn: &mut PgConnection, _username: &str) {
+pub fn delete_user(conn: &mut SqliteConnection, _username: &str) {
     info!("Delete User with username: {:?}", _username);
 
     diesel::delete(users.filter(username.like(_username)))
@@ -46,7 +53,7 @@ pub fn delete_user(conn: &mut PgConnection, _username: &str) {
 }
 
 pub fn check_login(
-    conn: &mut PgConnection,
+    conn: &mut SqliteConnection,
     _username: &str,
     _password: &str,
 ) -> Result<bool, ServiceError> {

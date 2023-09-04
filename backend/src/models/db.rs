@@ -1,7 +1,7 @@
 use crate::models::schema::users;
-use diesel::{r2d2, r2d2::ConnectionManager, PgConnection};
+use diesel::{r2d2, r2d2::ConnectionManager, SqliteConnection};
 use diesel::{Insertable, Queryable};
-pub type Pool = r2d2::Pool<ConnectionManager<PgConnection>>;
+pub type Pool = r2d2::Pool<ConnectionManager<SqliteConnection>>;
 use serde::Serialize;
 
 #[derive(Queryable, Debug, Serialize)]

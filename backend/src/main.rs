@@ -6,10 +6,12 @@ use actix_cors::Cors;
 use actix_web::{web, App, HttpServer};
 use actix_web_httpauth::middleware::HttpAuthentication;
 
-use diesel::{r2d2, r2d2::ConnectionManager, PgConnection};
+use diesel::{r2d2, r2d2::ConnectionManager, sqlite::SqliteConnection};
+
 use models::db::Pool;
 
 use dotenvy::dotenv;
+use env_logger::builder;
 
 use configuration::Application;
 use handler::api;
@@ -22,6 +24,7 @@ mod handler;
 mod models;
 mod tests;
 mod utils;
+pub type DatabaseConnection = SqliteConnection;
 
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
@@ -31,10 +34,9 @@ async fn main() -> std::io::Result<()> {
     let settings = Application::default();
 
     //TODO change to RUSTLS, because it is faster and more secure
-    let connection_manager = ConnectionManager::<PgConnection>::new(settings.database_url);
-    let pool: Pool = r2d2::Pool::builder()
-        .build(connection_manager)
-        .expect("Failed to create pool.");
+    let pool: Pool = Pool::builder()
+        .build(ConnectionManager::<DatabaseConnection>::new(settings.database_url))
+        .unwrap();
 
     //add https support
     HttpServer::new(move || {

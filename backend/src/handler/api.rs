@@ -1,7 +1,7 @@
 use actix_web::{web, Result};
 use actix_web_grants::proc_macro::has_permissions;
 use actix_web_httpauth::extractors::bearer::BearerAuth;
-use diesel::PgConnection;
+use diesel::SqliteConnection;
 use log::debug;
 
 use std::fs;
@@ -25,7 +25,7 @@ pub async fn login(
         "login function called for User: {:#?}",
         &user_login.username
     );
-    let connection: &mut PgConnection = &mut pool.get().unwrap();
+    let connection: &mut SqliteConnection = &mut pool.get().unwrap();
     if !check_login(connection, &user_login.username, &user_login.password)? {
         return Err(ServiceError::Unauthorized);
     };
@@ -48,7 +48,7 @@ pub async fn create_user(
     pool: web::Data<Pool>,
     user_data: web::Json<NewUser>,
 ) -> Result<web::Json<User>, ServiceError> {
-    let connection: &mut PgConnection = &mut pool.get().unwrap();
+    let connection: &mut SqliteConnection = &mut pool.get().unwrap();
     match insert_user(connection, &user_data.username, &user_data.password) {
         Ok(u) => return Ok(web::Json(u)),
         Err(e) => return Err(e),
